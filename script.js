@@ -75,6 +75,7 @@ function filtrarItens(tipoSelecionado) {
                 <h3>${item.nome}</h3>
                 <p class="efeito">${item.efeito}</p>
                 <span class="preco">${item.preco} ic's</span>
+                <!-- Chamando o nome que exportamos para o window -->
                 <button onclick="comprarItem('${item.nome}', ${item.preco})">Comprar</button>
             </div>
         `;
@@ -88,6 +89,7 @@ function renderizarInventario(itens) {
         section.innerHTML += `
             <div class="card-inventario ${item.raridade}">
                 <strong>${item.nome}</strong>
+                <!-- Importante: preco vem do objeto item -->
                 <button class="btn-vender" onclick="venderItem(${item.idUnico}, ${item.preco})">Vender</button>
             </div>
         `;
@@ -178,11 +180,12 @@ monitorarComunidade();
 
 // 6. TORNAR FUNÇÕES GLOBAIS (PARA O HTML ENXERGAR)
 // No final do script.js, adicione estas linhas:
+// O nome da esquerda é como o HTML chama, o da direita é o nome real da função no JS
 window.fazerLogin = fazerLogin;
 window.fazerCadastro = fazerCadastro;
 window.filtrarItens = filtrarItens;
-window.comprarItem = comprarItem; // Certifique-se que o nome aqui é comprarItem
-window.venderItem = venderItem;
+window.comprarItem = comprarItemNoFirebase; // Corrigido
+window.venderItem = venderItemNoFirebase;   // Corrigido
 
 // Inicia a loja
 filtrarItens('todos');
