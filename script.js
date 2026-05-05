@@ -1,31 +1,38 @@
+// Agrupe todas as importações do mesmo módulo em uma linha só
 import { initializeApp } from "firebase/app";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, getDocs } from "firebase/firestore";
-
 import { 
     getAuth, 
     onAuthStateChanged, 
     signInWithEmailAndPassword, 
     createUserWithEmailAndPassword 
 } from "firebase/auth";
+import { 
+    getFirestore, 
+    doc, 
+    getDoc, 
+    setDoc, 
+    updateDoc, 
+    onSnapshot, 
+    collection 
+} from "firebase/firestore";
 
-import { collection, getDocs, onSnapshot } from "firebase/firestore";
+// ... restante das configurações (firebaseConfig)
 
 // 1. COLOQUE SEUS DADOS DO FIREBASE AQUI
 const firebaseConfig = {
-    apiKey: "SUA_API_KEY",
-    authDomain: "SEU_PROJETO.firebaseapp.com",
-    projectId: "SEU_PROJETO",
-    storageBucket: "SEU_PROJETO.appspot.com",
-    messagingSenderId: "ID",
-    appId: "ID_APP"
+    apiKey: "AIzaSyDaEGg2wS3N47nxeOrJRHV0-4Cd41MLIaA",
+    authDomain: "the-fallen-throne.firebaseapp.com",
+    projectId: "the-fallen-throne",
+    storageBucket: "the-fallen-throne.firebasestorage.app",
+    messagingSenderId: "136052504846",
+    appId: "1:136052504846:web:a705dd5763a644c9643f5f"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-const ADMIN_UID = "COLOQUE_SEU_UID_AQUI"; // Você descobre esse ID no console do Firebase após logar
+const ADMIN_UID = "MQZd3bjnchaop9y8tRQvLqNBNaz1"; // Você descobre esse ID no console do Firebase após logar
 
 // 2. SUA LISTA DE ITENS (MANTIDA)
 const itensMercado = [
@@ -181,11 +188,11 @@ function monitorarComunidade() {
 monitorarComunidade();
 
 // 6. TORNAR FUNÇÕES GLOBAIS (PARA O HTML ENXERGAR)
-window.comprarItem = comprarItemNoFirebase;
-window.venderItem = venderItemNoFirebase;
-window.filtrarItens = filtrarItens;
 window.fazerLogin = fazerLogin;
 window.fazerCadastro = fazerCadastro;
+window.filtrarItens = filtrarItens;
+window.comprarItem = comprarItem;
+window.venderItem = venderItem;
 
 // Inicia a loja
 filtrarItens('todos');
