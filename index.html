@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Fallen Throne - Mercado Medieval</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="auth-container" class="auth-box">
+    <h2>Entrar no Reino</h2>
+    <input type="email" id="login-email" placeholder="Seu e-mail">
+    <input type="password" id="login-senha" placeholder="Sua senha">
+    <div class="auth-buttons">
+        <button onclick="fazerLogin()">Entrar</button>
+        <button onclick="fazerCadastro()">Cadastrar</button>
+    </div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>Mercado de Westeros</h1>
+            <p>The Fallen Throne - RPG System</p>
+            <div id="saldo-jogador">
+                Moedas: <span id="coins">1500</span> ic's
+            </div>
+        </header>
+
+        <nav class="filtros">
+            <button onclick="filtrarItens('todos')">Todos</button>
+            <button onclick="filtrarItens('Arma')">Armas</button>
+            <button onclick="filtrarItens('Armadura')">Defesa</button>
+            <button onclick="filtrarItens('Consumível')">Consumíveis</button>
+        </nav>
+
+        <main class="grid-mercado" id="vitrine">
+            </main>
+        <!-- Procure a tag </main> e adicione isso logo abaixo dela -->
+        <hr style="border: 1px solid #333; margin: 40px 0;">
+
+        <section class="inventario-container">
+       <h2>Minha Mochila</h2>
+         <div id="lista-inventario" class="grid-mercado">
+        <!-- Itens comprados aparecerão aqui -->
+         </div>
+        </section>
+    </div>
+
+    <hr style="border: 1px solid #333; margin: 40px 0;">
+
+        <section class="comunidade-container">
+         <h2>Exploradores de Westeros</h2>
+         <div id="lista-comunidade" class="grid-comunidade">
+        <!-- Dados de outros jogadores aparecerão aqui -->
+         </div>
+        </section>
+
+<!-- Importando Firebase como Módulos -->
+<script type="importmap">
+    {
+      "imports": {
+        "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+        "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
+        "firebase/firestore": "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
+      }
+    }
+</script>
+<script type="module" src="script.js"></script>
+</body>
+</html>
