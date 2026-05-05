@@ -179,8 +179,9 @@ monitorarComunidade();
 // 6. TORNAR FUNÇÕES GLOBAIS (PARA O HTML ENXERGAR)
 window.fazerLogin = fazerLogin;
 window.fazerCadastro = fazerCadastro;
+// O nome antes do '=' deve ser igual ao que está no onclick do seu HTML
+window.comprarItem = comprarItemNoFirebase; 
 window.filtrarItens = filtrarItens;
-window.comprarItem = comprarItem;
 window.venderItem = venderItem;
 
 // Inicia a loja
