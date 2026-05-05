@@ -1,20 +1,9 @@
-// Agrupe todas as importações do mesmo módulo em uma linha só
 import { initializeApp } from "firebase/app";
-import { 
-    getAuth, 
-    onAuthStateChanged, 
-    signInWithEmailAndPassword, 
-    createUserWithEmailAndPassword 
-} from "firebase/auth";
-import { 
-    getFirestore, 
-    doc, 
-    getDoc, 
-    setDoc, 
-    updateDoc, 
-    onSnapshot, 
-    collection 
-} from "firebase/firestore";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, getDocs } from "firebase/firestore";
+
+// Abaixo daqui, verifique se NÃO existe nenhuma linha como:
+// const getAuth = ... ou outro import { getAuth } ...
 
 // ... restante das configurações (firebaseConfig)
 
