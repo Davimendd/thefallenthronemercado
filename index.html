@@ -10,6 +10,7 @@
 
     <div id="auth-container" class="auth-box">
     <h2>Entrar no Reino</h2>
+    <input type="text" id="login-nome" placeholder="Nome do Personagem (ex: Ned Stark)">
     <input type="email" id="login-email" placeholder="Seu e-mail">
     <input type="password" id="login-senha" placeholder="Sua senha">
     <div class="auth-buttons">
@@ -19,9 +20,32 @@
     </div>
 
     <div class="container">
+
+        <div id="banner-global" class="banner-aviso" style="display: none;">
+         <span id="texto-aviso"></span>
+        </div>
+
+        <div id="painel-mestre" class="admin-only" style="display: none;">
+          <h3>Comando do Mestre</h3>
+         <input type="text" id="input-aviso" placeholder="Escreva um aviso para o reino...">
+           <button onclick="enviarAviso()">Enviar Mensagem</button>
+           <button onclick="limparAviso()" class="btn-vender">Remover Aviso</button>
+        </div>
+
         <header>
             <h1>Mercado de Westeros</h1>
             <p>The Fallen Throne - RPG System</p>
+
+            <div id="perfil-jogador" class="perfil-box">
+              <span id="nome-perfil">Carregando personagem...</span>
+             <button onclick="mostrarTrocaNome()" class="btn-pequeno">Trocar Nome</button>
+        
+             <div id="input-troca-nome" style="display: none; margin-top: 10px;">
+            <input type="text" id="novo-nome-input" placeholder="Novo nome do herói">
+            <button onclick="salvarNovoNome()">Confirmar</button>
+             </div>
+            </div>
+
             <div id="saldo-jogador">
                 Moedas: <span id="coins">1500</span> ic's
             </div>

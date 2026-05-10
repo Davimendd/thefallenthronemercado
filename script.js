@@ -40,25 +40,50 @@ let usuarioAtual = null;
 onAuthStateChanged(auth, (user) => {
     if (user) {
         usuarioAtual = user;
+        if (user.uid === ADMIN_UID) {
+            document.getElementById('painel-mestre').style.display = 'block';
+        }
         escutarDadosUsuario(user.uid);
-    } else {
-        console.log("Aguardando login...");
-        // Se quiser testar sem login agora, você pode chamar uma função de login aqui
+        escutarAvisoGlobal(); // Nova função
     }
 });
+
+// 1. Funções para Troca de Nome
+function mostrarTrocaNome() {
+    const div = document.getElementById('input-troca-nome');
+    div.style.display = div.style.display === 'none' ? 'block' : 'none';
+}
+
+async function salvarNovoNome() {
+    const novoNome = document.getElementById('novo-nome-input').value;
+    if (!novoNome) return alert("Digite um nome válido!");
+
+    try {
+        const userRef = doc(db, "usuarios", usuarioAtual.uid);
+        await updateDoc(userRef, { nome: novoNome });
+        
+        document.getElementById('input-troca-nome').style.display = 'none';
+        document.getElementById('novo-nome-input').value = '';
+        alert("Nome alterado com sucesso, nobre " + novoNome + "!");
+    } catch (error) {
+        alert("Erro ao trocar nome: " + error.message);
+    }
+}
+
 
 function escutarDadosUsuario(uid) {
     onSnapshot(doc(db, "usuarios", uid), (docSnap) => {
         if (docSnap.exists()) {
             const dados = docSnap.data();
+            
+            // Atualiza Moedas
             document.getElementById('coins').innerText = dados.moedas;
+            
+            // Atualiza Nome do Personagem no Topo (ID que criamos no HTML)
+            document.getElementById('nome-perfil').innerText = "Personagem: " + (dados.nome || "Sem Nome");
+            
+            // Renderiza o Inventário
             renderizarInventario(dados.inventario || []);
-        } else {
-            setDoc(doc(db, "usuarios", uid), {
-                nome: auth.currentUser.email,
-                moedas: 1500,
-                inventario: []
-            });
         }
     });
 }
@@ -123,11 +148,24 @@ async function venderItemNoFirebase(idUnico, precoOriginal) {
 }
 
 async function fazerCadastro() {
+    const nomePersonagem = document.getElementById('login-nome').value; // Captura o nome
     const email = document.getElementById('login-email').value;
     const senha = document.getElementById('login-senha').value;
+
+    if (!nomePersonagem) return alert("Escolha um nome para seu personagem!");
+
     try {
-        await createUserWithEmailAndPassword(auth, email, senha);
-        alert("Cavaleiro registrado com sucesso!");
+        const userCredential = await createUserWithEmailAndPassword(auth, email, senha);
+        const user = userCredential.user;
+
+        // Cria o documento no Firestore já com o nome escolhido
+        await setDoc(doc(db, "usuarios", user.uid), {
+            nome: nomePersonagem,
+            moedas: 1500,
+            inventario: []
+        });
+
+        alert("Cavaleiro " + nomePersonagem + " registrado!");
     } catch (error) {
         alert("Erro ao cadastrar: " + error.message);
     }
@@ -145,31 +183,70 @@ async function fazerLogin() {
     }
 }
 
+// --- FUNÇÕES DE MENSAGEM GLOBAL ---
+async function enviarAviso() {
+    const texto = document.getElementById('input-aviso').value;
+    await setDoc(doc(db, "configuracao", "global"), { aviso: texto });
+    document.getElementById('input-aviso').value = '';
+}
+
+async function limparAviso() {
+    await setDoc(doc(db, "configuracao", "global"), { aviso: "" });
+}
+
+function escutarAvisoGlobal() {
+    onSnapshot(doc(db, "configuracao", "global"), (docSnap) => {
+        const banner = document.getElementById('banner-global');
+        if (docSnap.exists() && docSnap.data().aviso) {
+            banner.style.display = 'block';
+            document.getElementById('texto-aviso').innerText = "📢 AVISO DO REINO: " + docSnap.data().aviso;
+        } else {
+            banner.style.display = 'none';
+        }
+    });
+}
+
+// --- FUNÇÕES DE CONTROLE DE JOGADORES ---
+async function ajustarMoedas(playerUid, quantidade) {
+    const playerRef = doc(db, "usuarios", playerUid);
+    const snap = await getDoc(playerRef);
+    const moedasAtuais = snap.data().moedas || 0;
+    await updateDoc(playerRef, { moedas: moedasAtuais + quantidade });
+}
+
+async function limparInventario(playerUid) {
+    if(confirm("Deseja realmente limpar a mochila deste jogador? (Morte do Personagem)")) {
+        await updateDoc(doc(db, "usuarios", playerUid), { inventario: [] });
+    }
+}
+
+
 // Função para carregar todos os jogadores em tempo real
 function monitorarComunidade() {
-    const colRef = collection(db, "usuarios");
-    
-    // onSnapshot permite que, se você alterar as moedas de alguém, o mural mude na hora
-    onSnapshot(colRef, (querySnapshot) => {
+    onSnapshot(collection(db, "usuarios"), (querySnapshot) => {
         const mural = document.getElementById('lista-comunidade');
         mural.innerHTML = '';
 
-        querySnapshot.forEach((doc) => {
-            const player = doc.data();
-            
-            // Gerar as tags de itens da mochila
-            const itensHTML = player.inventario && player.inventario.length > 0 
-                ? player.inventario.map(i => `<span class="item-tag ${i.raridade}">${i.nome}</span>`).join('')
-                : "<em>Mochila vazia</em>";
+        querySnapshot.forEach((docSnap) => {
+            const player = docSnap.data();
+            const pId = docSnap.id;
+
+            // Verifica se quem está vendo o site é o Admin
+            const botoesMestre = (usuarioAtual && usuarioAtual.uid === ADMIN_UID) ? `
+                <div class="controles-admin">
+                    <button class="btn-admin" onclick="ajustarMoedas('${pId}', 100)">+100</button>
+                    <button class="btn-admin" onclick="ajustarMoedas('${pId}', -100)">-100</button>
+                    <button class="btn-admin btn-vender" onclick="limparInventario('${pId}')">💀 Limpar</button>
+                </div>
+            ` : '';
+
+            const itensHTML = player.inventario?.map(i => `<span class="item-tag ${i.raridade}">${i.nome}</span>`).join('') || "Vazia";
 
             mural.innerHTML += `
                 <div class="player-card">
-                    <h3>${player.nome || 'Cavaleiro Misterioso'}</h3>
-                    <div class="player-info"><strong>Saldo:</strong> ${player.moedas} ic's</div>
-                    <div class="player-backpack">
-                        <strong>Mochila:</strong><br>
-                        ${itensHTML}
-                    </div>
+                    <h3>${player.nome || 'Desconhecido'}</h3>
+                    <div class="player-info">Saldo: ${player.moedas} ic's ${botoesMestre}</div>
+                    <div class="player-backpack">${itensHTML}</div>
                 </div>
             `;
         });
@@ -186,6 +263,12 @@ window.fazerCadastro = fazerCadastro;
 window.filtrarItens = filtrarItens;
 window.comprarItem = comprarItemNoFirebase; // Corrigido
 window.venderItem = venderItemNoFirebase;   // Corrigido
+window.mostrarTrocaNome = mostrarTrocaNome;
+window.salvarNovoNome = salvarNovoNome;
+window.enviarAviso = enviarAviso;
+window.limparAviso = limparAviso;
+window.ajustarMoedas = ajustarMoedas;
+window.limparInventario = limparInventario;
 
 // Inicia a loja
 filtrarItens('todos');

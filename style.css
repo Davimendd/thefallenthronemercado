@@ -1,9 +1,57 @@
-/* No topo do seu CSS */
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=MedievalSharp&family=Roboto:wght@300;400&display=swap');
+
+:root {
+    --ouro: #d4af37;
+    --ouro-escuro: #996515;
+    --fundo: #0d0d0d;
+    --card-fundo: #1a1a1a;
+    --borda: #3c3c3c;
+    --texto: #e0e0e0;
+}
 
 body {
-    font-family: 'Cinzel', serif;
+    background-color: var(--fundo);
+    color: var(--texto);
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    /* Adiciona uma leve textura de ruído ao fundo */
+    background-image: url('https://www.transparenttextures.com/patterns/dark-matter.png');
 }
+
+h1, h2, h3, .preco {
+    font-family: 'Cinzel', serif; /* Fonte estilo Game of Thrones */
+    color: var(--ouro);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+
+.card {
+    background: var(--card-fundo);
+    border: 1px solid var(--borda);
+    border-radius: 4px; /* Cantos menos arredondados ficam mais sérios */
+    padding: 20px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    border-color: var(--ouro);
+    box-shadow: 0 5px 15px rgba(212, 175, 55, 0.2);
+}
+
+/* Brilho de raridade */
+.card.comum { border-left: 4px solid #95a5a6; }
+.card.incomum { border-left: 4px solid #2ecc71; }
+.card.raro { border-left: 4px solid #3498db; }
+.card.epico { border-left: 4px solid #9b59b6; box-shadow: inset 0 0 10px #9b59b633; }
+.card.lendario { 
+    border-left: 4px solid var(--ouro); 
+    box-shadow: inset 0 0 15px rgba(212, 175, 55, 0.3);
+}
+
 
 :root {
     --comum: #8a8a8a;
@@ -82,6 +130,26 @@ header h1 {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+}
+
+button {
+    background: linear-gradient(145deg, #2c2c2c, #1a1a1a);
+    color: var(--ouro);
+    border: 1px solid var(--ouro-escuro);
+    padding: 10px 20px;
+    cursor: pointer;
+    font-family: 'MedievalSharp', cursive;
+    transition: 0.2s;
+}
+
+button:hover {
+    background: var(--ouro);
+    color: black;
+    box-shadow: 0 0 10px var(--ouro);
+}
+
+button:active {
+    transform: scale(0.95);
 }
 
 /* Bordas coloridas baseadas nas raridades */
@@ -200,43 +268,192 @@ header h1 {
     cursor: pointer;
 }
 
+
+
+
+/* Container Geral da Comunidade */
+.comunidade-container {
+    background: rgba(20, 20, 20, 0.8);
+    padding: 30px;
+    border-radius: 10px;
+    border: 1px solid #333;
+    margin-top: 50px;
+}
+
+/* Grid de Jogadores */
 .grid-comunidade {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
-    margin-top: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
+    margin-top: 30px;
 }
 
+/* Card Individual de cada Jogador */
 .player-card {
-    background: #1a1a1a;
-    border: 1px solid #d4af37;
-    padding: 15px;
-    border-radius: 8px;
+    background: #151515;
+    background-image: linear-gradient(to bottom, #1a1a1a, #111);
+    border: 1px solid #d4af3744;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 5px 5px 15px rgba(0,0,0,0.5);
+    transition: 0.3s;
 }
 
+.player-card:hover {
+    border-color: #d4af37;
+    transform: scale(1.02);
+}
+
+/* Nome do Jogador */
 .player-card h3 {
-    margin: 0;
-    color: #d4af37;
+    font-size: 1.1em;
+    margin-bottom: 10px;
     border-bottom: 1px solid #333;
-    padding-bottom: 5px;
+    padding-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
+/* Estilo do Saldo no Mural */
 .player-info {
+    font-family: 'MedievalSharp', cursive;
+    color: #2ecc71;
+    margin-bottom: 15px;
     font-size: 0.9em;
-    margin: 10px 0;
-    color: #2ecc71; /* Cor das moedas */
 }
 
+/* Área da Mochila no Mural */
 .player-backpack {
-    font-size: 0.85em;
-    color: #ccc;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 10px;
+    border-radius: 4px;
+    min-height: 60px;
 }
+
+.player-backpack strong {
+    font-size: 0.75em;
+    text-transform: uppercase;
+    color: #888;
+    display: block;
+    margin-bottom: 8px;
+}
+
+
+
 
 .item-tag {
     display: inline-block;
-    background: #333;
-    padding: 2px 6px;
-    margin: 2px;
+    padding: 3px 8px;
+    margin: 3px;
+    font-size: 0.75em;
     border-radius: 3px;
+    background: #222;
     border: 1px solid #444;
+    color: #ddd;
+    text-shadow: 1px 1px 1px black;
+}
+
+/* Cores por Raridade nas Tags */
+.item-tag.comum { border-color: #95a5a6; color: #bdc3c7; }
+.item-tag.incomum { border-color: #27ae60; color: #2ecc71; }
+.item-tag.raro { border-color: #2980b9; color: #3498db; }
+.item-tag.epico { border-color: #8e44ad; color: #9b59b6; box-shadow: 0 0 5px #8e44ad66; }
+.item-tag.lendario { border-color: #d4af37; color: #f1c40f; box-shadow: 0 0 8px #d4af3788; }
+
+.player-card {
+    background: #151515;
+    border: 2px solid #2c2c2c;
+    border-style: double; /* Dá um toque mais antigo */
+    padding: 15px;
+    margin-bottom: 10px;
+}
+
+.item-tag {
+    font-size: 0.7em;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-right: 5px;
+    background: #252525;
+    border: 1px solid #444;
+}
+
+#coins {
+    color: var(--ouro);
+    text-shadow: 0 0 8px rgba(212, 175, 55, 0.6);
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+.player-card h3 {
+    font-family: 'Cinzel', serif;
+    color: #d4af37;
+    text-shadow: 1px 1px 3px rgba(0,0,0,1);
+    border-bottom: 2px solid #d4af37;
+    padding-bottom: 5px;
+}
+
+.perfil-box {
+    background: rgba(0, 0, 0, 0.4);
+    padding: 15px;
+    border: 1px solid #d4af3733;
+    border-radius: 5px;
+    margin: 15px 0;
+    text-align: center;
+}
+
+#nome-perfil {
+    font-family: 'Cinzel', serif;
+    color: var(--ouro);
+    font-size: 1.2em;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.btn-pequeno {
+    font-size: 0.7em;
+    padding: 5px 10px;
+    opacity: 0.8;
+}
+
+#novo-nome-input {
+    background: #111;
+    border: 1px solid var(--ouro-escuro);
+    color: white;
+    padding: 8px;
+    border-radius: 3px;
+    font-family: 'Roboto', sans-serif;
+}
+
+.admin-only {
+    background: linear-gradient(145deg, #2a0505, #1a1a1a); /* Tom avermelhado escuro */
+    border: 2px solid #ff4444;
+    padding: 20px;
+    margin: 20px 0;
+    border-radius: 8px;
+}
+
+.banner-aviso {
+    background: #d4af37;
+    color: black;
+    padding: 15px;
+    text-align: center;
+    font-family: 'Cinzel', serif;
+    font-weight: bold;
+    border-radius: 0 0 10px 10px;
+    margin-bottom: 20px;
+    animation: pulse-aviso 2s infinite;
+}
+
+@keyframes pulse-aviso {
+    0% { box-shadow: 0 0 5px #d4af37; }
+    50% { box-shadow: 0 0 20px #d4af37; }
+    100% { box-shadow: 0 0 5px #d4af37; }
+}
+
+.btn-admin {
+    padding: 2px 8px;
+    margin-left: 5px;
+    font-size: 0.8em;
+    border-radius: 3px;
 }
