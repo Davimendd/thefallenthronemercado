@@ -25,13 +25,132 @@ const ADMIN_UID = "MQZd3bjnchaop9y8tRQvLqNBNaz1"; // Você descobre esse ID no c
 
 // 2. SUA LISTA DE ITENS (MANTIDA)
 const itensMercado = [
-    { nome: "Adaga de Aço Comum", tipo: "Arma", raridade: "comum", preco: 60, efeito: "1d4 + Agilidade", desc: "Aço barato." },
-    { nome: "Espada de Aço de Castelo", tipo: "Arma", raridade: "incomum", preco: 400, efeito: "1d8 + Força", desc: "Equilibrada." },
-    { nome: "Lança de Vidro de Dragão", tipo: "Arma", raridade: "epico", preco: 2500, efeito: "1d10 + Agi", desc: "Obsidiana pura." },
-    { nome: "Espada de Aço Valiriano", tipo: "Arma", raridade: "lendario", preco: 9500, efeito: "2d6 + Força", desc: "Relíquia ancestral." },
-    { nome: "Gibão de Couro Batido", tipo: "Armadura", raridade: "comum", preco: 120, efeito: "+2 Defesa", desc: "Leve." },
-    { nome: "Cota de Malha", tipo: "Armadura", raridade: "incomum", preco: 600, efeito: "+4 Defesa | -1 Agi", desc: "Proteção pesada." },
-    { nome: "Leite de Papoula", tipo: "Consumível", raridade: "raro", preco: 150, efeito: "Cura 1d10 Vida", desc: "Analgésico." }
+    { nome: "Adaga de Aço Comum", 
+      tipo: "Arma",
+      raridade: "comum",
+      preco: 60,
+      imagem: "https://png.pngtree.com/png-vector/20231115/ourmid/pngtree-ancient-roman-dagger-knife-png-image_10592942.png", // Link da imagem
+      efeito: "1d4 + Agilidade",
+      desc: "Aço barato." },
+
+    { nome: "Espada de Aço de Castelo",
+      tipo: "Arma",
+      raridade: "incomum",
+      preco: 400,
+      imagem: "https://acdn-us.mitiendanube.com/stores/007/070/236/products/bxg01-1-18d15693c0cec782e917684061205550-1024-1024.webp", // Link da imagem
+      efeito: "1d8 + Força",
+      desc: "Equilibrada." },
+
+    { nome: "Lança de Vidro de Dragão",
+      tipo: "Arma",
+      raridade: "epico",
+      preco: 2500,
+      imagem: "https://gbf.wiki/images/thumb/2/23/Weapon_b_1020201100.png/462px-Weapon_b_1020201100.png", // Link da imagem
+      efeito: "1d10 + Agi",
+      desc: "Obsidiana pura." },
+
+    { nome: "Espada de Aço Valiriano",
+      tipo: "Arma",
+      raridade: "lendario",
+      preco: 9500,
+      imagem: "https://cdna.artstation.com/p/assets/images/images/029/004/974/large/andrew-demel-darkswordcolor1.jpg?1596159620", // Link da imagem
+      efeito: "2d6 + Força",
+      desc: "Relíquia ancestral." },
+
+    { nome: "Gibão de Couro Batido",
+        tipo: "Armadura",
+        raridade: "comum",
+        preco: 120,
+        imagem: "https://i.etsystatic.com/60627043/r/il/48c638/7200589820/il_340x270.7200589820_mzji.jpg", // Link da imagem
+        efeito: "+2 Defesa",
+        desc: "Leve." },
+
+    { nome: "Cota de Malha",
+      tipo: "Armadura",
+      raridade: "incomum",
+      preco: 600,
+      imagem: "https://loxwoodjoust.co.uk/wp-content/uploads/2022/07/KnightinChainmail_adobe1280x853-1024x682.jpg", // Link da imagem
+      efeito: "+4 Defesa | -1 Agi",
+      desc: "Proteção pesada." },
+
+    { nome: "Leite de Papoula",
+      tipo: "Consumível",
+      raridade: "raro",
+      preco: 150,
+      imagem: "https://awoiaf.westeros.org/images/thumb/9/99/Milk_of_the_poppy.jpg/350px-Milk_of_the_poppy.jpg", // Link da imagem
+      efeito: "Cura 1d10 Vida",
+      desc: "Analgésico." },
+
+    { 
+        nome: "Machado de Guerra", 
+        tipo: "Arma", 
+        raridade: "raro", 
+        preco: 850, 
+        imagem: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRPadPXU7wzPrE2Tkpa0FoTmjtWo3dQB0n-5A&s",
+        efeito: "1d10 + Força (Pesada)", 
+        desc: "Capaz de partir escudos de madeira com facilidade." 
+    },
+
+    { 
+        nome: "Arco de Madeira de Represeiro", 
+        tipo: "Arma", 
+        raridade: "epico", 
+        preco: 2200, 
+        imagem: "https://cdnb.artstation.com/p/assets/images/images/044/887/555/large/mike-kokkinos-screenshot1.jpg?1641403101",
+        efeito: "1d8 + Agi (Crítico 18-20)", 
+        desc: "Madeira sagrada do Norte, extremamente flexível." 
+    },
+
+    { 
+        nome: "Irmã Sombria (Réplica)", 
+        tipo: "Arma", 
+        raridade: "lendario", 
+        preco: 9500, 
+        imagem: "https://cdnb.artstation.com/p/assets/covers/images/000/896/417/large/raphael-lima-dark-sister-01.jpg?1435590877",
+        efeito: "2d6 + Força + Sangramento", 
+        desc: "Inspirada na espada de Visenya Targaryen." 
+    },
+
+    { 
+        nome: "Escudo com Brasão", 
+        tipo: "Armadura", 
+        raridade: "raro", 
+        preco: 900, 
+        imagem: "https://thumbs.dreamstime.com/b/medieval-crusader%C3%A2%E2%82%AC%E2%84%A2s-metal-shield-isolated-white-large-medieval-crusader-s-metal-shield-isolated-white-background-359899733.jpg",
+        efeito: "+3 Defesa (Reação)", 
+        desc: "Um escudo reforçado com as cores da sua Casa." 
+    },
+
+    { 
+        nome: "Armadura de Placas Completa", 
+        tipo: "Armadura", 
+        raridade: "epico", 
+        preco: 3500, 
+        imagem: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSCHd4S0QFy6UFGXUjlUrUVPJrZxgMlLmpdtw&s",
+        efeito: "+10 Defesa | Desvantagem em Furtividade e -2 Agi", 
+        desc: "A defesa máxima para um campeão." 
+    },
+
+    { 
+        nome: "Fogovivo (Pote)", 
+        tipo: "Consumível", 
+        raridade: "epico", 
+        preco: 1800, 
+        imagem: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgvGhQ8nZSYcnLr-dUTwdJF7a4D1igVSvg3w&s",
+        efeito: "4d6 Dano de Área (Fogo)", 
+        desc: "A substância perigosa dos alquimistas." 
+    },
+
+    { 
+        nome: "Vinho da Árvore", 
+        tipo: "Consumível", 
+        raridade: "raro", 
+        preco: 250, 
+        imagem: "https://i.pinimg.com/474x/a9/da/43/a9da43d7650fda383714b389f7277877.jpg",
+        efeito: "Recupera Fôlego, podendo fazer duas ações em um turno.", 
+        desc: "O melhor vinho de Westeros." 
+    },
+
 ];
 
 let usuarioAtual = null;
@@ -97,6 +216,9 @@ function filtrarItens(tipoSelecionado) {
     filtrados.forEach(item => {
         vitrine.innerHTML += `
             <div class="card ${item.raridade}">
+              <div class="card-imagem">
+                  <img src="${item.imagem}" alt="${item.nome}">
+              </div>
                 <h3>${item.nome}</h3>
                 <p class="efeito">${item.efeito}</p>
                 <span class="preco">${item.preco} ic's</span>
