@@ -600,3 +600,109 @@ header > p {
 .item-tag.raro { border-color: var(--raro); color: #5db3e0; }
 .item-tag.epico { border-color: var(--epico); color: #b07fdb; box-shadow: 0 0 5px rgba(142, 79, 196, 0.35); }
 .item-tag.lendario { border-color: var(--lendario); color: var(--ouro-claro); box-shadow: 0 0 8px rgba(201, 164, 73, 0.45); }
+
+/* =========================================
+   12. SISTEMA DE TOAST (notificações)
+   ========================================= */
+#toast-container {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 340px;
+}
+
+.toast {
+    background: linear-gradient(180deg, var(--fundo-card), #0d0b08);
+    border: 1px solid var(--ouro-escuro);
+    border-left: 4px solid var(--ouro);
+    border-radius: 2px;
+    padding: 14px 18px;
+    font-family: 'Cormorant Garamond', serif;
+    color: var(--texto);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: toast-entra 0.35s ease-out;
+}
+
+.toast strong {
+    font-family: 'Cinzel', serif;
+    font-size: 0.95em;
+    color: var(--ouro-claro);
+}
+
+.toast.sucesso { border-left-color: var(--incomum); }
+.toast.sucesso strong { color: #6fcf86; }
+
+.toast.erro { border-left-color: #a3372b; }
+.toast.erro strong { color: #e0a89c; }
+
+.toast.saindo {
+    animation: toast-sai 0.3s ease-in forwards;
+}
+
+@keyframes toast-entra {
+    from { transform: translateX(40px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes toast-sai {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(40px); opacity: 0; }
+}
+
+/* =========================================
+   13. MODAL DE CONFIRMAÇÃO
+   ========================================= */
+#confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    z-index: 9998;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.confirm-box {
+    background: linear-gradient(180deg, var(--fundo-card), var(--fundo));
+    border: 1px solid var(--ouro-escuro);
+    border-radius: 3px;
+    padding: 28px 32px;
+    max-width: 360px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+}
+
+.confirm-box p {
+    font-size: 1.1em;
+    line-height: 1.5;
+    margin: 0 0 22px;
+}
+
+.confirm-box p strong {
+    color: var(--ouro-claro);
+    font-family: 'Cinzel', serif;
+}
+
+.confirm-botoes {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.confirm-botoes button {
+    flex: 1;
+}
+
+/* Estado de carregamento em botões */
+button.carregando {
+    opacity: 0.6;
+    pointer-events: none;
+    position: relative;
+}

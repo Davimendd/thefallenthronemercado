@@ -7,23 +7,60 @@ import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, g
 
 // ... restante das configurações (firebaseConfig)
 
-// 1. COLOQUE SEUS DADOS DO FIREBASE AQUI
-const firebaseConfig = {
-    apiKey: "AIzaSyDaEGg2wS3N47nxeOrJRHV0-4Cd41MLIaA",
-    authDomain: "the-fallen-throne.firebaseapp.com",
-    projectId: "the-fallen-throne",
-    storageBucket: "the-fallen-throne.firebasestorage.app",
-    messagingSenderId: "136052504846",
-    appId: "1:136052504846:web:a705dd5763a644c9643f5f"
-};
+// =========================================
+// 0. SISTEMA DE TOAST E CONFIRMAÇÃO
+// Ficam no topo de propósito: não dependem do Firebase e substituem
+// os alert()/confirm() nativos do navegador por algo que combina com o tema.
+// =========================================
+function mostrarToast(mensagem, tipo = 'sucesso', titulo = '') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+    const toast = document.createElement('div');
+    toast.className = `toast ${tipo}`;
+    toast.innerHTML = `
+        <div>
+            ${titulo ? `<strong>${titulo}</strong><br>` : ''}
+            ${mensagem}
+        </div>
+    `;
+    container.appendChild(toast);
 
-const ADMIN_UID = "MQZd3bjnchaop9y8tRQvLqNBNaz1"; // Você descobre esse ID no console do Firebase após logar
+    setTimeout(() => {
+        toast.classList.add('saindo');
+        setTimeout(() => toast.remove(), 300);
+    }, 3500);
+}
 
-// 2. SUA LISTA DE ITENS (MANTIDA)
+function mostrarConfirmacao(mensagem) {
+    return new Promise((resolve) => {
+        const overlay = document.getElementById('confirm-overlay');
+        overlay.innerHTML = `
+            <div class="confirm-box">
+                <p>${mensagem}</p>
+                <div class="confirm-botoes">
+                    <button id="confirm-cancelar">Cancelar</button>
+                    <button id="confirm-aceitar">Confirmar</button>
+                </div>
+            </div>
+        `;
+        overlay.style.display = 'flex';
+
+        const limpar = (resultado) => {
+            overlay.style.display = 'none';
+            overlay.innerHTML = '';
+            resolve(resultado);
+        };
+
+        document.getElementById('confirm-aceitar').onclick = () => limpar(true);
+        document.getElementById('confirm-cancelar').onclick = () => limpar(false);
+    });
+}
+
+// 1. SUA LISTA DE ITENS
+// Fica ANTES da inicialização do Firebase de propósito: assim a vitrine
+// é montada e exibida mesmo que o Firebase falhe, esteja fora do ar,
+// ou tenha um erro de configuração.
 const itensMercado = [
     { nome: "Adaga de Aço Comum", 
       tipo: "Arma",
@@ -155,17 +192,54 @@ const itensMercado = [
 
 let usuarioAtual = null;
 
+// RENDERIZA A LOJA IMEDIATAMENTE
+// Isso garante que os itens aparecem mesmo se o Firebase falhar, demorar ou der erro.
+// (a função filtrarItens é definida mais abaixo, mas o JS já "conhece" funções
+// declaradas com 'function' antes delas aparecerem no arquivo — hoisting)
+window.filtrarItens = filtrarItens;
+try {
+    filtrarItens('todos');
+} catch (erroInicial) {
+    console.error("Erro ao renderizar a vitrine inicial:", erroInicial);
+}
+
+// 2. COLOQUE SEUS DADOS DO FIREBASE AQUI
+const firebaseConfig = {
+    apiKey: "AIzaSyDaEGg2wS3N47nxeOrJRHV0-4Cd41MLIaA",
+    authDomain: "the-fallen-throne.firebaseapp.com",
+    projectId: "the-fallen-throne",
+    storageBucket: "the-fallen-throne.firebasestorage.app",
+    messagingSenderId: "136052504846",
+    appId: "1:136052504846:web:a705dd5763a644c9643f5f"
+};
+
+const ADMIN_UID = "MQZd3bjnchaop9y8tRQvLqNBNaz1"; // Você descobre esse ID no console do Firebase após logar
+
+// Inicialização protegida: se o Firebase falhar (chave errada, projeto fora do
+// ar, sem internet), a loja continua visível e só os recursos que dependem de
+// login/banco de dados ficam indisponíveis, em vez da página inteira travar.
+let app, auth, db;
+try {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+} catch (erroFirebase) {
+    console.error("Falha ao inicializar o Firebase:", erroFirebase);
+}
+
 // 3. MONITORAMENTO DE LOGIN E DADOS
-onAuthStateChanged(auth, (user) => {
-    if (user) {
-        usuarioAtual = user;
-        if (user.uid === ADMIN_UID) {
-            document.getElementById('painel-mestre').style.display = 'block';
+if (auth) {
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            usuarioAtual = user;
+            if (user.uid === ADMIN_UID) {
+                document.getElementById('painel-mestre').style.display = 'block';
+            }
+            escutarDadosUsuario(user.uid);
+            escutarAvisoGlobal(); // Nova função
         }
-        escutarDadosUsuario(user.uid);
-        escutarAvisoGlobal(); // Nova função
-    }
-});
+    });
+}
 
 // 1. Funções para Troca de Nome
 function mostrarTrocaNome() {
@@ -175,7 +249,7 @@ function mostrarTrocaNome() {
 
 async function salvarNovoNome() {
     const novoNome = document.getElementById('novo-nome-input').value;
-    if (!novoNome) return alert("Digite um nome válido!");
+    if (!novoNome) return mostrarToast('Escolha um nome válido para seu herói.', 'erro', 'Nome inválido');
 
     try {
         const userRef = doc(db, "usuarios", usuarioAtual.uid);
@@ -183,9 +257,9 @@ async function salvarNovoNome() {
         
         document.getElementById('input-troca-nome').style.display = 'none';
         document.getElementById('novo-nome-input').value = '';
-        alert("Nome alterado com sucesso, nobre " + novoNome + "!");
+        mostrarToast(`Agora sois conhecido como ${novoNome}.`, 'sucesso', 'Nome alterado');
     } catch (error) {
-        alert("Erro ao trocar nome: " + error.message);
+        mostrarToast('Não foi possível trocar o nome agora.', 'erro', 'Erro');
     }
 }
 
@@ -229,7 +303,7 @@ function filtrarItens(tipoSelecionado) {
                 <p class="efeito">${item.efeito}</p>
                 <span class="preco">${item.preco} ic's</span>
                 <!-- Chamando o nome que exportamos para o window -->
-                <button onclick="comprarItem('${item.nome}', ${item.preco})">Comprar</button>
+                <button onclick="comprarItem('${item.nome}', ${item.preco}, this)">Comprar</button>
             </div>
         `;
     });
@@ -244,44 +318,86 @@ function renderizarInventario(itens) {
             <div class="card-inventario ${item.raridade}">
                 <strong>${item.nome}</strong>
                 <!-- Importante: preco vem do objeto item -->
-                <button class="btn-vender" onclick="venderItem(${item.idUnico}, ${item.preco})">Vender (${valorVenda} ic's)</button>
+                <button class="btn-vender" onclick="venderItem(${item.idUnico}, ${item.preco}, '${item.nome}', this)">Vender (${valorVenda} ic's)</button>
             </div>
         `;
     });
 }
 
 // 5. LÓGICA DE COMPRA E VENDA (BANCO DE DADOS)
-async function comprarItemNoFirebase(nomeItem, precoItem) {
-    if (!usuarioAtual) return alert("Você precisa estar logado!");
-    const userRef = doc(db, "usuarios", usuarioAtual.uid);
-    const docSnap = await getDoc(userRef);
-    const dados = docSnap.data();
+const LIMITE_CONFIRMACAO_COMPRA = 1000; // itens acima desse preço pedem confirmação
 
-    if (dados.moedas >= precoItem) {
-        const itemDados = itensMercado.find(i => i.nome === nomeItem);
-        const novoInventario = [...(dados.inventario || []), { ...itemDados, idUnico: Date.now() }];
-        await updateDoc(userRef, { moedas: dados.moedas - precoItem, inventario: novoInventario });
-    } else {
-        alert("Sem moedas!");
+async function comprarItemNoFirebase(nomeItem, precoItem, botao) {
+    if (!usuarioAtual) {
+        mostrarToast('Você precisa entrar no reino antes de negociar.', 'erro', 'Acesso negado');
+        return;
+    }
+
+    if (precoItem >= LIMITE_CONFIRMACAO_COMPRA) {
+        const confirmado = await mostrarConfirmacao(
+            `Comprar <strong>${nomeItem}</strong> por <strong>${precoItem} ic's</strong>?`
+        );
+        if (!confirmado) return;
+    }
+
+    if (botao) { botao.classList.add('carregando'); botao.disabled = true; }
+
+    try {
+        const userRef = doc(db, "usuarios", usuarioAtual.uid);
+        const docSnap = await getDoc(userRef);
+        const dados = docSnap.data();
+
+        if (dados.moedas >= precoItem) {
+            const itemDados = itensMercado.find(i => i.nome === nomeItem);
+            const novoInventario = [...(dados.inventario || []), { ...itemDados, idUnico: Date.now() }];
+            await updateDoc(userRef, { moedas: dados.moedas - precoItem, inventario: novoInventario });
+            mostrarToast(`${nomeItem} foi guardado em sua mochila.`, 'sucesso', 'Negócio fechado');
+        } else {
+            mostrarToast('Suas moedas não são suficientes para esse item.', 'erro', 'Sem moedas');
+        }
+    } catch (error) {
+        mostrarToast('Não foi possível concluir a compra. Tente novamente.', 'erro', 'Erro');
+        console.error(error);
+    } finally {
+        if (botao) { botao.classList.remove('carregando'); botao.disabled = false; }
     }
 }
 
-async function venderItemNoFirebase(idUnico, precoOriginal) {
-    const userRef = doc(db, "usuarios", usuarioAtual.uid);
-    const docSnap = await getDoc(userRef);
-    const dados = docSnap.data();
+async function venderItemNoFirebase(idUnico, precoOriginal, nomeItem, botao) {
     const valorVenda = Math.floor(precoOriginal * 0.7);
-    
-    const novoInventario = dados.inventario.filter(i => i.idUnico !== idUnico);
-    await updateDoc(userRef, { moedas: dados.moedas + valorVenda, inventario: novoInventario });
+
+    const confirmado = await mostrarConfirmacao(
+        `Vender <strong>${nomeItem || 'este item'}</strong> por <strong>${valorVenda} ic's</strong>?`
+    );
+    if (!confirmado) return;
+
+    if (botao) { botao.classList.add('carregando'); botao.disabled = true; }
+
+    try {
+        const userRef = doc(db, "usuarios", usuarioAtual.uid);
+        const docSnap = await getDoc(userRef);
+        const dados = docSnap.data();
+
+        const novoInventario = dados.inventario.filter(i => i.idUnico !== idUnico);
+        await updateDoc(userRef, { moedas: dados.moedas + valorVenda, inventario: novoInventario });
+        mostrarToast(`Você recebeu ${valorVenda} ic's pela venda.`, 'sucesso', 'Item vendido');
+    } catch (error) {
+        mostrarToast('Não foi possível concluir a venda. Tente novamente.', 'erro', 'Erro');
+        console.error(error);
+    } finally {
+        if (botao) { botao.classList.remove('carregando'); botao.disabled = false; }
+    }
 }
 
 async function fazerCadastro() {
     const nomePersonagem = document.getElementById('login-nome').value; // Captura o nome
     const email = document.getElementById('login-email').value;
     const senha = document.getElementById('login-senha').value;
+    const botao = event ? event.target : null;
 
-    if (!nomePersonagem) return alert("Escolha um nome para seu personagem!");
+    if (!nomePersonagem) return mostrarToast('Escolha um nome para seu personagem.', 'erro', 'Nome obrigatório');
+
+    if (botao) { botao.classList.add('carregando'); botao.disabled = true; }
 
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, senha);
@@ -294,22 +410,45 @@ async function fazerCadastro() {
             inventario: []
         });
 
-        alert("Cavaleiro " + nomePersonagem + " registrado!");
+        mostrarToast(`Cavaleiro ${nomePersonagem} foi registrado no reino.`, 'sucesso', 'Bem-vindo');
     } catch (error) {
-        alert("Erro ao cadastrar: " + error.message);
+        mostrarToast(traduzirErroFirebase(error), 'erro', 'Erro ao cadastrar');
+    } finally {
+        if (botao) { botao.classList.remove('carregando'); botao.disabled = false; }
     }
 }
 
 async function fazerLogin() {
     const email = document.getElementById('login-email').value;
     const senha = document.getElementById('login-senha').value;
+    const botao = event ? event.target : null;
+
+    if (botao) { botao.classList.add('carregando'); botao.disabled = true; }
+
     try {
         await signInWithEmailAndPassword(auth, email, senha);
         // Esconde a tela de login após entrar
         document.getElementById('auth-container').style.display = 'none';
+        mostrarToast('Que seus dias sejam longos e prósperos.', 'sucesso', 'Bem-vindo de volta');
     } catch (error) {
-        alert("Erro ao entrar: " + error.message);
+        mostrarToast(traduzirErroFirebase(error), 'erro', 'Erro ao entrar');
+    } finally {
+        if (botao) { botao.classList.remove('carregando'); botao.disabled = false; }
     }
+}
+
+// Traduz os erros mais comuns do Firebase Auth para mensagens legíveis
+function traduzirErroFirebase(error) {
+    const codigo = error?.code || '';
+    const mapa = {
+        'auth/invalid-email': 'O e-mail informado não é válido.',
+        'auth/user-not-found': 'Não há nenhum cavaleiro com esse e-mail.',
+        'auth/wrong-password': 'Senha incorreta.',
+        'auth/invalid-credential': 'E-mail ou senha incorretos.',
+        'auth/email-already-in-use': 'Já existe um cadastro com esse e-mail.',
+        'auth/weak-password': 'A senha precisa ter ao menos 6 caracteres.',
+    };
+    return mapa[codigo] || 'Algo deu errado. Tente novamente em breve.';
 }
 
 // --- FUNÇÕES DE MENSAGEM GLOBAL ---
@@ -382,14 +521,17 @@ function monitorarComunidade() {
     });
 }
 
-monitorarComunidade();
+try {
+    monitorarComunidade();
+} catch (erroComunidade) {
+    console.error("Erro ao carregar o mural da comunidade:", erroComunidade);
+}
 
 // 6. TORNAR FUNÇÕES GLOBAIS (PARA O HTML ENXERGAR)
 // No final do script.js, adicione estas linhas:
 // O nome da esquerda é como o HTML chama, o da direita é o nome real da função no JS
 window.fazerLogin = fazerLogin;
 window.fazerCadastro = fazerCadastro;
-window.filtrarItens = filtrarItens;
 window.comprarItem = comprarItemNoFirebase; // Corrigido
 window.venderItem = venderItemNoFirebase;   // Corrigido
 window.mostrarTrocaNome = mostrarTrocaNome;
@@ -398,6 +540,3 @@ window.enviarAviso = enviarAviso;
 window.limparAviso = limparAviso;
 window.ajustarMoedas = ajustarMoedas;
 window.limparInventario = limparInventario;
-
-// Inicia a loja
-filtrarItens('todos');
