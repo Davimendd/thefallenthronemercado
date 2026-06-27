@@ -311,14 +311,39 @@ function filtrarItens(tipoSelecionado) {
 
 function renderizarInventario(itens) {
     const section = document.getElementById('lista-inventario');
-    section.innerHTML = itens.length === 0 ? '<p>Mochila vazia.</p>' : '';
+
+    if (itens.length === 0) {
+        section.innerHTML = '<p class="mochila-vazia">Sua mochila está vazia, aventureiro.</p>';
+        return;
+    }
+
+    const nomeRaridade = {
+        comum: 'comum',
+        incomum: 'incomum',
+        raro: 'raro',
+        epico: 'épico',
+        lendario: 'lendário'
+    };
+
+    section.innerHTML = '';
     itens.forEach(item => {
         const valorVenda = Math.floor(item.preco * 0.7);
         section.innerHTML += `
             <div class="card-inventario ${item.raridade}">
-                <strong>${item.nome}</strong>
-                <!-- Importante: preco vem do objeto item -->
-                <button class="btn-vender" onclick="venderItem(${item.idUnico}, ${item.preco}, '${item.nome}', this)">Vender (${valorVenda} ic's)</button>
+                <div class="card-imagem">
+                    <img src="${item.imagem}" alt="${item.nome}">
+                </div>
+                <div class="info-corpo">
+                    <span class="tipo-raridade">${item.tipo} · ${nomeRaridade[item.raridade] || item.raridade}</span>
+                    <strong>${item.nome}</strong>
+                    <p class="efeito">${item.efeito}</p>
+                    <p class="desc">${item.desc || ''}</p>
+                    <div class="rodape-inventario">
+                        <span class="preco-original">Comprado por <span>${item.preco} ic's</span></span>
+                    </div>
+                    <!-- Importante: preco vem do objeto item -->
+                    <button class="btn-vender" onclick="venderItem(${item.idUnico}, ${item.preco}, '${item.nome}', this)">Vender (${valorVenda} ic's)</button>
+                </div>
             </div>
         `;
     });
