@@ -1,73 +1,39 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=MedievalSharp&family=Roboto:wght@300;400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Cinzel+Decorative:wght@700&display=swap');
 
+/* =========================================
+   1. TOKENS
+   ========================================= */
 :root {
-    --ouro: #d4af37;
-    --ouro-escuro: #996515;
-    --fundo: #0d0d0d;
-    --card-fundo: #1a1a1a;
-    --borda: #3c3c3c;
-    --texto: #e0e0e0;
+    --ouro: #c9a449;
+    --ouro-claro: #e8d5a0;
+    --ouro-escuro: #6b5320;
+    --fundo: #0a0908;
+    --fundo-card: #16130f;
+    --borda: #3a3326;
+    --texto: #d8cdb8;
+    --texto-fraco: #8a7f68;
+
+    --comum: #8a8a8a;
+    --incomum: #4a8f5c;
+    --raro: #3d7ea6;
+    --epico: #8e4fc4;
+    --lendario: #c9a449;
 }
 
+* { box-sizing: border-box; }
+
+/* =========================================
+   2. BASE
+   ========================================= */
 body {
     background-color: var(--fundo);
     color: var(--texto);
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Cormorant Garamond', serif;
     margin: 0;
-    /* Adiciona uma leve textura de ruído ao fundo */
-    background-image: url('https://www.transparenttextures.com/patterns/dark-matter.png');
-}
-
-h1, h2, h3, .preco {
-    font-family: 'Cinzel', serif; /* Fonte estilo Game of Thrones */
-    color: var(--ouro);
-    text-transform: uppercase;
-    letter-spacing: 2px;
-}
-
-
-.card {
-    background: var(--card-fundo);
-    border: 1px solid var(--borda);
-    border-radius: 4px; /* Cantos menos arredondados ficam mais sérios */
-    padding: 20px;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.card:hover {
-    transform: translateY(-5px);
-    border-color: var(--ouro);
-    box-shadow: 0 5px 15px rgba(212, 175, 55, 0.2);
-}
-
-/* Brilho de raridade */
-.card.comum { border-left: 4px solid #95a5a6; }
-.card.incomum { border-left: 4px solid #2ecc71; }
-.card.raro { border-left: 4px solid #3498db; }
-.card.epico { border-left: 4px solid #9b59b6; box-shadow: inset 0 0 10px #9b59b633; }
-.card.lendario { 
-    border-left: 4px solid var(--ouro); 
-    box-shadow: inset 0 0 15px rgba(212, 175, 55, 0.3);
-}
-
-
-:root {
-    --comum: #8a8a8a;
-    --incomum: #2ecc71;
-    --raro: #3498db;
-    --epico: #9b59b6;
-    --lendario: #f1c40f;
-    --fundo-card: #1e1e1e;
-}
-
-body {
-    background-color: #121212;
-    color: #f0e6d2;
-    font-family: 'Georgia', serif;
-    margin: 0;
-    padding: 0;
+    padding: 0 0 60px;
+    background-image:
+        radial-gradient(ellipse at top, rgba(201, 164, 73, 0.06), transparent 60%),
+        url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Cfilter id="n"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23n)" opacity="0.04"/%3E%3C/svg%3E');
 }
 
 .container {
@@ -76,417 +42,561 @@ body {
     padding: 20px;
 }
 
-header {
-    text-align: center;
-    border-bottom: 2px solid #333;
-    padding-bottom: 20px;
-    margin-bottom: 30px;
-}
-
-header h1 {
-    margin: 0 0 5px 0;
-    color: #d4af37; /* Dourado */
-}
-
-#saldo-jogador {
-    font-size: 1.2em;
-    margin-top: 10px;
-    color: #f1c40f;
-}
-
-.filtros {
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-.filtros button {
-    background-color: #252525;
-    color: #f0e6d2;
-    border: 1px solid #444;
-    padding: 10px 20px;
-    margin: 0 5px;
-    font-size: 1em;
-    cursor: pointer;
-    border-radius: 4px;
-    transition: 0.3s;
-}
-
-.filtros button:hover {
-    background-color: #333;
-    color: #d4af37;
-}
-
-.grid-mercado {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px;
-}
-
-.card {
-    background-color: var(--fundo-card);
-    border: 1px solid #333;
-    padding: 18px;
-    border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-button {
-    background: linear-gradient(145deg, #2c2c2c, #1a1a1a);
-    color: var(--ouro);
-    border: 1px solid var(--ouro-escuro);
-    padding: 10px 20px;
-    cursor: pointer;
-    font-family: 'MedievalSharp', cursive;
-    transition: 0.2s;
-}
-
-button:hover {
-    background: var(--ouro);
-    color: black;
-    box-shadow: 0 0 10px var(--ouro);
-}
-
-button:active {
-    transform: scale(0.95);
-}
-
-/* Bordas coloridas baseadas nas raridades */
-.comum { border-left: 5px solid var(--comum); }
-.incomum { border-left: 5px solid var(--incomum); }
-.raro { border-left: 5px solid var(--raro); }
-.epico { border-left: 5px solid var(--epico); }
-.lendario { 
-    border-left: 5px solid var(--lendario); 
-    box-shadow: 0 0 10px rgba(241, 196, 15, 0.15);
-}
-
-.card h3 {
-    margin: 0 0 8px 0;
-    color: #fff;
-}
-
-.card .categoria-tipo {
-    font-size: 0.8em;
-    color: #888;
-    text-transform: uppercase;
-    margin-bottom: 10px;
-}
-
-.card .descricao {
-    font-size: 0.95em;
-    line-height: 1.4;
-    color: #ccc;
-    margin-bottom: 12px;
-}
-
-.card .efeito {
-    font-style: italic;
-    color: #d4af37;
-    margin-bottom: 15px;
-}
-
-.card .preco {
-    font-weight: bold;
-    color: #2ecc71;
-    font-size: 1.1em;
-    margin-bottom: 15px;
-}
-
-.card button {
-    background-color: #333;
-    color: #f0e6d2;
+hr {
     border: none;
-    padding: 10px;
-    cursor: pointer;
-    border-radius: 4px;
-    font-family: inherit;
-    font-weight: bold;
-    transition: 0.2s;
+    border-top: 1px solid var(--borda);
+    margin: 50px 0;
 }
 
-.card button:hover {
-    background-color: #d4af37;
-    color: #000;
+h1, h2, h3 {
+    font-family: 'Cinzel', serif;
+    color: var(--ouro-claro);
+    margin: 0;
 }
 
-.inventario-container {
-    margin-top: 30px;
-    padding: 20px;
-    background: #1a1a1a;
-    border-radius: 10px;
-    border: 2px dashed #444;
-}
-
-.inventario-container h2 {
-    color: #d4af37;
-    text-align: center;
-}
-
-.card-inventario {
-    background-color: #252525;
-    border: 1px solid #444;
-    padding: 10px;
-    border-radius: 5px;
-    font-size: 0.9em;
-}
-
-.btn-vender {
-    background-color: #c0392b !important; /* Vermelho */
-    margin-top: 10px;
-    width: 100%;
-}
-
-.btn-vender:hover {
-    background-color: #e74c3c !important;
-}
-
+/* =========================================
+   3. AUTENTICAÇÃO
+   ========================================= */
 .auth-box {
-    background: #1e1e1e;
-    padding: 20px;
-    border-radius: 8px;
-    max-width: 300px;
-    margin: 20px auto;
+    background: linear-gradient(180deg, var(--fundo-card), var(--fundo));
+    padding: 28px;
+    border-radius: 3px;
+    max-width: 320px;
+    margin: 40px auto;
     text-align: center;
-    border: 1px solid #d4af37;
+    border: 1px solid var(--ouro-escuro);
+}
+
+.auth-box h2 {
+    font-size: 1.3em;
+    letter-spacing: 1px;
+    margin-bottom: 18px;
 }
 
 .auth-box input {
     width: 90%;
     padding: 10px;
-    margin: 10px 0;
-    background: #121212;
-    border: 1px solid #444;
-    color: white;
+    margin: 8px 0;
+    background: #0d0c0a;
+    border: 1px solid var(--borda);
+    color: var(--texto);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1em;
+    border-radius: 2px;
+}
+
+.auth-box input::placeholder {
+    color: var(--texto-fraco);
+}
+
+.auth-box input:focus {
+    outline: none;
+    border-color: var(--ouro);
+}
+
+.auth-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
 }
 
 .auth-buttons button {
-    background: #d4af37;
-    color: black;
-    font-weight: bold;
+    flex: 1;
+}
+
+/* =========================================
+   4. BOTÕES (padrão global)
+   ========================================= */
+button {
+    background: transparent;
+    color: var(--ouro-claro);
+    border: 1px solid var(--ouro-escuro);
+    padding: 9px 18px;
     cursor: pointer;
-}
-
-
-
-
-/* Container Geral da Comunidade */
-.comunidade-container {
-    background: rgba(20, 20, 20, 0.8);
-    padding: 30px;
-    border-radius: 10px;
-    border: 1px solid #333;
-    margin-top: 50px;
-}
-
-/* Grid de Jogadores */
-.grid-comunidade {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 25px;
-    margin-top: 30px;
-}
-
-/* Card Individual de cada Jogador */
-.player-card {
-    background: #151515;
-    background-image: linear-gradient(to bottom, #1a1a1a, #111);
-    border: 1px solid #d4af3744;
-    padding: 20px;
-    border-radius: 5px;
-    box-shadow: 5px 5px 15px rgba(0,0,0,0.5);
-    transition: 0.3s;
-}
-
-.player-card:hover {
-    border-color: #d4af37;
-    transform: scale(1.02);
-}
-
-/* Nome do Jogador */
-.player-card h3 {
-    font-size: 1.1em;
-    margin-bottom: 10px;
-    border-bottom: 1px solid #333;
-    padding-bottom: 8px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-/* Estilo do Saldo no Mural */
-.player-info {
-    font-family: 'MedievalSharp', cursive;
-    color: #2ecc71;
-    margin-bottom: 15px;
-    font-size: 0.9em;
-}
-
-/* Área da Mochila no Mural */
-.player-backpack {
-    background: rgba(0, 0, 0, 0.3);
-    padding: 10px;
-    border-radius: 4px;
-    min-height: 60px;
-}
-
-.player-backpack strong {
-    font-size: 0.75em;
-    text-transform: uppercase;
-    color: #888;
-    display: block;
-    margin-bottom: 8px;
-}
-
-
-
-
-.item-tag {
-    display: inline-block;
-    padding: 3px 8px;
-    margin: 3px;
-    font-size: 0.75em;
-    border-radius: 3px;
-    background: #222;
-    border: 1px solid #444;
-    color: #ddd;
-    text-shadow: 1px 1px 1px black;
-}
-
-/* Cores por Raridade nas Tags */
-.item-tag.comum { border-color: #95a5a6; color: #bdc3c7; }
-.item-tag.incomum { border-color: #27ae60; color: #2ecc71; }
-.item-tag.raro { border-color: #2980b9; color: #3498db; }
-.item-tag.epico { border-color: #8e44ad; color: #9b59b6; box-shadow: 0 0 5px #8e44ad66; }
-.item-tag.lendario { border-color: #d4af37; color: #f1c40f; box-shadow: 0 0 8px #d4af3788; }
-
-.player-card {
-    background: #151515;
-    border: 2px solid #2c2c2c;
-    border-style: double; /* Dá um toque mais antigo */
-    padding: 15px;
-    margin-bottom: 10px;
-}
-
-.item-tag {
-    font-size: 0.7em;
-    padding: 2px 8px;
-    border-radius: 10px;
-    margin-right: 5px;
-    background: #252525;
-    border: 1px solid #444;
-}
-
-#coins {
-    color: var(--ouro);
-    text-shadow: 0 0 8px rgba(212, 175, 55, 0.6);
-    font-weight: bold;
-    font-size: 1.2em;
-}
-
-.player-card h3 {
     font-family: 'Cinzel', serif;
-    color: #d4af37;
-    text-shadow: 1px 1px 3px rgba(0,0,0,1);
-    border-bottom: 2px solid #d4af37;
-    padding-bottom: 5px;
+    font-size: 0.78em;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    border-radius: 2px;
+    transition: 0.25s;
 }
 
-.perfil-box {
-    background: rgba(0, 0, 0, 0.4);
-    padding: 15px;
-    border: 1px solid #d4af3733;
-    border-radius: 5px;
-    margin: 15px 0;
+button:hover {
+    background: var(--ouro);
+    color: #0a0908;
+    box-shadow: 0 0 14px rgba(201, 164, 73, 0.35);
+}
+
+button:active {
+    transform: scale(0.96);
+}
+
+.btn-pequeno {
+    font-size: 0.65em;
+    padding: 6px 12px;
+    opacity: 0.85;
+}
+
+.btn-vender {
+    border-color: #7a2a22 !important;
+    color: #e0a89c !important;
+}
+
+.btn-vender:hover {
+    background: #a3372b !important;
+    color: #fff !important;
+    box-shadow: 0 0 14px rgba(163, 55, 43, 0.4);
+}
+
+/* =========================================
+   5. BANNER GLOBAL (aviso do mestre)
+   ========================================= */
+.banner-aviso {
+    background: linear-gradient(180deg, var(--ouro-claro), var(--ouro));
+    color: #1a1305;
+    padding: 14px 20px;
     text-align: center;
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    letter-spacing: 1px;
+    border-radius: 0 0 6px 6px;
+    margin-bottom: 24px;
+    animation: pulso-aviso 2.4s infinite;
+}
+
+@keyframes pulso-aviso {
+    0%, 100% { box-shadow: 0 0 6px rgba(201, 164, 73, 0.5); }
+    50% { box-shadow: 0 0 22px rgba(201, 164, 73, 0.85); }
+}
+
+/* =========================================
+   6. PAINEL DO MESTRE (admin)
+   ========================================= */
+.admin-only {
+    background: linear-gradient(145deg, #2a0808, #14100c);
+    border: 1px solid #7a2a22;
+    padding: 22px;
+    margin: 24px 0;
+    border-radius: 4px;
+}
+
+.admin-only h3 {
+    color: #e0a89c;
+    font-size: 1.05em;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+}
+
+.admin-only input {
+    width: 60%;
+    padding: 10px;
+    background: #0d0c0a;
+    border: 1px solid #5a2018;
+    color: var(--texto);
+    font-family: 'Cormorant Garamond', serif;
+    border-radius: 2px;
+    margin-right: 10px;
+}
+
+.admin-only button {
+    border-color: #7a2a22;
+    color: #e0a89c;
+}
+
+.admin-only button:hover {
+    background: #a3372b;
+    color: #fff;
+}
+
+/* =========================================
+   7. HEADER
+   ========================================= */
+header {
+    text-align: center;
+    padding: 36px 0 30px;
+    border-bottom: 1px solid var(--borda);
+    margin-bottom: 10px;
+}
+
+header h1 {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 2.5em;
+    letter-spacing: 1px;
+    text-shadow: 0 0 25px rgba(201, 164, 73, 0.25);
+}
+
+header > p {
+    font-family: 'Cinzel', serif;
+    font-size: 0.85em;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--texto-fraco);
+    margin: 8px 0 0;
+}
+
+/* Perfil do jogador */
+.perfil-box {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0, 0, 0, 0.35);
+    padding: 16px 30px;
+    border: 1px solid var(--borda);
+    border-radius: 3px;
+    margin: 22px 0;
 }
 
 #nome-perfil {
     font-family: 'Cinzel', serif;
-    color: var(--ouro);
-    font-size: 1.2em;
-    display: block;
-    margin-bottom: 10px;
+    color: var(--ouro-claro);
+    font-size: 1.1em;
+    letter-spacing: 0.5px;
 }
 
-.btn-pequeno {
-    font-size: 0.7em;
-    padding: 5px 10px;
-    opacity: 0.8;
+#input-troca-nome {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
 }
 
 #novo-nome-input {
-    background: #111;
+    background: #0d0c0a;
     border: 1px solid var(--ouro-escuro);
-    color: white;
-    padding: 8px;
-    border-radius: 3px;
-    font-family: 'Roboto', sans-serif;
+    color: var(--texto);
+    padding: 8px 10px;
+    border-radius: 2px;
+    font-family: 'Cormorant Garamond', serif;
 }
 
-.admin-only {
-    background: linear-gradient(145deg, #2a0505, #1a1a1a); /* Tom avermelhado escuro */
-    border: 2px solid #ff4444;
-    padding: 20px;
-    margin: 20px 0;
-    border-radius: 8px;
-}
-
-.banner-aviso {
-    background: #d4af37;
-    color: black;
-    padding: 15px;
-    text-align: center;
+#saldo-jogador {
     font-family: 'Cinzel', serif;
-    font-weight: bold;
-    border-radius: 0 0 10px 10px;
-    margin-bottom: 20px;
-    animation: pulse-aviso 2s infinite;
+    font-size: 1.25em;
+    color: var(--texto-fraco);
+    letter-spacing: 1px;
 }
 
-@keyframes pulse-aviso {
-    0% { box-shadow: 0 0 5px #d4af37; }
-    50% { box-shadow: 0 0 20px #d4af37; }
-    100% { box-shadow: 0 0 5px #d4af37; }
+#coins {
+    color: var(--ouro);
+    text-shadow: 0 0 10px rgba(201, 164, 73, 0.55);
+    font-weight: 700;
+    font-size: 1.15em;
 }
 
-.btn-admin {
-    padding: 2px 8px;
-    margin-left: 5px;
-    font-size: 0.8em;
+/* =========================================
+   8. FILTROS
+   ========================================= */
+.filtros {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    margin: 38px 0 34px;
+    border-bottom: 1px solid var(--borda);
+    flex-wrap: wrap;
+}
+
+.filtros button {
+    background: none;
+    border: none;
+    color: var(--texto-fraco);
+    font-size: 0.82em;
+    letter-spacing: 2px;
+    padding: 12px 22px;
+    border-radius: 0;
+}
+
+.filtros button:hover {
+    background: none;
+    color: var(--ouro-claro);
+    box-shadow: none;
+}
+
+.filtros button.ativo {
+    color: var(--ouro);
+    position: relative;
+}
+
+.filtros button.ativo::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 50%;
+    width: 24px;
+    height: 2px;
+    background: var(--ouro);
+    transform: translateX(-50%);
+}
+
+/* =========================================
+   9. GRID DE MERCADO / CARDS DE ITEM
+   ========================================= */
+.grid-mercado {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 22px;
+}
+
+.card {
+    background: var(--fundo-card);
+    border: 1px solid var(--borda);
     border-radius: 3px;
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    border-color: var(--ouro-escuro);
 }
 
 .card-imagem {
     width: 100%;
-    height: 150px; /* Altura fixa para todos os itens */
+    height: 170px;
     overflow: hidden;
-    border-radius: 4px;
-    margin-bottom: 15px;
     background: #000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    position: relative;
+}
+
+.card-imagem::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 50%, rgba(0, 0, 0, 0.85) 100%);
 }
 
 .card-imagem img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Faz a imagem preencher o espaço sem distorcer */
-    transition: transform 0.5s ease;
+    object-fit: cover;
+    filter: saturate(0.85) brightness(0.92);
+    transition: transform 0.6s ease, filter 0.6s ease;
 }
 
 .card:hover .card-imagem img {
-    transform: scale(1.1); /* Efeito de zoom ao passar o mouse */
+    transform: scale(1.08);
+    filter: saturate(1) brightness(1);
 }
 
-.card.lendario .card-imagem {
-    border: 2px solid var(--ouro);
-    box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+/* Selo de cera — substitui a borda lateral de raridade */
+.card::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    z-index: 2;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6), inset 0 0 0 2px rgba(255, 255, 255, 0.15);
 }
 
-.card.epico .card-imagem {
-    border: 2px solid var(--epico);
-    box-shadow: 0 0 10px rgba(159, 1, 199, 0.5);
+.card::after {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    z-index: 3;
+    font-family: 'Cinzel', serif;
+    font-size: 0.52em;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    color: #fff;
+    pointer-events: none;
+    line-height: 1.05;
 }
+
+.card.comum::after { content: "comum"; }
+.card.incomum::after { content: "incom."; }
+.card.raro::after { content: "raro"; }
+.card.epico::after { content: "épico"; }
+.card.lendario::after { content: "lend."; }
+
+.card.comum::before { background: radial-gradient(circle at 30% 30%, #a3a3a3, #6e6e6e); }
+.card.incomum::before { background: radial-gradient(circle at 30% 30%, #5fb677, #356b41); }
+.card.raro::before { background: radial-gradient(circle at 30% 30%, #5b9fd0, #2a5d7d); }
+.card.epico::before { background: radial-gradient(circle at 30% 30%, #a86fd6, #5e2f85); }
+.card.lendario::before {
+    background: radial-gradient(circle at 30% 30%, #e8d28a, #a3792f);
+    box-shadow: 0 0 14px rgba(201, 164, 73, 0.7), inset 0 0 0 2px rgba(255, 255, 255, 0.25);
+}
+
+.card h3 {
+    font-size: 1.05em;
+    margin: 0;
+    letter-spacing: 0.3px;
+    line-height: 1.25;
+    padding: 18px 20px 0;
+}
+
+.card .efeito {
+    font-style: italic;
+    color: var(--ouro);
+    font-size: 0.95em;
+    margin: 8px 20px 0;
+    border-left: 2px solid var(--ouro-escuro);
+    padding-left: 10px;
+}
+
+.card .preco {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    color: var(--ouro);
+    font-size: 1.05em;
+    display: block;
+    margin: 14px 20px 12px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--borda);
+}
+
+.card button {
+    margin: 0 20px 20px;
+}
+
+/* =========================================
+   10. MOCHILA / INVENTÁRIO
+   ========================================= */
+.inventario-container {
+    margin-top: 10px;
+    padding: 26px;
+    background: rgba(20, 18, 13, 0.6);
+    border-radius: 4px;
+    border: 1px dashed var(--borda);
+}
+
+.inventario-container h2 {
+    text-align: center;
+    font-size: 1.4em;
+    letter-spacing: 2px;
+    margin-bottom: 24px;
+}
+
+.card-inventario {
+    background-color: var(--fundo-card);
+    border: 1px solid var(--borda);
+    border-left: 4px solid var(--texto-fraco);
+    padding: 14px 16px;
+    border-radius: 2px;
+    font-size: 0.95em;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.card-inventario strong {
+    font-family: 'Cinzel', serif;
+    color: var(--ouro-claro);
+    font-size: 0.95em;
+}
+
+.card-inventario.comum { border-left-color: var(--comum); }
+.card-inventario.incomum { border-left-color: var(--incomum); }
+.card-inventario.raro { border-left-color: var(--raro); }
+.card-inventario.epico { border-left-color: var(--epico); }
+.card-inventario.lendario { border-left-color: var(--lendario); }
+
+/* =========================================
+   11. COMUNIDADE / MURAL DE JOGADORES
+   ========================================= */
+.comunidade-container {
+    background: rgba(15, 13, 10, 0.7);
+    padding: 32px;
+    border-radius: 4px;
+    border: 1px solid var(--borda);
+}
+
+.comunidade-container h2 {
+    text-align: center;
+    font-size: 1.4em;
+    letter-spacing: 2px;
+    margin-bottom: 28px;
+}
+
+.grid-comunidade {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 22px;
+}
+
+.player-card {
+    background: var(--fundo-card);
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.015), transparent 40%);
+    border: 1px solid var(--borda);
+    border-style: double;
+    border-width: 3px;
+    padding: 18px 20px;
+    border-radius: 3px;
+    transition: border-color 0.3s ease;
+}
+
+.player-card:hover {
+    border-color: var(--ouro-escuro);
+}
+
+.player-card h3 {
+    font-size: 1.05em;
+    color: var(--ouro-claro);
+    border-bottom: 1px solid var(--borda);
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.player-info {
+    font-family: 'Cinzel', serif;
+    color: #6fae7f;
+    font-size: 0.82em;
+    letter-spacing: 0.5px;
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.player-backpack {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 10px;
+    border-radius: 2px;
+    min-height: 50px;
+}
+
+.controles-admin {
+    display: flex;
+    gap: 6px;
+}
+
+.btn-admin {
+    padding: 3px 10px;
+    font-size: 0.68em;
+    letter-spacing: 0.5px;
+}
+
+.item-tag {
+    display: inline-block;
+    padding: 3px 10px;
+    margin: 3px;
+    font-size: 0.72em;
+    letter-spacing: 0.3px;
+    border-radius: 10px;
+    background: #1c1812;
+    border: 1px solid var(--borda);
+    color: var(--texto);
+}
+
+.item-tag.comum { border-color: var(--comum); color: #bdc3c7; }
+.item-tag.incomum { border-color: var(--incomum); color: #6fcf86; }
+.item-tag.raro { border-color: var(--raro); color: #5db3e0; }
+.item-tag.epico { border-color: var(--epico); color: #b07fdb; box-shadow: 0 0 5px rgba(142, 79, 196, 0.35); }
+.item-tag.lendario { border-color: var(--lendario); color: var(--ouro-claro); box-shadow: 0 0 8px rgba(201, 164, 73, 0.45); }

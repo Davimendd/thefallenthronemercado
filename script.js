@@ -213,9 +213,15 @@ function filtrarItens(tipoSelecionado) {
     vitrine.innerHTML = '';
     let filtrados = tipoSelecionado === 'todos' ? itensMercado : itensMercado.filter(i => i.tipo === tipoSelecionado);
 
+    // Marca visualmente qual botão de filtro está ativo
+    document.querySelectorAll('.filtros button').forEach(btn => btn.classList.remove('ativo'));
+    if (event && event.target) {
+        event.target.classList.add('ativo');
+    }
+
     filtrados.forEach(item => {
         vitrine.innerHTML += `
-            <div class="card ${item.raridade}">
+            <div class="card ${item.raridade}" data-raridade="${item.raridade}">
               <div class="card-imagem">
                   <img src="${item.imagem}" alt="${item.nome}">
               </div>
@@ -233,11 +239,12 @@ function renderizarInventario(itens) {
     const section = document.getElementById('lista-inventario');
     section.innerHTML = itens.length === 0 ? '<p>Mochila vazia.</p>' : '';
     itens.forEach(item => {
+        const valorVenda = Math.floor(item.preco * 0.7);
         section.innerHTML += `
             <div class="card-inventario ${item.raridade}">
                 <strong>${item.nome}</strong>
                 <!-- Importante: preco vem do objeto item -->
-                <button class="btn-vender" onclick="venderItem(${item.idUnico}, ${item.preco})">Vender</button>
+                <button class="btn-vender" onclick="venderItem(${item.idUnico}, ${item.preco})">Vender (${valorVenda} ic's)</button>
             </div>
         `;
     });
