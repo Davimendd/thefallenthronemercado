@@ -237,14 +237,37 @@ header > p {
 /* Perfil do jogador */
 .perfil-box {
     display: inline-flex;
-    flex-direction: column;
     align-items: center;
-    gap: 6px;
+    gap: 18px;
     background: rgba(0, 0, 0, 0.35);
-    padding: 16px 30px;
+    padding: 16px 28px;
     border: 1px solid var(--borda);
     border-radius: 3px;
     margin: 22px 0;
+    text-align: left;
+}
+
+.avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #0d0c0a;
+    border: 2px solid var(--ouro-escuro);
+    box-shadow: 0 0 10px rgba(201, 164, 73, 0.25);
+    flex-shrink: 0;
+}
+
+.perfil-textos {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.perfil-acoes {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
 }
 
 #nome-perfil {
@@ -254,19 +277,22 @@ header > p {
     letter-spacing: 0.5px;
 }
 
-#input-troca-nome {
+#input-troca-nome,
+#input-troca-foto {
     display: flex;
     gap: 8px;
     margin-top: 10px;
 }
 
-#novo-nome-input {
+#novo-nome-input,
+#nova-foto-input {
     background: #0d0c0a;
     border: 1px solid var(--ouro-escuro);
     color: var(--texto);
     padding: 8px 10px;
     border-radius: 2px;
     font-family: 'Cormorant Garamond', serif;
+    min-width: 220px;
 }
 
 #saldo-jogador {
@@ -682,15 +708,35 @@ header > p {
     border-color: var(--ouro-escuro);
 }
 
-.player-card h3 {
-    font-size: 1.05em;
-    color: var(--ouro-claro);
+.player-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
     border-bottom: 1px solid var(--borda);
     padding-bottom: 10px;
     margin-bottom: 12px;
+}
+
+.avatar-mural {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #0d0c0a;
+    border: 2px solid var(--ouro-escuro);
+    flex-shrink: 0;
+}
+
+.player-card h3 {
+    font-size: 1.05em;
+    color: var(--ouro-claro);
+    margin: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex: 1;
+    border: none;
+    padding: 0;
 }
 
 .player-info {

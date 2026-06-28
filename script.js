@@ -7,6 +7,11 @@ import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, g
 
 // ... restante das configurações (firebaseConfig)
 
+// Avatar padrão para quem ainda não definiu uma foto de perfil.
+// Fica no topo de propósito, junto das outras constantes que não dependem
+// do Firebase, para nunca correr o risco de ser usada antes de existir.
+const AVATAR_PADRAO = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%231c1812'/%3E%3Ccircle cx='32' cy='24' r='12' fill='%233a3326'/%3E%3Cpath d='M10 58c0-14 9.8-22 22-22s22 8 22 22' fill='%233a3326'/%3E%3C/svg%3E";
+
 // =========================================
 // 0. SISTEMA DE TOAST E CONFIRMAÇÃO
 // Ficam no topo de propósito: não dependem do Firebase e substituem
@@ -263,6 +268,40 @@ async function salvarNovoNome() {
     }
 }
 
+// Avatar padrão para quem ainda não definiu uma foto de perfil
+function mostrarTrocaFoto() {
+    const div = document.getElementById('input-troca-foto');
+    div.style.display = div.style.display === 'none' ? 'block' : 'none';
+}
+
+async function salvarNovaFoto() {
+    const novaFoto = document.getElementById('nova-foto-input').value.trim();
+    if (!novaFoto) return mostrarToast('Cole o link de uma imagem válida.', 'erro', 'Link inválido');
+
+    try {
+        // Testa se a URL realmente carrega uma imagem antes de salvar,
+        // para não guardar um link quebrado no perfil do jogador.
+        await validarUrlDeImagem(novaFoto);
+
+        const userRef = doc(db, "usuarios", usuarioAtual.uid);
+        await updateDoc(userRef, { foto: novaFoto });
+
+        document.getElementById('input-troca-foto').style.display = 'none';
+        document.getElementById('nova-foto-input').value = '';
+        mostrarToast('Seu retrato foi atualizado no reino.', 'sucesso', 'Foto alterada');
+    } catch (error) {
+        mostrarToast('Esse link não parece ser de uma imagem válida.', 'erro', 'Erro na imagem');
+    }
+}
+
+function validarUrlDeImagem(url) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(true);
+        img.onerror = () => reject(new Error('imagem inválida'));
+        img.src = url;
+    });
+}
 
 function escutarDadosUsuario(uid) {
     onSnapshot(doc(db, "usuarios", uid), (docSnap) => {
@@ -274,6 +313,9 @@ function escutarDadosUsuario(uid) {
             
             // Atualiza Nome do Personagem no Topo (ID que criamos no HTML)
             document.getElementById('nome-perfil').innerText = "Personagem: " + (dados.nome || "Sem Nome");
+
+            // Atualiza Avatar do Personagem no Topo
+            document.getElementById('avatar-perfil').src = dados.foto || AVATAR_PADRAO;
             
             // Renderiza o Inventário
             renderizarInventario(dados.inventario || []);
@@ -537,7 +579,10 @@ function monitorarComunidade() {
 
             mural.innerHTML += `
                 <div class="player-card">
-                    <h3>${player.nome || 'Desconhecido'}</h3>
+                    <div class="player-card-header">
+                        <img class="avatar-mural" src="${player.foto || AVATAR_PADRAO}" alt="Avatar de ${player.nome || 'jogador'}">
+                        <h3>${player.nome || 'Desconhecido'}</h3>
+                    </div>
                     <div class="player-info">Saldo: ${player.moedas} ic's ${botoesMestre}</div>
                     <div class="player-backpack">${itensHTML}</div>
                 </div>
@@ -561,6 +606,8 @@ window.comprarItem = comprarItemNoFirebase; // Corrigido
 window.venderItem = venderItemNoFirebase;   // Corrigido
 window.mostrarTrocaNome = mostrarTrocaNome;
 window.salvarNovoNome = salvarNovoNome;
+window.mostrarTrocaFoto = mostrarTrocaFoto;
+window.salvarNovaFoto = salvarNovaFoto;
 window.enviarAviso = enviarAviso;
 window.limparAviso = limparAviso;
 window.ajustarMoedas = ajustarMoedas;

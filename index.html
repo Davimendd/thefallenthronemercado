@@ -40,13 +40,24 @@
             <p>The Fallen Throne - RPG System</p>
 
             <div id="perfil-jogador" class="perfil-box">
-              <span id="nome-perfil">Carregando personagem...</span>
-             <button onclick="mostrarTrocaNome()" class="btn-pequeno">Trocar Nome</button>
-        
-             <div id="input-troca-nome" style="display: none; margin-top: 10px;">
-            <input type="text" id="novo-nome-input" placeholder="Novo nome do herói">
-            <button onclick="salvarNovoNome()">Confirmar</button>
-             </div>
+              <img id="avatar-perfil" class="avatar" src="" alt="Avatar do personagem">
+              <div class="perfil-textos">
+                  <span id="nome-perfil">Carregando personagem...</span>
+                  <div class="perfil-acoes">
+                      <button onclick="mostrarTrocaNome()" class="btn-pequeno">Trocar Nome</button>
+                      <button onclick="mostrarTrocaFoto()" class="btn-pequeno">Trocar Foto</button>
+                  </div>
+
+                  <div id="input-troca-nome" style="display: none; margin-top: 10px;">
+                      <input type="text" id="novo-nome-input" placeholder="Novo nome do herói">
+                      <button onclick="salvarNovoNome()">Confirmar</button>
+                  </div>
+
+                  <div id="input-troca-foto" style="display: none; margin-top: 10px;">
+                      <input type="text" id="nova-foto-input" placeholder="Cole o link (URL) de uma imagem">
+                      <button onclick="salvarNovaFoto()">Confirmar</button>
+                  </div>
+              </div>
             </div>
 
             <div id="saldo-jogador">
