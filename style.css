@@ -55,27 +55,52 @@ h1, h2, h3 {
 }
 
 /* =========================================
-   3. AUTENTICAÇÃO
+   3. AUTENTICAÇÃO (tela cheia)
    ========================================= */
+#auth-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse at center, rgba(28, 24, 18, 0.97), rgba(5, 4, 3, 0.99));
+    backdrop-filter: blur(4px);
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+#auth-overlay.saindo {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
 .auth-box {
     background: linear-gradient(180deg, var(--fundo-card), var(--fundo));
-    padding: 28px;
-    border-radius: 3px;
-    max-width: 320px;
-    margin: 40px auto;
+    padding: 36px 32px;
+    border-radius: 4px;
+    max-width: 340px;
+    width: 90%;
     text-align: center;
     border: 1px solid var(--ouro-escuro);
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(201, 164, 73, 0.08);
+    animation: auth-entra 0.5s ease-out;
+}
+
+@keyframes auth-entra {
+    from { transform: translateY(14px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }
 
 .auth-box h2 {
-    font-size: 1.3em;
+    font-size: 1.4em;
     letter-spacing: 1px;
-    margin-bottom: 18px;
+    margin-bottom: 22px;
 }
 
 .auth-box input {
     width: 90%;
-    padding: 10px;
+    padding: 11px;
     margin: 8px 0;
     background: #0d0c0a;
     border: 1px solid var(--borda);
@@ -102,6 +127,69 @@ h1, h2, h3 {
 
 .auth-buttons button {
     flex: 1;
+}
+
+/* =========================================
+   3.1 ÍCONE FLUTUANTE DE CONTA
+   ========================================= */
+#conta-flutuante {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    z-index: 9000;
+}
+
+#botao-conta {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid var(--ouro-escuro);
+    background: var(--fundo-card);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+#botao-conta:hover {
+    border-color: var(--ouro);
+    box-shadow: 0 0 12px rgba(201, 164, 73, 0.4);
+    background: var(--fundo-card);
+}
+
+#avatar-flutuante {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+#menu-conta {
+    position: absolute;
+    top: 54px;
+    right: 0;
+    background: linear-gradient(180deg, var(--fundo-card), var(--fundo));
+    border: 1px solid var(--ouro-escuro);
+    border-radius: 3px;
+    padding: 14px;
+    min-width: 200px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    animation: auth-entra 0.2s ease-out;
+}
+
+#menu-conta-nome {
+    font-family: 'Cinzel', serif;
+    color: var(--ouro-claro);
+    font-size: 0.9em;
+    text-align: center;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--borda);
+}
+
+#menu-conta button {
+    font-size: 0.72em;
 }
 
 /* =========================================

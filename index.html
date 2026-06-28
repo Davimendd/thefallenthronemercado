@@ -11,15 +11,28 @@
     <div id="toast-container"></div>
     <div id="confirm-overlay" style="display: none;"></div>
 
-    <div id="auth-container" class="auth-box">
-    <h2>Entrar no Reino</h2>
-    <input type="text" id="login-nome" placeholder="Nome do Personagem (ex: Ned Stark)">
-    <input type="email" id="login-email" placeholder="Seu e-mail">
-    <input type="password" id="login-senha" placeholder="Sua senha">
-    <div class="auth-buttons">
-        <button onclick="fazerLogin()">Entrar</button>
-        <button onclick="fazerCadastro()">Cadastrar</button>
+    <!-- Ícone fixo de conta: permite trocar/sair da conta logada -->
+    <div id="conta-flutuante" style="display: none;">
+        <button id="botao-conta" onclick="alternarMenuConta()" title="Conta">
+            <img id="avatar-flutuante" src="" alt="Conta">
+        </button>
+        <div id="menu-conta" style="display: none;">
+            <span id="menu-conta-nome">Carregando...</span>
+            <button onclick="trocarDeConta()" class="btn-vender">Sair / Trocar de conta</button>
+        </div>
     </div>
+
+    <div id="auth-overlay">
+        <div id="auth-container" class="auth-box">
+            <h2>Entrar no Reino</h2>
+            <input type="text" id="login-nome" placeholder="Nome do Personagem (ex: Ned Stark)">
+            <input type="email" id="login-email" placeholder="Seu e-mail">
+            <input type="password" id="login-senha" placeholder="Sua senha">
+            <div class="auth-buttons">
+                <button onclick="fazerLogin()">Entrar</button>
+                <button onclick="fazerCadastro()">Cadastrar</button>
+            </div>
+        </div>
     </div>
 
     <div class="container">

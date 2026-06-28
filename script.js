@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, getDocs } from "firebase/firestore";
 
 // Abaixo daqui, verifique se NÃO existe nenhuma linha como:
@@ -208,6 +208,13 @@ try {
     console.error("Erro ao renderizar a vitrine inicial:", erroInicial);
 }
 
+// Avatar padrão no ícone flutuante até que os dados do usuário cheguem
+try {
+    document.getElementById('avatar-flutuante').src = AVATAR_PADRAO;
+} catch (erroAvatarInicial) {
+    console.error("Erro ao definir avatar inicial:", erroAvatarInicial);
+}
+
 // 2. COLOQUE SEUS DADOS DO FIREBASE AQUI
 const firebaseConfig = {
     apiKey: "AIzaSyDaEGg2wS3N47nxeOrJRHV0-4Cd41MLIaA",
@@ -232,6 +239,22 @@ try {
     console.error("Falha ao inicializar o Firebase:", erroFirebase);
 }
 
+// Esconde a tela de login com uma transição suave
+function esconderTelaDeLogin() {
+    const overlay = document.getElementById('auth-overlay');
+    overlay.classList.add('saindo');
+    document.getElementById('conta-flutuante').style.display = 'block';
+}
+
+// Mostra a tela de login novamente (usado no logout)
+function mostrarTelaDeLogin() {
+    const overlay = document.getElementById('auth-overlay');
+    overlay.classList.remove('saindo');
+    document.getElementById('menu-conta').style.display = 'none';
+    document.getElementById('conta-flutuante').style.display = 'none';
+    document.getElementById('painel-mestre').style.display = 'none';
+}
+
 // 3. MONITORAMENTO DE LOGIN E DADOS
 if (auth) {
     onAuthStateChanged(auth, (user) => {
@@ -242,8 +265,30 @@ if (auth) {
             }
             escutarDadosUsuario(user.uid);
             escutarAvisoGlobal(); // Nova função
+            esconderTelaDeLogin();
+        } else {
+            usuarioAtual = null;
+            mostrarTelaDeLogin();
         }
     });
+}
+
+// --- ÍCONE FLUTUANTE DE CONTA ---
+function alternarMenuConta() {
+    const menu = document.getElementById('menu-conta');
+    menu.style.display = menu.style.display === 'none' ? 'flex' : 'none';
+}
+
+async function trocarDeConta() {
+    const confirmado = await mostrarConfirmacao('Sair da conta atual e voltar à tela de login?');
+    if (!confirmado) return;
+
+    try {
+        await signOut(auth);
+        mostrarToast('Até a próxima jornada, aventureiro.', 'sucesso', 'Conta encerrada');
+    } catch (error) {
+        mostrarToast('Não foi possível sair da conta agora.', 'erro', 'Erro');
+    }
 }
 
 // 1. Funções para Troca de Nome
@@ -316,6 +361,10 @@ function escutarDadosUsuario(uid) {
 
             // Atualiza Avatar do Personagem no Topo
             document.getElementById('avatar-perfil').src = dados.foto || AVATAR_PADRAO;
+
+            // Atualiza o ícone flutuante de conta (avatar + nome no menu)
+            document.getElementById('avatar-flutuante').src = dados.foto || AVATAR_PADRAO;
+            document.getElementById('menu-conta-nome').innerText = dados.nome || "Sem Nome";
             
             // Renderiza o Inventário
             renderizarInventario(dados.inventario || []);
@@ -494,8 +543,7 @@ async function fazerLogin() {
 
     try {
         await signInWithEmailAndPassword(auth, email, senha);
-        // Esconde a tela de login após entrar
-        document.getElementById('auth-container').style.display = 'none';
+        // A tela de login é escondida automaticamente pelo onAuthStateChanged
         mostrarToast('Que seus dias sejam longos e prósperos.', 'sucesso', 'Bem-vindo de volta');
     } catch (error) {
         mostrarToast(traduzirErroFirebase(error), 'erro', 'Erro ao entrar');
@@ -608,6 +656,8 @@ window.mostrarTrocaNome = mostrarTrocaNome;
 window.salvarNovoNome = salvarNovoNome;
 window.mostrarTrocaFoto = mostrarTrocaFoto;
 window.salvarNovaFoto = salvarNovaFoto;
+window.alternarMenuConta = alternarMenuConta;
+window.trocarDeConta = trocarDeConta;
 window.enviarAviso = enviarAviso;
 window.limparAviso = limparAviso;
 window.ajustarMoedas = ajustarMoedas;
