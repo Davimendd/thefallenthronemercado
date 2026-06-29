@@ -11,6 +11,12 @@
     <div id="toast-container"></div>
     <div id="confirm-overlay" style="display: none;"></div>
 
+    <!-- Ícone fixo de mochila: acesso rápido à página da mochila -->
+    <button id="botao-mochila-flutuante" style="display: none;" onclick="mostrarPagina('mochila')" title="Minha Mochila">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 7V5.5A2.5 2.5 0 0110.5 3h3A2.5 2.5 0 0116 5.5V7m-9 0h10a2 2 0 012 2v9a2 2 0 01-2 2H7a2 2 0 01-2-2V9a2 2 0 012-2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        <span id="badge-mochila" class="badge-contador" style="display: none;">0</span>
+    </button>
+
     <!-- Ícone fixo de conta: permite trocar/sair da conta logada -->
     <div id="conta-flutuante" style="display: none;">
         <button id="botao-conta" onclick="alternarMenuConta()" title="Conta">
@@ -101,34 +107,55 @@
             </div>
         </header>
 
-        <nav class="filtros">
-            <button class="ativo" onclick="filtrarItens('todos')">Todos</button>
-            <button onclick="filtrarItens('Arma')">Armas</button>
-            <button onclick="filtrarItens('Armadura')">Defesa</button>
-            <button onclick="filtrarItens('Consumível')">Consumíveis</button>
+        <!-- Navegação entre as páginas do reino -->
+        <nav class="paginas-nav">
+            <button class="pagina-tab ativa" onclick="mostrarPagina('vitrine')">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 9L4.5 4h15L21 9M3 9v10a1 1 0 001 1h16a1 1 0 001-1V9M3 9h18M9 21v-6h6v6" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+                Mercado
+            </button>
+            <button class="pagina-tab" onclick="mostrarPagina('mochila')">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 7V5.5A2.5 2.5 0 0110.5 3h3A2.5 2.5 0 0116 5.5V7m-9 0h10a2 2 0 012 2v9a2 2 0 01-2 2H7a2 2 0 01-2-2V9a2 2 0 012-2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+                Mochila
+            </button>
+            <button class="pagina-tab" onclick="mostrarPagina('mural')">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="8" r="2.5" stroke="currentColor" stroke-width="1.5"/><circle cx="17" cy="9" r="2" stroke="currentColor" stroke-width="1.5"/><path d="M4 19c0-2.8 2.2-5 5-5s5 2.2 5 5M14 19c0-1.8.6-3.4 1.6-4.6.5-.2 1-.4 1.4-.4 2 0 3.5 1.6 3.5 3.5v1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                Exploradores
+            </button>
         </nav>
 
-        <main class="grid-mercado" id="vitrine">
-            </main>
-        <!-- Procure a tag </main> e adicione isso logo abaixo dela -->
-        <hr style="border: 1px solid #333; margin: 40px 0;">
+        <!-- PÁGINA: VITRINE / MERCADO -->
+        <section id="pagina-vitrine" class="pagina-conteudo">
+            <nav class="filtros">
+                <button class="ativo" onclick="filtrarItens('todos')">Todos</button>
+                <button onclick="filtrarItens('Arma')">Armas</button>
+                <button onclick="filtrarItens('Armadura')">Defesa</button>
+                <button onclick="filtrarItens('Consumível')">Consumíveis</button>
+            </nav>
 
-        <section class="inventario-container">
-       <h2>Minha Mochila</h2>
-         <div id="lista-inventario" class="grid-mercado">
-        <!-- Itens comprados aparecerão aqui -->
-         </div>
+            <main class="grid-mercado" id="vitrine">
+                </main>
+        </section>
+
+        <!-- PÁGINA: MOCHILA -->
+        <section id="pagina-mochila" class="pagina-conteudo" style="display: none;">
+            <section class="inventario-container">
+                <h2>Minha Mochila</h2>
+                <div id="lista-inventario" class="grid-mercado">
+                    <!-- Itens comprados aparecerão aqui -->
+                </div>
+            </section>
+        </section>
+
+        <!-- PÁGINA: MURAL DA COMUNIDADE -->
+        <section id="pagina-mural" class="pagina-conteudo" style="display: none;">
+            <section class="comunidade-container">
+                <h2>Exploradores de Westeros</h2>
+                <div id="lista-comunidade" class="grid-comunidade">
+                    <!-- Dados de outros jogadores aparecerão aqui -->
+                </div>
+            </section>
         </section>
     </div>
-
-    <hr style="border: 1px solid #333; margin: 40px 0;">
-
-        <section class="comunidade-container">
-         <h2>Exploradores de Westeros</h2>
-         <div id="lista-comunidade" class="grid-comunidade">
-        <!-- Dados de outros jogadores aparecerão aqui -->
-         </div>
-        </section>
 
 <!-- Importando Firebase como Módulos -->
 <script type="importmap">

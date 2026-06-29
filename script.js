@@ -62,6 +62,35 @@ function mostrarConfirmacao(mensagem) {
     });
 }
 
+// =========================================
+// NAVEGAÇÃO ENTRE PÁGINAS (Mercado / Mochila / Exploradores)
+// Fica no topo de propósito: não depende do Firebase, então funciona
+// mesmo antes do login terminar de carregar.
+// =========================================
+function mostrarPagina(nomePagina) {
+    const paginas = ['vitrine', 'mochila', 'mural'];
+
+    paginas.forEach(p => {
+        document.getElementById('pagina-' + p).style.display = (p === nomePagina) ? 'block' : 'none';
+    });
+
+    document.querySelectorAll('.pagina-tab').forEach((tab, i) => {
+        tab.classList.toggle('ativa', paginas[i] === nomePagina);
+    });
+}
+
+// Atualiza o número exibido no badge do ícone flutuante de mochila
+function atualizarBadgeMochila(quantidade) {
+    const badge = document.getElementById('badge-mochila');
+    if (!badge) return;
+    if (quantidade > 0) {
+        badge.style.display = 'flex';
+        badge.innerText = quantidade > 99 ? '99+' : quantidade;
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
 // 1. SUA LISTA DE ITENS
 // Fica ANTES da inicialização do Firebase de propósito: assim a vitrine
 // é montada e exibida mesmo que o Firebase falhe, esteja fora do ar,
@@ -244,6 +273,7 @@ function esconderTelaDeLogin() {
     const overlay = document.getElementById('auth-overlay');
     overlay.classList.add('saindo');
     document.getElementById('conta-flutuante').style.display = 'block';
+    document.getElementById('botao-mochila-flutuante').style.display = 'flex';
 }
 
 // Mostra a tela de login novamente (usado no logout)
@@ -252,7 +282,9 @@ function mostrarTelaDeLogin() {
     overlay.classList.remove('saindo');
     document.getElementById('menu-conta').style.display = 'none';
     document.getElementById('conta-flutuante').style.display = 'none';
+    document.getElementById('botao-mochila-flutuante').style.display = 'none';
     document.getElementById('painel-mestre').style.display = 'none';
+    mostrarPagina('vitrine');
 }
 
 // 3. MONITORAMENTO DE LOGIN E DADOS
@@ -408,6 +440,8 @@ function filtrarItens(tipoSelecionado) {
 
 function renderizarInventario(itens) {
     const section = document.getElementById('lista-inventario');
+
+    atualizarBadgeMochila(itens.length);
 
     if (itens.length === 0) {
         section.innerHTML = '<p class="mochila-vazia">Sua mochila está vazia, aventureiro.</p>';
@@ -669,6 +703,7 @@ window.salvarNovoNome = salvarNovoNome;
 window.mostrarTrocaFoto = mostrarTrocaFoto;
 window.salvarNovaFoto = salvarNovaFoto;
 window.alternarMenuConta = alternarMenuConta;
+window.mostrarPagina = mostrarPagina;
 window.trocarDeConta = trocarDeConta;
 window.enviarAviso = enviarAviso;
 window.limparAviso = limparAviso;
