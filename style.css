@@ -300,10 +300,32 @@ button:active {
    7. HEADER
    ========================================= */
 header {
+    position: relative;
     text-align: center;
-    padding: 36px 0 30px;
+    padding: 50px 20px 38px;
     border-bottom: 1px solid var(--borda);
     margin-bottom: 10px;
+    overflow: hidden;
+    background:
+        radial-gradient(ellipse at top, rgba(201, 164, 73, 0.08), transparent 65%),
+        repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.015) 0px, rgba(255, 255, 255, 0.015) 2px, transparent 2px, transparent 8px),
+        repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.15) 0px, rgba(0, 0, 0, 0.15) 2px, transparent 2px, transparent 8px);
+}
+
+.brasao {
+    width: 72px;
+    height: 84px;
+    margin: 0 auto 14px;
+    display: block;
+}
+
+header .eyebrow {
+    font-family: 'Cinzel', serif;
+    font-size: 0.72em;
+    letter-spacing: 4px;
+    color: var(--texto-fraco);
+    text-transform: uppercase;
+    margin: 0;
 }
 
 header h1 {
@@ -311,15 +333,42 @@ header h1 {
     font-size: 2.5em;
     letter-spacing: 1px;
     text-shadow: 0 0 25px rgba(201, 164, 73, 0.25);
+    margin: 10px 0 4px;
 }
 
-header > p {
+header .subtitulo {
     font-family: 'Cinzel', serif;
     font-size: 0.85em;
     letter-spacing: 3px;
     text-transform: uppercase;
     color: var(--texto-fraco);
-    margin: 8px 0 0;
+    margin: 0;
+}
+
+.ornamento-linha {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 18px;
+}
+
+.ornamento-linha .linha {
+    height: 1px;
+    width: 80px;
+    background: linear-gradient(90deg, transparent, var(--ouro-escuro));
+}
+
+.ornamento-linha .linha.direita {
+    background: linear-gradient(90deg, var(--ouro-escuro), transparent);
+}
+
+.ornamento-linha .losango {
+    width: 6px;
+    height: 6px;
+    background: var(--ouro);
+    transform: rotate(45deg);
+    flex-shrink: 0;
 }
 
 /* Perfil do jogador */
@@ -467,9 +516,36 @@ header > p {
     border-color: var(--ouro-escuro);
 }
 
+.frame-imagem {
+    position: relative;
+    margin: 10px;
+    padding: 6px;
+    background:
+        repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0px, rgba(255, 255, 255, 0.02) 2px, transparent 2px, transparent 7px),
+        repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.2) 0px, rgba(0, 0, 0, 0.2) 2px, transparent 2px, transparent 7px),
+        #0d0b08;
+    border: 1px solid var(--ouro-escuro);
+}
+
+.frame-imagem .canto {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--ouro);
+    z-index: 2;
+    pointer-events: none;
+}
+
+.frame-imagem .canto.tl { top: -1px; left: -1px; border-right: none; border-bottom: none; }
+.frame-imagem .canto.tr { top: -1px; right: -1px; border-left: none; border-bottom: none; }
+.frame-imagem .canto.bl { bottom: -1px; left: -1px; border-right: none; border-top: none; }
+.frame-imagem .canto.br { bottom: -1px; right: -1px; border-left: none; border-top: none; }
+
+.card.lendario .frame-imagem .canto { border-color: var(--ouro-claro); }
+
 .card-imagem {
     width: 100%;
-    height: 170px;
+    height: 158px;
     overflow: hidden;
     background: #000;
     position: relative;
@@ -499,26 +575,26 @@ header > p {
 .card::before {
     content: '';
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 16px;
+    right: 16px;
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    z-index: 2;
+    z-index: 4;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6), inset 0 0 0 2px rgba(255, 255, 255, 0.15);
 }
 
 .card::after {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 16px;
+    right: 16px;
     width: 40px;
     height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
-    z-index: 3;
+    z-index: 5;
     font-family: 'Cinzel', serif;
     font-size: 0.52em;
     letter-spacing: 0.3px;
@@ -612,7 +688,7 @@ header > p {
 
 .card-inventario .card-imagem {
     width: 100%;
-    height: 150px;
+    height: 140px;
     overflow: hidden;
     background: #000;
     position: relative;
@@ -642,26 +718,26 @@ header > p {
 .card-inventario::before {
     content: '';
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 16px;
+    right: 16px;
     width: 38px;
     height: 38px;
     border-radius: 50%;
-    z-index: 2;
+    z-index: 4;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6), inset 0 0 0 2px rgba(255, 255, 255, 0.15);
 }
 
 .card-inventario::after {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 16px;
+    right: 16px;
     width: 38px;
     height: 38px;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
-    z-index: 3;
+    z-index: 5;
     font-family: 'Cinzel', serif;
     font-size: 0.5em;
     letter-spacing: 0.3px;

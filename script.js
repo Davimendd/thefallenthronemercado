@@ -387,8 +387,14 @@ function filtrarItens(tipoSelecionado) {
     filtrados.forEach(item => {
         vitrine.innerHTML += `
             <div class="card ${item.raridade}" data-raridade="${item.raridade}">
-              <div class="card-imagem">
-                  <img src="${item.imagem}" alt="${item.nome}">
+              <div class="frame-imagem">
+                  <div class="card-imagem">
+                      <img src="${item.imagem}" alt="${item.nome}">
+                  </div>
+                  <span class="canto tl"></span>
+                  <span class="canto tr"></span>
+                  <span class="canto bl"></span>
+                  <span class="canto br"></span>
               </div>
                 <h3>${item.nome}</h3>
                 <p class="efeito">${item.efeito}</p>
@@ -421,8 +427,14 @@ function renderizarInventario(itens) {
         const valorVenda = Math.floor(item.preco * 0.7);
         section.innerHTML += `
             <div class="card-inventario ${item.raridade}">
-                <div class="card-imagem">
-                    <img src="${item.imagem}" alt="${item.nome}">
+                <div class="frame-imagem">
+                    <div class="card-imagem">
+                        <img src="${item.imagem}" alt="${item.nome}">
+                    </div>
+                    <span class="canto tl"></span>
+                    <span class="canto tr"></span>
+                    <span class="canto bl"></span>
+                    <span class="canto br"></span>
                 </div>
                 <div class="info-corpo">
                     <span class="tipo-raridade">${item.tipo} · ${nomeRaridade[item.raridade] || item.raridade}</span>
