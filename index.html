@@ -113,6 +113,10 @@
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 9L4.5 4h15L21 9M3 9v10a1 1 0 001 1h16a1 1 0 001-1V9M3 9h18M9 21v-6h6v6" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
                 Mercado
             </button>
+            <button class="pagina-tab" onclick="mostrarPagina('fichas')">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 3h10a1 1 0 011 1v16a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 7h6M9 11h6M9 15h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                Minhas Fichas
+            </button>
             <button class="pagina-tab" onclick="mostrarPagina('mochila')">
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 7V5.5A2.5 2.5 0 0110.5 3h3A2.5 2.5 0 0116 5.5V7m-9 0h10a2 2 0 012 2v9a2 2 0 01-2 2H7a2 2 0 01-2-2V9a2 2 0 012-2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
                 Mochila
@@ -134,6 +138,100 @@
 
             <main class="grid-mercado" id="vitrine">
                 </main>
+        </section>
+
+        <!-- PÁGINA: MINHAS FICHAS -->
+        <section id="pagina-fichas" class="pagina-conteudo" style="display: none;">
+            <section class="fichas-container">
+                <div class="fichas-cabecalho">
+                    <h2>Minhas Fichas</h2>
+                    <button class="btn-criar-ficha" onclick="abrirFormularioFicha()">+ Criar Nova Ficha</button>
+                </div>
+
+                <div id="lista-fichas" class="grid-fichas">
+                    <!-- Cards de fichas da conta aparecerão aqui -->
+                </div>
+            </section>
+
+            <!-- Formulário de criação/edição de ficha (modal) -->
+            <div id="formulario-ficha-overlay" style="display: none;">
+                <div class="formulario-ficha-box">
+                    <h3 id="formulario-ficha-titulo">Criar Novo Personagem</h3>
+
+                    <div class="input-group">
+                        <label>Nome Completo</label>
+                        <input type="text" id="ficha-nome" placeholder="Ex: Jon Snow">
+                    </div>
+
+                    <div class="ficha-row">
+                        <div class="input-group">
+                            <label>Casa</label>
+                            <select id="ficha-casa">
+                                <option value="Sem Casa">Nenhuma / Bastardo</option>
+                                <option value="Stark">Casa Stark</option>
+                                <option value="Lannister">Casa Lannister</option>
+                                <option value="Targaryen">Casa Targaryen</option>
+                                <option value="Baratheon">Casa Baratheon</option>
+                                <option value="Tyrell">Casa Tyrell</option>
+                                <option value="Arryn">Casa Arryn</option>
+                                <option value="Casa Menor">Casa Menor</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Origem Social</label>
+                            <select id="ficha-origem" onchange="atualizarClassesDisponiveis()">
+                                <option value="Plebeu">Plebeu (Povo Comum)</option>
+                                <option value="Nobre">Nobreza (Lorde / Lady)</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Classe / Ofício</label>
+                            <select id="ficha-classe"></select>
+                        </div>
+                    </div>
+
+                    <div class="ficha-row tripartite">
+                        <div class="input-group">
+                            <label>Idade</label>
+                            <input type="number" id="ficha-idade" placeholder="25">
+                        </div>
+                        <div class="input-group">
+                            <label>Gênero</label>
+                            <input type="text" id="ficha-genero" placeholder="Masculino">
+                        </div>
+                        <div class="input-group">
+                            <label>Altura</label>
+                            <input type="text" id="ficha-altura" placeholder="1.80m">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Retrato (link de imagem)</label>
+                        <input type="text" id="ficha-foto" placeholder="Cole o link (URL) de uma imagem">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Tema da Ficha</label>
+                        <select id="ficha-tema">
+                            <option value="theme-classic">📜 Pergaminho Clássico</option>
+                            <option value="theme-dark">🌑 Noite Estelar (Modo Escuro)</option>
+                            <option value="theme-snow">❄️ Inverno (Neve/Stark)</option>
+                            <option value="theme-fire">🔥 Fogo Dragão (Targaryen)</option>
+                            <option value="theme-iron">⚓ Homens de Ferro (Rústico/Metal)</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label>História &amp; Biografia</label>
+                        <textarea id="ficha-sobre" placeholder="Conte a jornada do seu personagem..."></textarea>
+                    </div>
+
+                    <div class="formulario-ficha-botoes">
+                        <button class="btn-secondary" onclick="fecharFormularioFicha()">Cancelar</button>
+                        <button class="btn-main" onclick="salvarFicha()">⚔️ Salvar Ficha</button>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- PÁGINA: MOCHILA -->

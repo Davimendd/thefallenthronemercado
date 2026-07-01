@@ -1164,3 +1164,353 @@ button.carregando {
     pointer-events: none;
     position: relative;
 }
+
+/* =========================================
+   14. SISTEMA DE FICHAS
+   ========================================= */
+.fichas-container {
+    background: rgba(20, 18, 13, 0.6);
+    border-radius: 4px;
+    border: 1px dashed var(--borda);
+    padding: 26px;
+    margin-top: 26px;
+}
+
+.fichas-cabecalho {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+.fichas-cabecalho h2 {
+    margin: 0;
+    text-align: left;
+    font-size: 1.4em;
+    letter-spacing: 2px;
+}
+
+.btn-criar-ficha {
+    background: var(--ouro);
+    color: #1a1305;
+    font-weight: 700;
+    border-color: var(--ouro-claro);
+}
+
+.btn-criar-ficha:hover {
+    background: var(--ouro-claro);
+    color: #1a1305;
+}
+
+.grid-fichas {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.card-ficha {
+    background: var(--fundo-card);
+    border: 1px solid var(--borda);
+    border-radius: 4px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    transition: border-color 0.3s ease, transform 0.3s ease;
+}
+
+.card-ficha:hover {
+    transform: translateY(-3px);
+    border-color: var(--ouro-escuro);
+}
+
+.card-ficha.ficha-ativa {
+    border-color: var(--ouro);
+    box-shadow: 0 0 16px rgba(201, 164, 73, 0.2);
+}
+
+.card-ficha-topo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+}
+
+.avatar-ficha {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--ouro-escuro);
+    flex-shrink: 0;
+}
+
+.card-ficha-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+
+.card-ficha-info strong {
+    font-family: 'Cinzel', serif;
+    color: var(--ouro-claro);
+    font-size: 1.05em;
+}
+
+.card-ficha-classe {
+    font-size: 0.78em;
+    color: var(--texto-fraco);
+}
+
+.selo-ativa {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: var(--ouro);
+    color: #1a1305;
+    font-family: 'Cinzel', serif;
+    font-size: 0.6em;
+    letter-spacing: 1px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 10px;
+}
+
+.barra-status {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.barra-status-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.78em;
+    color: var(--texto-fraco);
+    font-family: 'Cinzel', serif;
+}
+
+.barra-fundo {
+    height: 8px;
+    background: #0d0c0a;
+    border: 1px solid var(--borda);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.barra-preenchimento {
+    height: 100%;
+    transition: width 0.4s ease;
+}
+
+.barra-vida {
+    background: linear-gradient(90deg, #7a2a22, #c0392b);
+}
+
+.card-ficha-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85em;
+    color: var(--texto);
+}
+
+.card-ficha-botoes {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.card-ficha-botoes button {
+    flex: 1;
+    font-size: 0.7em;
+    padding: 8px 10px;
+    min-width: 80px;
+}
+
+/* Formulário modal de criação/edição de ficha */
+#formulario-ficha-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 9500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.formulario-ficha-box {
+    background: linear-gradient(180deg, var(--fundo-card), var(--fundo));
+    border: 1px solid var(--ouro-escuro);
+    border-radius: 4px;
+    padding: 30px;
+    max-width: 560px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+}
+
+.formulario-ficha-box h3 {
+    font-family: 'Cinzel', serif;
+    color: var(--ouro-claro);
+    text-align: center;
+    margin: 0 0 24px;
+    letter-spacing: 1px;
+}
+
+.formulario-ficha-box .input-group {
+    margin-bottom: 14px;
+}
+
+.formulario-ficha-box label {
+    display: block;
+    font-family: 'Cinzel', serif;
+    font-size: 0.75em;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--texto-fraco);
+    margin-bottom: 6px;
+}
+
+.formulario-ficha-box input,
+.formulario-ficha-box select,
+.formulario-ficha-box textarea {
+    width: 100%;
+    padding: 10px;
+    background: #0d0c0a;
+    border: 1px solid var(--borda);
+    color: var(--texto);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1em;
+    border-radius: 2px;
+    box-sizing: border-box;
+}
+
+.formulario-ficha-box textarea {
+    min-height: 90px;
+    resize: vertical;
+}
+
+.formulario-ficha-box input:focus,
+.formulario-ficha-box select:focus,
+.formulario-ficha-box textarea:focus {
+    outline: none;
+    border-color: var(--ouro);
+}
+
+.ficha-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+}
+
+.ficha-row.tripartite {
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+@media (max-width: 560px) {
+    .ficha-row, .ficha-row.tripartite {
+        grid-template-columns: 1fr;
+    }
+}
+
+.formulario-ficha-botoes {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.formulario-ficha-botoes button {
+    flex: 1;
+}
+
+.tag-classe-mural {
+    font-size: 0.6em;
+    color: var(--texto-fraco);
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+/* =========================================
+   15. BOTÕES DE EQUIPAR / USAR / AJUSTE DE VIDA
+   ========================================= */
+.btn-equipar {
+    width: 100%;
+    margin-top: 6px;
+    border-color: var(--ouro-escuro);
+    color: var(--ouro-claro);
+    font-size: 0.72em;
+}
+
+.btn-equipar.equipado {
+    background: rgba(201, 164, 73, 0.15);
+    border-color: var(--ouro);
+    color: var(--ouro);
+}
+
+.btn-equipar:hover {
+    background: var(--ouro);
+    color: #0a0908;
+}
+
+.btn-equipar.equipado:hover {
+    background: rgba(163, 55, 43, 0.15);
+    border-color: #a3372b;
+    color: #e0a89c;
+}
+
+.btn-usar {
+    width: 100%;
+    margin-top: 6px;
+    border-color: #2a5d7d;
+    color: #5db3e0;
+    font-size: 0.72em;
+}
+
+.btn-usar:hover {
+    background: #2a5d7d;
+    color: #fff;
+}
+
+/* Controles de ajuste manual de vida no card de ficha */
+.controles-vida {
+    display: flex;
+    gap: 5px;
+    margin-top: 6px;
+}
+
+.btn-vida-ajuste {
+    flex: 1;
+    padding: 5px;
+    font-size: 0.72em;
+    letter-spacing: 0;
+    border-radius: 2px;
+}
+
+.btn-vida-ajuste.dano {
+    border-color: #7a2a22;
+    color: #e0a89c;
+}
+
+.btn-vida-ajuste.dano:hover {
+    background: #a3372b;
+    color: #fff;
+    box-shadow: none;
+}
+
+.btn-vida-ajuste.cura {
+    border-color: var(--incomum);
+    color: #6fcf86;
+}
+
+.btn-vida-ajuste.cura:hover {
+    background: var(--incomum);
+    color: #fff;
+    box-shadow: none;
+}
