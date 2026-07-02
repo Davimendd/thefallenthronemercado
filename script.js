@@ -615,6 +615,8 @@ function escutarDadosUsuario(uid) {
             atualizarPerfilComFichaAtiva();
             renderizarListaDeFichas();
         }
+    }, (erro) => {
+        console.error("Erro ao observar documento do usuário:", erro.message);
     });
 
     // Observa a subcoleção de fichas dessa conta em tempo real.
@@ -625,6 +627,8 @@ function escutarDadosUsuario(uid) {
         });
         atualizarPerfilComFichaAtiva();
         renderizarListaDeFichas();
+    }, (erro) => {
+        console.error("Erro ao observar subcoleção de fichas:", erro.message);
     });
 }
 
@@ -1272,6 +1276,8 @@ function escutarAvisoGlobal() {
         } else {
             banner.style.display = 'none';
         }
+    }, (erro) => {
+        console.warn("Aviso global indisponível:", erro.message);
     });
 }
 
@@ -1291,49 +1297,62 @@ async function limparInventario(donoUid, fichaId) {
 
 // Carrega todas as fichas de todos os jogadores em tempo real (collection group:
 // busca a subcoleção "fichas" através de TODAS as contas de uma vez).
+// Requer um índice de grupo de coleção no Firestore — se não existir ainda,
+// o mural fica vazio sem quebrar o resto do app.
 function monitorarComunidade() {
-    onSnapshot(collectionGroup(db, "fichas"), (querySnapshot) => {
-        const mural = document.getElementById('lista-comunidade');
-        mural.innerHTML = '';
+    const mural = document.getElementById('lista-comunidade');
 
-        if (querySnapshot.empty) {
-            mural.innerHTML = '<p class="mochila-vazia">Nenhum explorador forjou sua lenda ainda.</p>';
-            return;
-        }
+    try {
+        onSnapshot(collectionGroup(db, "fichas"), (querySnapshot) => {
+            mural.innerHTML = '';
 
-        querySnapshot.forEach((fichaSnap) => {
-            const ficha = fichaSnap.data();
-            const fichaId = fichaSnap.id;
-            // O "dono" da ficha é o documento avô na hierarquia usuarios/{uid}/fichas/{fichaId}
-            const donoUid = fichaSnap.ref.parent.parent.id;
+            if (querySnapshot.empty) {
+                mural.innerHTML = '<p class="mochila-vazia">Nenhum explorador forjou sua lenda ainda.</p>';
+                return;
+            }
 
-            const botoesMestre = (usuarioAtual && usuarioAtual.uid === ADMIN_UID) ? `
-                <div class="controles-admin">
-                    <button class="btn-admin" onclick="ajustarMoedas('${donoUid}', '${fichaId}', 100)">+100</button>
-                    <button class="btn-admin" onclick="ajustarMoedas('${donoUid}', '${fichaId}', -100)">-100</button>
-                    <button class="btn-admin btn-vender" onclick="limparInventario('${donoUid}', '${fichaId}')">💀 Limpar</button>
-                </div>
-            ` : '';
+            querySnapshot.forEach((fichaSnap) => {
+                const ficha = fichaSnap.data();
+                const fichaId = fichaSnap.id;
+                const donoUid = fichaSnap.ref.parent.parent.id;
 
-            const itensHTML = ficha.inventario?.map(i => `<span class="item-tag ${i.raridade}">${i.nome}</span>`).join('') || "Vazia";
-            const vidaAtual = ficha.vidaAtual ?? ficha.vidaMaxima ?? 0;
-            const defesaTotal = calcularDefesaTotal(ficha);
-
-            mural.innerHTML += `
-                <div class="player-card">
-                    <div class="player-card-header">
-                        <img class="avatar-mural" src="${ficha.foto || AVATAR_PADRAO}" alt="Avatar de ${ficha.nome || 'jogador'}">
-                        <h3>${ficha.nome || 'Desconhecido'} <span class="tag-classe-mural">${ficha.classe || ''}</span></h3>
+                const botoesMestre = (usuarioAtual && usuarioAtual.uid === ADMIN_UID) ? `
+                    <div class="controles-admin">
+                        <button class="btn-admin" onclick="ajustarMoedas('${donoUid}', '${fichaId}', 100)">+100</button>
+                        <button class="btn-admin" onclick="ajustarMoedas('${donoUid}', '${fichaId}', -100)">-100</button>
+                        <button class="btn-admin btn-vender" onclick="limparInventario('${donoUid}', '${fichaId}')">💀 Limpar</button>
                     </div>
-                    <div class="player-info">
-                        ❤️ ${vidaAtual}/${ficha.vidaMaxima || 0} · 🛡️ ${defesaTotal} · 💰 ${ficha.moedas || 0} ic's
-                        ${botoesMestre}
+                ` : '';
+
+                const itensHTML = ficha.inventario?.map(i => `<span class="item-tag ${i.raridade}">${i.nome}</span>`).join('') || "Vazia";
+                const vidaAtual = ficha.vidaAtual ?? ficha.vidaMaxima ?? 0;
+                const defesaTotal = calcularDefesaTotal(ficha);
+
+                mural.innerHTML += `
+                    <div class="player-card">
+                        <div class="player-card-header">
+                            <img class="avatar-mural" src="${ficha.foto || AVATAR_PADRAO}" alt="Avatar de ${ficha.nome || 'jogador'}">
+                            <h3>${ficha.nome || 'Desconhecido'} <span class="tag-classe-mural">${ficha.classe || ''}</span></h3>
+                        </div>
+                        <div class="player-info">
+                            ❤️ ${vidaAtual}/${ficha.vidaMaxima || 0} · 🛡️ ${defesaTotal} · 💰 ${ficha.moedas || 0} ic's
+                            ${botoesMestre}
+                        </div>
+                        <div class="player-backpack">${itensHTML}</div>
                     </div>
-                    <div class="player-backpack">${itensHTML}</div>
-                </div>
-            `;
+                `;
+            });
+        }, (erro) => {
+            // O erro mais comum aqui é "permission-denied" por falta de índice de collectionGroup.
+            // O mural fica vazio mas o restante do app continua funcionando normalmente.
+            console.warn("Mural indisponível (verifique o índice de grupo de coleção 'fichas' no Firestore):", erro.message);
+            if (mural) {
+                mural.innerHTML = '<p class="mochila-vazia">O mural está sendo preparado. Crie o índice de grupo de coleção "fichas" no console do Firebase.</p>';
+            }
         });
-    });
+    } catch (erroComunidade) {
+        console.error("Erro ao iniciar listener do mural:", erroComunidade);
+    }
 }
 
 try {
