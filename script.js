@@ -1324,27 +1324,72 @@ function monitorarComunidade() {
                     </div>
                 ` : '';
 
-                const itensHTML = ficha.inventario?.map(i => `<span class="item-tag ${i.raridade}">${i.nome}</span>`).join('') || "Vazia";
                 const vidaAtual = ficha.vidaAtual ?? ficha.vidaMaxima ?? 0;
                 const defesaTotal = calcularDefesaTotal(ficha);
+                const percentualVida = ficha.vidaMaxima > 0
+                    ? Math.round((vidaAtual / ficha.vidaMaxima) * 100)
+                    : 0;
+
+                // Arma e armadura equipadas (para exibição no card do mural)
+                const armaEquipada = (ficha.inventario || []).find(i => i.idUnico === ficha.equipado?.arma);
+                const armaduraEquipada = (ficha.inventario || []).find(i => i.idUnico === ficha.equipado?.armadura);
+
+                const itensHTML = (ficha.inventario || []).length > 0
+                    ? (ficha.inventario).map(i => {
+                        const isEquipado = i.idUnico === ficha.equipado?.arma || i.idUnico === ficha.equipado?.armadura;
+                        return `<span class="item-tag ${i.raridade} ${isEquipado ? 'item-equipado-tag' : ''}">${isEquipado ? '✦ ' : ''}${i.nome}</span>`;
+                    }).join('')
+                    : '<span style="color:var(--texto-fraco);font-size:0.85em;">Mochila vazia</span>';
+
+                // ID seguro para usar no onclick (sem aspas problemáticas)
+                const fichaDataId = `${donoUid}__${fichaId}`;
 
                 mural.innerHTML += `
-                    <div class="player-card">
-                        <div class="player-card-header">
-                            <img class="avatar-mural" src="${ficha.foto || AVATAR_PADRAO}" alt="Avatar de ${ficha.nome || 'jogador'}">
-                            <h3>${ficha.nome || 'Desconhecido'} <span class="tag-classe-mural">${ficha.classe || ''}</span></h3>
+                    <div class="player-card-novo">
+                        <div class="player-card-banner" style="background-image: url('${ficha.foto || ''}')">
+                            <div class="player-card-banner-overlay"></div>
+                            <img class="player-card-avatar" src="${ficha.foto || AVATAR_PADRAO}" alt="${ficha.nome || 'jogador'}">
                         </div>
-                        <div class="player-info">
-                            ❤️ ${vidaAtual}/${ficha.vidaMaxima || 0} · 🛡️ ${defesaTotal} · 💰 ${ficha.moedas || 0} ic's
-                            ${botoesMestre}
+
+                        <div class="player-card-corpo">
+                            <div class="player-card-titulo">
+                                <div>
+                                    <h3>${ficha.nome || 'Desconhecido'}</h3>
+                                    <span class="player-card-subtitulo">${ficha.classe || ''} · ${ficha.casa || ''}</span>
+                                </div>
+                                ${botoesMestre}
+                            </div>
+
+                            <div class="player-card-barra-vida">
+                                <div class="barra-status-label">
+                                    <span>❤️ Vida</span>
+                                    <span>${vidaAtual} / ${ficha.vidaMaxima || 0}</span>
+                                </div>
+                                <div class="barra-fundo">
+                                    <div class="barra-preenchimento barra-vida" style="width:${percentualVida}%"></div>
+                                </div>
+                            </div>
+
+                            <div class="player-card-stats">
+                                <div class="stat-item">🛡️ <strong>${defesaTotal}</strong><span>Defesa</span></div>
+                                <div class="stat-item">💰 <strong>${ficha.moedas || 0}</strong><span>ic's</span></div>
+                                ${armaEquipada ? `<div class="stat-item">⚔️ <strong title="${armaEquipada.efeito}">${armaEquipada.nome.split(' ').slice(0,2).join(' ')}</strong><span>Equipada</span></div>` : ''}
+                            </div>
+
+                            <div class="player-card-mochila">${itensHTML}</div>
+
+                            <button class="btn-ver-ficha" onclick="abrirModalFicha('${fichaDataId}')">
+                                📜 Ver Ficha Completa
+                            </button>
                         </div>
-                        <div class="player-backpack">${itensHTML}</div>
                     </div>
                 `;
+
+                // Guarda os dados da ficha num mapa global para o modal acessar depois
+                _fichasMuralCache = _fichasMuralCache || {};
+                _fichasMuralCache[fichaDataId] = ficha;
             });
         }, (erro) => {
-            // O erro mais comum aqui é "permission-denied" por falta de índice de collectionGroup.
-            // O mural fica vazio mas o restante do app continua funcionando normalmente.
             console.warn("Mural indisponível (verifique o índice de grupo de coleção 'fichas' no Firestore):", erro.message);
             if (mural) {
                 mural.innerHTML = '<p class="mochila-vazia">O mural está sendo preparado. Crie o índice de grupo de coleção "fichas" no console do Firebase.</p>';
@@ -1353,6 +1398,128 @@ function monitorarComunidade() {
     } catch (erroComunidade) {
         console.error("Erro ao iniciar listener do mural:", erroComunidade);
     }
+}
+
+// Cache local das fichas exibidas no mural, para o modal acessar sem nova query
+let _fichasMuralCache = {};
+
+// Abre o modal de visualização completa de uma ficha
+function abrirModalFicha(fichaDataId) {
+    const ficha = _fichasMuralCache[fichaDataId];
+    if (!ficha) return;
+
+    const vidaAtual = ficha.vidaAtual ?? ficha.vidaMaxima ?? 0;
+    const defesaTotal = calcularDefesaTotal(ficha);
+    const percentualVida = ficha.vidaMaxima > 0
+        ? Math.round((vidaAtual / ficha.vidaMaxima) * 100)
+        : 0;
+
+    const attr = atributosPorClasse[ficha.classe] || {};
+    const hab = habilidadesPorClasse[ficha.classe] || null;
+
+    const armaEquipada = (ficha.inventario || []).find(i => i.idUnico === ficha.equipado?.arma);
+    const armaduraEquipada = (ficha.inventario || []).find(i => i.idUnico === ficha.equipado?.armadura);
+
+    const itensInventario = (ficha.inventario || []).map(i => {
+        const isArma = i.idUnico === ficha.equipado?.arma;
+        const isArmadura = i.idUnico === ficha.equipado?.armadura;
+        const badge = isArma ? '⚔️' : isArmadura ? '🛡️' : '';
+        return `<div class="modal-item-tag ${i.raridade}">${badge} ${i.nome}<span>${i.efeito}</span></div>`;
+    }).join('') || '<p style="color:var(--texto-fraco);font-style:italic;">Mochila vazia</p>';
+
+    const tema = ficha.tema || 'theme-classic';
+
+    document.getElementById('modal-ficha-conteudo').innerHTML = `
+        <div class="modal-ficha-inner ${tema}">
+            <button class="modal-fechar" onclick="fecharModalFicha()">✕</button>
+
+            <!-- Cabeçalho da ficha -->
+            <div class="modal-ficha-header">
+                <img class="modal-avatar" src="${ficha.foto || AVATAR_PADRAO}" alt="${ficha.nome}">
+                <div class="modal-ficha-titulo">
+                    <h2>${ficha.nome || 'Sem Nome'}</h2>
+                    <p>${ficha.classe || ''} · ${ficha.casa || ''}</p>
+                    <p class="modal-sub">${ficha.origem || ''} · ${ficha.idade ? ficha.idade + ' anos' : ''} ${ficha.genero ? '· ' + ficha.genero : ''} ${ficha.altura ? '· ' + ficha.altura : ''}</p>
+                </div>
+            </div>
+
+            <!-- Status: Vida e Defesa -->
+            <div class="modal-section">
+                <div class="modal-status-grid">
+                    <div class="modal-status-bloco">
+                        <div class="barra-status-label">
+                            <span>❤️ Vida</span>
+                            <span>${vidaAtual} / ${ficha.vidaMaxima || 0}</span>
+                        </div>
+                        <div class="barra-fundo">
+                            <div class="barra-preenchimento barra-vida" style="width:${percentualVida}%"></div>
+                        </div>
+                    </div>
+                    <div class="modal-stat-box">🛡️ <strong>${defesaTotal}</strong> Defesa</div>
+                    <div class="modal-stat-box">💰 <strong>${ficha.moedas || 0}</strong> ic's</div>
+                </div>
+            </div>
+
+            <!-- Atributos -->
+            <div class="modal-section">
+                <h4 class="modal-section-title">Atributos</h4>
+                <div class="modal-atributos">
+                    <div class="attr-box"><span>FOR</span><strong>${attr.for ?? 0}</strong></div>
+                    <div class="attr-box"><span>AGI</span><strong>${attr.agi ?? 0}</strong></div>
+                    <div class="attr-box"><span>VIG</span><strong>${attr.vig ?? 0}</strong></div>
+                    <div class="attr-box"><span>INT</span><strong>${attr.int ?? 0}</strong></div>
+                    <div class="attr-box"><span>CAR</span><strong>${attr.car ?? 0}</strong></div>
+                </div>
+            </div>
+
+            <!-- Habilidade especial -->
+            ${hab ? `
+            <div class="modal-section modal-habilidade">
+                <h4 class="modal-section-title">Habilidade Especial</h4>
+                <strong>${hab.nome}</strong>
+                <p>${hab.desc}</p>
+                <em>${hab.efeito}</em>
+                <ul>${hab.tabela}</ul>
+            </div>
+            ` : ''}
+
+            <!-- Equipamentos -->
+            ${(armaEquipada || armaduraEquipada) ? `
+            <div class="modal-section">
+                <h4 class="modal-section-title">Equipamentos Ativos</h4>
+                <div class="modal-equipamentos">
+                    ${armaEquipada ? `<div class="modal-equip-box"><span>⚔️ Arma</span><strong>${armaEquipada.nome}</strong><em>${armaEquipada.efeito}</em></div>` : ''}
+                    ${armaduraEquipada ? `<div class="modal-equip-box"><span>🛡️ Armadura</span><strong>${armaduraEquipada.nome}</strong><em>${armaduraEquipada.efeito}</em></div>` : ''}
+                </div>
+            </div>
+            ` : ''}
+
+            <!-- Inventário completo -->
+            <div class="modal-section">
+                <h4 class="modal-section-title">Mochila (${(ficha.inventario || []).length} itens)</h4>
+                <div class="modal-inventario">${itensInventario}</div>
+            </div>
+
+            <!-- Biografia -->
+            ${ficha.sobre ? `
+            <div class="modal-section">
+                <h4 class="modal-section-title">História & Biografia</h4>
+                <p class="modal-biografia">${ficha.sobre}</p>
+            </div>
+            ` : ''}
+        </div>
+    `;
+
+    document.getElementById('modal-ficha-overlay').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function fecharModalFicha(event) {
+    // Fecha apenas se clicou no overlay escuro (não no conteúdo interno)
+    if (event && event.target !== document.getElementById('modal-ficha-overlay') && event.type !== 'click') return;
+    if (event && event.target.closest('.modal-ficha-box') && event.target !== document.getElementById('modal-ficha-overlay')) return;
+    document.getElementById('modal-ficha-overlay').style.display = 'none';
+    document.body.style.overflow = '';
 }
 
 try {
@@ -1390,3 +1557,5 @@ window.ajustarVidaDeFicha = ajustarVidaDeFicha;
 window.equiparItem = equiparItem;
 window.desequiparItem = desequiparItem;
 window.usarItem = usarItem;
+window.abrirModalFicha = abrirModalFicha;
+window.fecharModalFicha = fecharModalFicha;

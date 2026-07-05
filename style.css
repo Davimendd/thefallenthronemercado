@@ -1514,3 +1514,469 @@ button.carregando {
     color: #fff;
     box-shadow: none;
 }
+
+/* =========================================
+   16. MURAL REDESENHADO (player-card-novo)
+   ========================================= */
+.grid-comunidade {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 22px;
+    margin-top: 20px;
+}
+
+.player-card-novo {
+    background: var(--fundo-card);
+    border: 1px solid var(--borda);
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.player-card-novo:hover {
+    transform: translateY(-4px);
+    border-color: var(--ouro-escuro);
+}
+
+.player-card-banner {
+    position: relative;
+    height: 100px;
+    background-size: cover;
+    background-position: center top;
+    background-color: #0d0b08;
+    display: flex;
+    align-items: flex-end;
+    padding: 0 14px 0;
+}
+
+.player-card-banner-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(10,9,8,0.9) 100%);
+}
+
+.player-card-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--ouro-escuro);
+    position: relative;
+    z-index: 1;
+    margin-bottom: -30px;
+    flex-shrink: 0;
+}
+
+.player-card-corpo {
+    padding: 36px 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+}
+
+.player-card-titulo {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.player-card-titulo h3 {
+    font-family: 'Cinzel', serif;
+    color: var(--ouro-claro);
+    font-size: 1.1em;
+    margin: 0;
+    border: none;
+    padding: 0;
+}
+
+.player-card-subtitulo {
+    font-size: 0.8em;
+    color: var(--texto-fraco);
+    display: block;
+    margin-top: 3px;
+}
+
+.player-card-barra-vida {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.player-card-stats {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(0,0,0,0.25);
+    border: 1px solid var(--borda);
+    border-radius: 3px;
+    padding: 6px 10px;
+    font-size: 0.82em;
+    min-width: 60px;
+}
+
+.stat-item strong {
+    font-family: 'Cinzel', serif;
+    color: var(--ouro-claro);
+    font-size: 1em;
+}
+
+.stat-item span {
+    font-size: 0.7em;
+    color: var(--texto-fraco);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-top: 2px;
+}
+
+.player-card-mochila {
+    background: rgba(0,0,0,0.2);
+    border-radius: 3px;
+    padding: 8px;
+    min-height: 36px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+}
+
+.item-equipado-tag {
+    border-color: var(--ouro) !important;
+    color: var(--ouro-claro) !important;
+    box-shadow: 0 0 6px rgba(201,164,73,0.3);
+}
+
+.btn-ver-ficha {
+    width: 100%;
+    margin-top: 4px;
+    border-color: var(--ouro-escuro);
+    color: var(--ouro-claro);
+    font-size: 0.78em;
+    letter-spacing: 1px;
+}
+
+.btn-ver-ficha:hover {
+    background: var(--ouro);
+    color: #0a0908;
+}
+
+/* =========================================
+   17. MODAL DE FICHA COMPLETA
+   ========================================= */
+#modal-ficha-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.78);
+    z-index: 10500;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 30px 16px;
+    overflow-y: auto;
+}
+
+.modal-ficha-box {
+    width: 100%;
+    max-width: 620px;
+    position: relative;
+}
+
+.modal-fechar {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border-radius: 50%;
+    font-size: 1em;
+    z-index: 2;
+    background: rgba(0,0,0,0.5);
+    border-color: var(--borda);
+    color: var(--texto-fraco);
+}
+
+.modal-fechar:hover {
+    background: #a3372b;
+    border-color: #a3372b;
+    color: #fff;
+    box-shadow: none;
+}
+
+/* Base do inner: background muda conforme o tema */
+.modal-ficha-inner {
+    border-radius: 4px;
+    padding: 32px 28px;
+    font-family: 'Cormorant Garamond', serif;
+    color: #2a1a0a;
+    position: relative;
+    overflow: hidden;
+}
+
+/* ===== TEMAS ===== */
+.modal-ficha-inner.theme-classic {
+    background: #f5e9c9 url('https://www.transparenttextures.com/patterns/old-map.png');
+    border: 3px solid #8b6914;
+    color: #2a1a0a;
+}
+.modal-ficha-inner.theme-classic h2,
+.modal-ficha-inner.theme-classic h4 { color: #5a3a0a; }
+.modal-ficha-inner.theme-classic .modal-section { border-color: #c8a96e; }
+
+.modal-ficha-inner.theme-dark {
+    background: linear-gradient(180deg, #0d1020, #090d18);
+    border: 2px solid #3a4060;
+    color: #c8d0e8;
+}
+.modal-ficha-inner.theme-dark h2 { color: #a0aaff; }
+.modal-ficha-inner.theme-dark h4 { color: #7080cc; }
+.modal-ficha-inner.theme-dark .modal-section { border-color: #2a3050; }
+.modal-ficha-inner.theme-dark .attr-box { background: rgba(60,70,120,0.3); border-color: #3a4060; }
+
+.modal-ficha-inner.theme-snow {
+    background: linear-gradient(180deg, #e8f0f8, #d0dce8);
+    border: 2px solid #7090b0;
+    color: #1a2a3a;
+}
+.modal-ficha-inner.theme-snow h2 { color: #1a3a5a; }
+.modal-ficha-inner.theme-snow h4 { color: #2a5a7a; }
+.modal-ficha-inner.theme-snow .modal-section { border-color: #90aac0; }
+.modal-ficha-inner.theme-snow .attr-box { background: rgba(100,140,180,0.15); border-color: #7090b0; }
+
+.modal-ficha-inner.theme-fire {
+    background: linear-gradient(180deg, #1a0800, #280e00);
+    border: 2px solid #c04000;
+    color: #f0c060;
+}
+.modal-ficha-inner.theme-fire h2 { color: #ff8030; }
+.modal-ficha-inner.theme-fire h4 { color: #d06020; }
+.modal-ficha-inner.theme-fire .modal-section { border-color: #602000; }
+.modal-ficha-inner.theme-fire .attr-box { background: rgba(120,40,0,0.3); border-color: #802800; }
+
+.modal-ficha-inner.theme-iron {
+    background: linear-gradient(180deg, #1a1814, #100e0c);
+    border: 2px solid #606060;
+    color: #c0b8a8;
+}
+.modal-ficha-inner.theme-iron h2 { color: #d0c8a0; }
+.modal-ficha-inner.theme-iron h4 { color: #9090a0; }
+.modal-ficha-inner.theme-iron .modal-section { border-color: #404040; }
+.modal-ficha-inner.theme-iron .attr-box { background: rgba(80,80,80,0.2); border-color: #505050; }
+
+/* Seções internas do modal */
+.modal-ficha-header {
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+    margin-bottom: 22px;
+}
+
+.modal-avatar {
+    width: 90px;
+    height: 90px;
+    border-radius: 4px;
+    object-fit: cover;
+    border: 2px solid currentColor;
+    flex-shrink: 0;
+    opacity: 0.9;
+}
+
+.modal-ficha-titulo h2 {
+    font-family: 'Cinzel', serif;
+    font-size: 1.5em;
+    margin: 0 0 4px;
+}
+
+.modal-ficha-titulo p {
+    margin: 2px 0;
+    font-size: 0.95em;
+    opacity: 0.8;
+}
+
+.modal-sub {
+    font-size: 0.82em !important;
+    opacity: 0.6 !important;
+}
+
+.modal-section {
+    border-top: 1px solid rgba(0,0,0,0.2);
+    padding-top: 14px;
+    margin-top: 4px;
+}
+
+.modal-section-title {
+    font-family: 'Cinzel', serif;
+    font-size: 0.78em;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: 0.7;
+    margin: 0 0 12px;
+}
+
+.modal-status-grid {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.modal-status-bloco {
+    flex: 1;
+    min-width: 180px;
+}
+
+.modal-stat-box {
+    background: rgba(0,0,0,0.12);
+    border: 1px solid rgba(0,0,0,0.15);
+    border-radius: 3px;
+    padding: 8px 14px;
+    font-size: 0.9em;
+    white-space: nowrap;
+}
+
+.modal-stat-box strong {
+    font-family: 'Cinzel', serif;
+    font-size: 1.1em;
+    margin: 0 4px;
+}
+
+.modal-atributos {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.attr-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(0,0,0,0.1);
+    border: 1px solid rgba(0,0,0,0.15);
+    border-radius: 3px;
+    padding: 8px 14px;
+    min-width: 56px;
+}
+
+.attr-box span {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65em;
+    letter-spacing: 1px;
+    opacity: 0.6;
+    text-transform: uppercase;
+}
+
+.attr-box strong {
+    font-family: 'Cinzel', serif;
+    font-size: 1.4em;
+}
+
+.modal-habilidade strong {
+    font-family: 'Cinzel', serif;
+    font-size: 1.05em;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.modal-habilidade p {
+    margin: 4px 0;
+    font-size: 0.95em;
+    opacity: 0.85;
+}
+
+.modal-habilidade em {
+    font-size: 0.88em;
+    opacity: 0.7;
+    display: block;
+    margin: 4px 0;
+}
+
+.modal-habilidade ul {
+    margin: 8px 0 0;
+    padding-left: 18px;
+    font-size: 0.88em;
+    opacity: 0.85;
+}
+
+.modal-habilidade ul li {
+    margin-bottom: 4px;
+}
+
+.modal-equipamentos {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.modal-equip-box {
+    flex: 1;
+    min-width: 160px;
+    background: rgba(0,0,0,0.1);
+    border: 1px solid rgba(0,0,0,0.15);
+    border-radius: 3px;
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.modal-equip-box span {
+    font-size: 0.72em;
+    opacity: 0.6;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.modal-equip-box strong {
+    font-family: 'Cinzel', serif;
+    font-size: 0.95em;
+}
+
+.modal-equip-box em {
+    font-size: 0.82em;
+    opacity: 0.7;
+}
+
+.modal-inventario {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.modal-item-tag {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 7px 12px;
+    border-radius: 3px;
+    background: rgba(0,0,0,0.1);
+    border-left: 3px solid;
+    font-size: 0.9em;
+}
+
+.modal-item-tag span {
+    font-size: 0.78em;
+    opacity: 0.65;
+    font-style: italic;
+}
+
+.modal-item-tag.comum { border-color: #8a8a8a; }
+.modal-item-tag.incomum { border-color: #4a8f5c; }
+.modal-item-tag.raro { border-color: #3d7ea6; }
+.modal-item-tag.epico { border-color: #8e4fc4; }
+.modal-item-tag.lendario { border-color: #c9a449; }
+
+.modal-biografia {
+    font-size: 1em;
+    line-height: 1.7;
+    opacity: 0.85;
+    white-space: pre-wrap;
+}
