@@ -96,8 +96,12 @@
                   </div>
 
                   <div id="input-troca-foto" style="display: none; margin-top: 10px;">
-                      <input type="text" id="nova-foto-input" placeholder="Cole o link (URL) de uma imagem">
-                      <button onclick="salvarNovaFoto()">Confirmar</button>
+                      <label for="input-arquivo-foto-perfil" class="btn-file-label-perfil">
+                          📷 Escolher imagem
+                      </label>
+                      <input type="file" id="input-arquivo-foto-perfil" accept="image/*"
+                             style="display:none" onchange="onArquivoFotoPerfilSelecionado(this)">
+                      <span id="preview-nome-foto-perfil" class="file-name-preview-mini"></span>
                   </div>
               </div>
             </div>
@@ -206,8 +210,18 @@
                     </div>
 
                     <div class="input-group">
-                        <label>Retrato (link de imagem)</label>
-                        <input type="text" id="ficha-foto" placeholder="Cole o link (URL) de uma imagem">
+                        <label>Retrato do Personagem</label>
+                        <div class="file-input-ficha">
+                            <label for="input-arquivo-foto-ficha" class="btn-file-label-ficha">
+                                📷 Escolher imagem
+                            </label>
+                            <input type="file" id="input-arquivo-foto-ficha" accept="image/*"
+                                   style="display:none" onchange="onArquivoFotoFichaSelecionado(this)">
+                            <span id="preview-nome-foto-ficha" class="file-name-preview-mini">Nenhuma imagem selecionada</span>
+                        </div>
+                        <img id="preview-img-foto-ficha" src="" alt="" style="display:none; width:80px; height:80px; border-radius:50%; object-fit:cover; margin-top:8px; border:2px solid var(--ouro-escuro);">
+                        <!-- Guarda o base64 resultante da compressão -->
+                        <input type="hidden" id="ficha-foto">
                     </div>
 
                     <div class="input-group">

@@ -569,36 +569,114 @@ async function salvarNovoNome() {
 }
 
 // Avatar padrão para quem ainda não definiu uma foto de perfil
-function mostrarTrocaFoto() {
-    const div = document.getElementById('input-troca-foto');
-    div.style.display = div.style.display === 'none' ? 'block' : 'none';
+// =========================================
+// SISTEMA DE UPLOAD DE IMAGEM (Base64 comprimido)
+// Redimensiona qualquer imagem para no máximo MAX_IMG_PX × MAX_IMG_PX
+// antes de salvar, mantendo o resultado em ~30-80KB.
+// =========================================
+const MAX_IMG_PX = 400;
+const IMG_QUALITY = 0.82; // 0-1, qualidade JPEG
+
+function comprimirImagem(file) {
+    return new Promise((resolve, reject) => {
+        if (!file || !file.type.startsWith('image/')) {
+            reject(new Error('Arquivo não é uma imagem.'));
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error('Erro ao ler o arquivo.'));
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onerror = () => reject(new Error('Não foi possível carregar a imagem.'));
+            img.onload = () => {
+                // Calcula as dimensões mantendo proporção
+                let { width, height } = img;
+                if (width > MAX_IMG_PX || height > MAX_IMG_PX) {
+                    if (width > height) {
+                        height = Math.round((height / width) * MAX_IMG_PX);
+                        width = MAX_IMG_PX;
+                    } else {
+                        width = Math.round((width / height) * MAX_IMG_PX);
+                        height = MAX_IMG_PX;
+                    }
+                }
+
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Converte para JPEG comprimido
+                const base64 = canvas.toDataURL('image/jpeg', IMG_QUALITY);
+                resolve(base64);
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
 }
 
-async function salvarNovaFoto() {
-    const novaFoto = document.getElementById('nova-foto-input').value.trim();
-    if (!novaFoto) return mostrarToast('Cole o link de uma imagem válida.', 'erro', 'Link inválido');
-    if (!fichaAtivaId) return mostrarToast('Nenhuma ficha ativa selecionada.', 'erro', 'Erro');
+// Chamado quando o usuário seleciona um arquivo no input de foto do PERFIL
+async function onArquivoFotoPerfilSelecionado(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const preview = document.getElementById('preview-nome-foto-perfil');
+    if (preview) preview.innerText = 'Comprimindo...';
 
     try {
-        await validarUrlDeImagem(novaFoto);
+        const base64 = await comprimirImagem(file);
 
-        await updateDoc(doc(db, "usuarios", usuarioAtual.uid, "fichas", fichaAtivaId), { foto: novaFoto });
+        // Salva imediatamente na ficha ativa
+        if (!fichaAtivaId) {
+            mostrarToast('Nenhuma ficha ativa selecionada.', 'erro', 'Erro');
+            return;
+        }
 
+        await updateDoc(doc(db, "usuarios", usuarioAtual.uid, "fichas", fichaAtivaId), { foto: base64 });
+
+        if (preview) preview.innerText = '✓ ' + file.name;
         document.getElementById('input-troca-foto').style.display = 'none';
-        document.getElementById('nova-foto-input').value = '';
         mostrarToast('Seu retrato foi atualizado no reino.', 'sucesso', 'Foto alterada');
     } catch (error) {
-        mostrarToast('Esse link não parece ser de uma imagem válida.', 'erro', 'Erro na imagem');
+        mostrarToast('Não foi possível processar a imagem.', 'erro', 'Erro');
+        if (preview) preview.innerText = 'Erro ao processar';
+        console.error(error);
     }
 }
 
-function validarUrlDeImagem(url) {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(true);
-        img.onerror = () => reject(new Error('imagem inválida'));
-        img.src = url;
-    });
+// Chamado quando o usuário seleciona um arquivo no input de foto da FICHA (formulário)
+async function onArquivoFotoFichaSelecionado(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const preview = document.getElementById('preview-nome-foto-ficha');
+    const previewImg = document.getElementById('preview-img-foto-ficha');
+    if (preview) preview.innerText = 'Comprimindo...';
+
+    try {
+        const base64 = await comprimirImagem(file);
+
+        // Guarda no campo hidden para ser lido por salvarFicha()
+        document.getElementById('ficha-foto').value = base64;
+
+        if (preview) preview.innerText = '✓ ' + file.name;
+        if (previewImg) {
+            previewImg.src = base64;
+            previewImg.style.display = 'block';
+        }
+    } catch (error) {
+        mostrarToast('Não foi possível processar a imagem.', 'erro', 'Erro');
+        if (preview) preview.innerText = 'Erro ao processar';
+        console.error(error);
+    }
+}
+
+function mostrarTrocaFoto() {
+    const div = document.getElementById('input-troca-foto');
+    div.style.display = div.style.display === 'none' ? 'block' : 'none';
 }
 
 // Estado em memória: lista de fichas da conta logada e qual está ativa.
@@ -696,6 +774,18 @@ function abrirFormularioFicha(fichaIdParaEditar) {
         document.getElementById('ficha-foto').value = ficha.foto || '';
         document.getElementById('ficha-tema').value = ficha.tema || 'theme-classic';
         document.getElementById('ficha-sobre').value = ficha.sobre || '';
+
+        // Mostra preview da foto atual ao editar
+        const previewImg = document.getElementById('preview-img-foto-ficha');
+        const previewNome = document.getElementById('preview-nome-foto-ficha');
+        if (ficha.foto) {
+            previewImg.src = ficha.foto;
+            previewImg.style.display = 'block';
+            if (previewNome) previewNome.innerText = '✓ Foto atual';
+        } else {
+            previewImg.style.display = 'none';
+            if (previewNome) previewNome.innerText = 'Nenhuma imagem selecionada';
+        }
     } else {
         document.getElementById('formulario-ficha-titulo').innerText = 'Criar Novo Personagem';
         delete document.getElementById('formulario-ficha-overlay').dataset.editandoId;
@@ -710,6 +800,14 @@ function abrirFormularioFicha(fichaIdParaEditar) {
         document.getElementById('ficha-foto').value = '';
         document.getElementById('ficha-tema').value = 'theme-classic';
         document.getElementById('ficha-sobre').value = '';
+
+        // Limpa preview ao criar ficha nova
+        const previewImg = document.getElementById('preview-img-foto-ficha');
+        const previewNome = document.getElementById('preview-nome-foto-ficha');
+        if (previewImg) previewImg.style.display = 'none';
+        if (previewNome) previewNome.innerText = 'Nenhuma imagem selecionada';
+        const inputArquivo = document.getElementById('input-arquivo-foto-ficha');
+        if (inputArquivo) inputArquivo.value = '';
     }
 }
 
@@ -1538,7 +1636,8 @@ window.venderItem = venderItemNoFirebase;   // Corrigido
 window.mostrarTrocaNome = mostrarTrocaNome;
 window.salvarNovoNome = salvarNovoNome;
 window.mostrarTrocaFoto = mostrarTrocaFoto;
-window.salvarNovaFoto = salvarNovaFoto;
+window.onArquivoFotoPerfilSelecionado = onArquivoFotoPerfilSelecionado;
+window.onArquivoFotoFichaSelecionado = onArquivoFotoFichaSelecionado;
 window.alternarMenuConta = alternarMenuConta;
 window.mostrarPagina = mostrarPagina;
 window.trocarDeConta = trocarDeConta;

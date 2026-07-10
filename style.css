@@ -1980,3 +1980,64 @@ button.carregando {
     opacity: 0.85;
     white-space: pre-wrap;
 }
+
+/* =========================================
+   18. UPLOAD DE IMAGEM (file picker)
+   ========================================= */
+.btn-file-label-perfil {
+    display: inline-block;
+    padding: 7px 14px;
+    background: transparent;
+    color: var(--ouro-claro);
+    border: 1px solid var(--ouro-escuro);
+    border-radius: 2px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.72em;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: 0.25s;
+}
+
+.btn-file-label-perfil:hover {
+    background: var(--ouro);
+    color: #0a0908;
+}
+
+.file-name-preview-mini {
+    display: block;
+    font-size: 0.78em;
+    color: var(--texto-fraco);
+    margin-top: 6px;
+    font-style: italic;
+    max-width: 240px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-input-ficha {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.btn-file-label-ficha {
+    display: inline-block;
+    padding: 10px 16px;
+    background: transparent;
+    color: var(--texto);
+    border: 1px solid var(--borda);
+    border-radius: 2px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1em;
+    cursor: pointer;
+    transition: 0.25s;
+    white-space: nowrap;
+}
+
+.btn-file-label-ficha:hover {
+    border-color: var(--ouro);
+    color: var(--ouro-claro);
+}
