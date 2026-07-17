@@ -361,11 +361,18 @@ header {
         repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.15) 0px, rgba(0, 0, 0, 0.15) 2px, transparent 2px, transparent 8px);
 }
 
-.brasao {
-    width: 72px;
-    height: 84px;
-    margin: 0 auto 14px;
+.brasao-trono {
+    width: 140px;
+    height: 140px;
+    object-fit: contain;
+    margin: 0 auto 8px;
     display: block;
+    filter: drop-shadow(0 0 18px rgba(201, 164, 73, 0.35));
+    transition: filter 0.4s ease;
+}
+
+.brasao-trono:hover {
+    filter: drop-shadow(0 0 30px rgba(201, 164, 73, 0.6));
 }
 
 header .eyebrow {
