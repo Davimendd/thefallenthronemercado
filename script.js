@@ -1658,3 +1658,31 @@ window.desequiparItem = desequiparItem;
 window.usarItem = usarItem;
 window.abrirModalFicha = abrirModalFicha;
 window.fecharModalFicha = fecharModalFicha;
+// =========================================
+// SLIDESHOW DE FUNDO
+// Alterna entre as 8 imagens de fundo a cada 8 segundos
+// com transição suave de fade (2s definida no CSS).
+// =========================================
+(function iniciarSlideshow() {
+    const slides = document.querySelectorAll('.bg-slide');
+    if (!slides.length) return;
+
+    let atual = 0;
+
+    // Ativa a primeira imediatamente
+    slides[0].classList.add('ativa');
+
+    // Pré-carrega todas as imagens em background para evitar
+    // "piscada" na primeira vez que cada slide aparece
+    slides.forEach(slide => {
+        const url = slide.style.backgroundImage.replace(/url\(['"]?|['"]?\)/g, '');
+        const img = new Image();
+        img.src = url;
+    });
+
+    setInterval(() => {
+        slides[atual].classList.remove('ativa');
+        atual = (atual + 1) % slides.length;
+        slides[atual].classList.add('ativa');
+    }, 8000); // troca a cada 8 segundos
+})();

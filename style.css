@@ -2048,3 +2048,57 @@ button.carregando {
     border-color: var(--ouro);
     color: var(--ouro-claro);
 }
+
+/* =========================================
+   19. SLIDESHOW DE FUNDO
+   ========================================= */
+#bg-slideshow {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.bg-slide {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    opacity: 0;
+    transition: opacity 2s ease-in-out;
+}
+
+.bg-slide.ativa {
+    opacity: 1;
+}
+
+/* Overlay escuro sobre todas as slides */
+#bg-slideshow::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(5, 4, 3, 0.65);
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* Garante que o conteúdo do site fica acima do slideshow */
+#app-wrapper,
+header,
+nav,
+main,
+section,
+.pagina-conteudo,
+#toast-container,
+#confirm-overlay,
+#conta-flutuante,
+#botao-mochila-flutuante,
+#auth-overlay,
+#modal-ficha-overlay,
+#formulario-ficha-overlay,
+#painel-mestre,
+#banner-aviso {
+    position: relative;
+    z-index: 1;
+}
