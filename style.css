@@ -40,6 +40,8 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
+    position: relative;
+    z-index: 2;
 }
 
 hr {
@@ -2089,16 +2091,35 @@ header,
 nav,
 main,
 section,
-.pagina-conteudo,
-#toast-container,
-#confirm-overlay,
-#conta-flutuante,
-#botao-mochila-flutuante,
-#auth-overlay,
-#modal-ficha-overlay,
-#formulario-ficha-overlay,
-#painel-mestre,
-#banner-aviso {
+.pagina-conteudo {
     position: relative;
     z-index: 1;
+}
+
+/* Elementos com position:fixed precisam de z-index alto
+   mas NÃO podem ter position sobrescrito (senão perdem o fixed) */
+#toast-container,
+#confirm-overlay,
+#auth-overlay,
+#modal-ficha-overlay,
+#formulario-ficha-overlay {
+    z-index: 10000;
+}
+
+#conta-flutuante {
+    z-index: 9000;
+}
+
+#botao-mochila-flutuante {
+    z-index: 9000;
+}
+
+#painel-mestre {
+    position: relative;
+    z-index: 2;
+}
+
+#banner-aviso,
+#banner-global {
+    z-index: 9500;
 }
