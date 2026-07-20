@@ -67,6 +67,15 @@ function mostrarConfirmacao(mensagem) {
 // Fica no topo de propósito: não depende do Firebase, então funciona
 // mesmo antes do login terminar de carregar.
 // =========================================
+
+// Estado da busca — declarado aqui para estar disponível em mostrarPagina
+let _paginaAtivaBusca = 'vitrine';
+const _filtros = {
+    vitrine: { raridade: 'todos', tipo: 'todos', preco: 'todos' },
+    mochila: { raridade: 'todos', estado: 'todos' },
+    mural:   { casa: 'todos', classe: 'todos', riqueza: 'todos' }
+};
+
 function mostrarPagina(nomePagina) {
     const paginas = ['vitrine', 'fichas', 'mochila', 'mural'];
 
@@ -77,6 +86,214 @@ function mostrarPagina(nomePagina) {
     document.querySelectorAll('.pagina-tab').forEach((tab, i) => {
         tab.classList.toggle('ativa', paginas[i] === nomePagina);
     });
+
+    // Mostra/oculta o painel de busca e os filtros corretos para cada aba
+    const painelBusca = document.getElementById('painel-busca');
+    const filtrosVitrine = document.getElementById('filtros-vitrine');
+    const filtrosMochila = document.getElementById('filtros-mochila');
+    const filtrosMural = document.getElementById('filtros-mural');
+
+    // Oculta o painel de busca na aba "Minhas Fichas" (não faz sentido buscar fichas próprias com lista pequena)
+    painelBusca.style.display = (nomePagina === 'fichas') ? 'none' : 'block';
+
+    if (filtrosVitrine) filtrosVitrine.style.display = (nomePagina === 'vitrine') ? 'flex' : 'none';
+    if (filtrosMochila) filtrosMochila.style.display = (nomePagina === 'mochila') ? 'flex' : 'none';
+    if (filtrosMural) filtrosMural.style.display = (nomePagina === 'mural') ? 'flex' : 'none';
+
+    // Atualiza placeholder da busca conforme contexto
+    const inputBusca = document.getElementById('busca-texto');
+    if (inputBusca) {
+        const placeholders = {
+            vitrine: 'Buscar itens no mercado...',
+            mochila: 'Buscar na sua mochila...',
+            mural: 'Buscar por personagem, casa ou classe...',
+            fichas: ''
+        };
+        inputBusca.placeholder = placeholders[nomePagina] || 'Buscar...';
+    }
+
+    // Limpa a busca ao trocar de aba
+    limparBusca();
+    _paginaAtivaBusca = nomePagina;
+}
+
+// =========================================
+// MOTOR DE BUSCA E FILTROS CONTEXTUAIS
+// =========================================
+
+// Ativado ao clicar num filtro-selo ou filtro-tag
+function toggleFiltro(btn) {
+    const filtro = btn.dataset.filtro;
+    const valor  = btn.dataset.valor;
+
+    // Dentro do container correto, desmarca todos e marca o clicado
+    const grupo = btn.parentElement;
+    grupo.querySelectorAll('[data-filtro="' + filtro + '"]').forEach(b => b.classList.remove('ativo'));
+    btn.classList.add('ativo');
+
+    // Salva no estado
+    if (_filtros[_paginaAtivaBusca]) {
+        _filtros[_paginaAtivaBusca][filtro] = valor;
+    }
+
+    executarBusca();
+}
+
+// Executa a busca/filtro na seção ativa
+function executarBusca() {
+    const texto = (document.getElementById('busca-texto')?.value || '').toLowerCase().trim();
+    const btnLimpar = document.getElementById('busca-btn-limpar');
+    if (btnLimpar) btnLimpar.style.display = texto ? 'flex' : 'none';
+
+    switch (_paginaAtivaBusca) {
+        case 'vitrine':  _buscarVitrine(texto);  break;
+        case 'mochila':  _buscarMochila(texto);  break;
+        case 'mural':    _buscarMural(texto);     break;
+    }
+}
+
+function limparBusca() {
+    const input = document.getElementById('busca-texto');
+    if (input) input.value = '';
+    const btnLimpar = document.getElementById('busca-btn-limpar');
+    if (btnLimpar) btnLimpar.style.display = 'none';
+
+    // Reseta todos os filtros para "todos"
+    document.querySelectorAll('.filtro-selo, .filtro-tag').forEach(btn => {
+        btn.classList.toggle('ativo', btn.dataset.valor === 'todos');
+    });
+    Object.keys(_filtros).forEach(sec => {
+        Object.keys(_filtros[sec]).forEach(k => _filtros[sec][k] = 'todos');
+    });
+
+    _esconderContador();
+
+    // Re-exibe todos os cards sem filtro
+    _mostrarTodos('#vitrine .card');
+    _mostrarTodos('#lista-inventario .card-inventario');
+    _mostrarTodos('#lista-comunidade .player-card-novo');
+}
+
+// ---- Vitrine ----
+function _buscarVitrine(texto) {
+    const { raridade, tipo, preco } = _filtros.vitrine;
+    const cards = document.querySelectorAll('#vitrine .card');
+    let visiveis = 0;
+
+    cards.forEach(card => {
+        const nome   = card.querySelector('h3')?.innerText?.toLowerCase() || '';
+        const efeito = card.querySelector('.efeito')?.innerText?.toLowerCase() || '';
+        const item   = itensMercado.find(i => nome.includes(i.nome.toLowerCase()));
+        if (!item) { card.style.display = 'none'; return; }
+
+        const textoOk    = !texto || nome.includes(texto) || efeito.includes(texto);
+        const raridadeOk = raridade === 'todos' || item.raridade === raridade;
+        const tipoOk     = tipo === 'todos' || item.tipo === tipo;
+        const precoOk    = _filtrarPreco(item.preco, preco);
+
+        const visivel = textoOk && raridadeOk && tipoOk && precoOk;
+        card.style.display = visivel ? '' : 'none';
+        if (visivel) visiveis++;
+    });
+
+    _mostrarContador(visiveis, cards.length, 'item');
+}
+
+// ---- Mochila ----
+function _buscarMochila(texto) {
+    const { raridade, estado } = _filtros.mochila;
+    const ficha = obterFichaAtiva();
+    const equipado = ficha?.equipado || {};
+    const cards = document.querySelectorAll('#lista-inventario .card-inventario');
+    let visiveis = 0;
+
+    cards.forEach(card => {
+        const nome     = card.querySelector('strong')?.innerText?.toLowerCase() || '';
+        const tipo     = card.querySelector('.tipo-raridade')?.innerText?.toLowerCase() || '';
+        const textoOk  = !texto || nome.includes(texto) || tipo.includes(texto);
+        const cardRar  = [...card.classList].find(c => ['comum','incomum','raro','epico','lendario'].includes(c)) || '';
+        const rarOk    = raridade === 'todos' || cardRar === raridade;
+
+        // Estado: equipado ou guardado
+        let estadoOk = true;
+        if (estado !== 'todos') {
+            const isEquipado = card.querySelector('.btn-equipar.equipado') !== null;
+            estadoOk = estado === 'equipado' ? isEquipado : !isEquipado;
+        }
+
+        const visivel = textoOk && rarOk && estadoOk;
+        card.style.display = visivel ? '' : 'none';
+        if (visivel) visiveis++;
+    });
+
+    _mostrarContador(visiveis, cards.length, 'item');
+}
+
+// ---- Mural ----
+function _buscarMural(texto) {
+    const { casa, classe, riqueza } = _filtros.mural;
+    const cards = document.querySelectorAll('#lista-comunidade .player-card-novo');
+    let visiveis = 0;
+
+    cards.forEach(card => {
+        const nome       = card.querySelector('h3')?.innerText?.toLowerCase() || '';
+        const subtitulo  = card.querySelector('.player-card-subtitulo')?.innerText?.toLowerCase() || '';
+        const textoOk    = !texto || nome.includes(texto) || subtitulo.includes(texto);
+
+        // Extrai dados do subtítulo "Classe · Casa"
+        const partes     = subtitulo.split('·').map(s => s.trim());
+        const classeCard = partes[0] || '';
+        const casaCard   = partes[1] || '';
+        const casaOk     = casa === 'todos' || casaCard.includes(casa.toLowerCase());
+        const classeOk   = classe === 'todos' || classeCard.includes(classe.toLowerCase());
+
+        // Riqueza: extrai moedas do stat-item
+        let riquezaOk = true;
+        if (riqueza !== 'todos') {
+            const statItems = card.querySelectorAll('.stat-item');
+            let moedas = 0;
+            statItems.forEach(si => {
+                if (si.innerText.includes("ic's")) {
+                    moedas = parseInt(si.querySelector('strong')?.innerText?.replace(/\D/g,'') || '0');
+                }
+            });
+            if (riqueza === 'pobre')  riquezaOk = moedas <= 500;
+            if (riqueza === 'medio')  riquezaOk = moedas > 500 && moedas <= 2000;
+            if (riqueza === 'rico')   riquezaOk = moedas > 2000;
+        }
+
+        const visivel = textoOk && casaOk && classeOk && riquezaOk;
+        card.style.display = visivel ? '' : 'none';
+        if (visivel) visiveis++;
+    });
+
+    _mostrarContador(visiveis, cards.length, 'explorador');
+}
+
+// ---- Helpers ----
+function _filtrarPreco(preco, faixa) {
+    if (faixa === 'todos') return true;
+    const [min, max] = faixa.split('-').map(Number);
+    return preco >= min && preco <= max;
+}
+
+function _mostrarTodos(seletor) {
+    document.querySelectorAll(seletor).forEach(el => el.style.display = '');
+}
+
+function _mostrarContador(visiveis, total, tipo) {
+    const el = document.getElementById('busca-contador');
+    if (!el) return;
+    const temFiltro = visiveis < total;
+    el.style.display = temFiltro ? 'block' : 'none';
+    el.innerHTML = temFiltro
+        ? `<span class="contador-numero">${visiveis}</span> de <span class="contador-total">${total}</span> ${tipo}${visiveis !== 1 ? 's' : ''} encontrado${visiveis !== 1 ? 's' : ''}`
+        : '';
+}
+
+function _esconderContador() {
+    const el = document.getElementById('busca-contador');
+    if (el) el.style.display = 'none';
 }
 
 // Atualiza o número exibido no badge do ícone flutuante de mochila
@@ -1640,6 +1857,9 @@ window.onArquivoFotoPerfilSelecionado = onArquivoFotoPerfilSelecionado;
 window.onArquivoFotoFichaSelecionado = onArquivoFotoFichaSelecionado;
 window.alternarMenuConta = alternarMenuConta;
 window.mostrarPagina = mostrarPagina;
+window.toggleFiltro = toggleFiltro;
+window.executarBusca = executarBusca;
+window.limparBusca = limparBusca;
 window.trocarDeConta = trocarDeConta;
 window.enviarAviso = enviarAviso;
 window.limparAviso = limparAviso;

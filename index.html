@@ -126,6 +126,102 @@
             </button>
         </nav>
 
+        <!-- ============================================================ -->
+        <!-- PAINEL DE BUSCA CONTEXTUAL                                   -->
+        <!-- Muda de conteúdo conforme a aba ativa. Oculto nas Fichas.   -->
+        <!-- ============================================================ -->
+        <div id="painel-busca" class="painel-busca">
+
+            <!-- Barra de texto compartilhada -->
+            <div class="busca-input-wrapper">
+                <svg class="busca-lupa" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                <input type="text" id="busca-texto" placeholder="Buscar no reino..." oninput="executarBusca()" autocomplete="off">
+                <button class="busca-limpar" id="busca-btn-limpar" onclick="limparBusca()" title="Limpar busca" style="display:none">✕</button>
+            </div>
+
+            <!-- Filtros do MERCADO -->
+            <div id="filtros-vitrine" class="filtros-contextuais">
+                <span class="filtros-label">Raridade:</span>
+                <div class="filtros-grupo">
+                    <button class="filtro-selo ativo" data-filtro="raridade" data-valor="todos" onclick="toggleFiltro(this)">Todos</button>
+                    <button class="filtro-selo comum" data-filtro="raridade" data-valor="comum" onclick="toggleFiltro(this)">⬤ Comum</button>
+                    <button class="filtro-selo incomum" data-filtro="raridade" data-valor="incomum" onclick="toggleFiltro(this)">⬤ Incomum</button>
+                    <button class="filtro-selo raro" data-filtro="raridade" data-valor="raro" onclick="toggleFiltro(this)">⬤ Raro</button>
+                    <button class="filtro-selo epico" data-filtro="raridade" data-valor="epico" onclick="toggleFiltro(this)">⬤ Épico</button>
+                    <button class="filtro-selo lendario" data-filtro="raridade" data-valor="lendario" onclick="toggleFiltro(this)">⬤ Lendário</button>
+                </div>
+                <span class="filtros-label">Tipo:</span>
+                <div class="filtros-grupo">
+                    <button class="filtro-tag ativo" data-filtro="tipo" data-valor="todos" onclick="toggleFiltro(this)">Todos</button>
+                    <button class="filtro-tag" data-filtro="tipo" data-valor="Arma" onclick="toggleFiltro(this)">⚔️ Armas</button>
+                    <button class="filtro-tag" data-filtro="tipo" data-valor="Armadura" onclick="toggleFiltro(this)">🛡️ Defesa</button>
+                    <button class="filtro-tag" data-filtro="tipo" data-valor="Consumível" onclick="toggleFiltro(this)">🧪 Consumíveis</button>
+                </div>
+                <span class="filtros-label">Preço:</span>
+                <div class="filtros-grupo">
+                    <button class="filtro-tag ativo" data-filtro="preco" data-valor="todos" onclick="toggleFiltro(this)">Qualquer</button>
+                    <button class="filtro-tag" data-filtro="preco" data-valor="0-500" onclick="toggleFiltro(this)">Até 500 ic's</button>
+                    <button class="filtro-tag" data-filtro="preco" data-valor="501-2000" onclick="toggleFiltro(this)">500–2000 ic's</button>
+                    <button class="filtro-tag" data-filtro="preco" data-valor="2001-9999" onclick="toggleFiltro(this)">Acima de 2000 ic's</button>
+                </div>
+            </div>
+
+            <!-- Filtros da MOCHILA -->
+            <div id="filtros-mochila" class="filtros-contextuais" style="display:none">
+                <span class="filtros-label">Raridade:</span>
+                <div class="filtros-grupo">
+                    <button class="filtro-selo ativo" data-filtro="raridade" data-valor="todos" onclick="toggleFiltro(this)">Todos</button>
+                    <button class="filtro-selo comum" data-filtro="raridade" data-valor="comum" onclick="toggleFiltro(this)">⬤ Comum</button>
+                    <button class="filtro-selo incomum" data-filtro="raridade" data-valor="incomum" onclick="toggleFiltro(this)">⬤ Incomum</button>
+                    <button class="filtro-selo raro" data-filtro="raridade" data-valor="raro" onclick="toggleFiltro(this)">⬤ Raro</button>
+                    <button class="filtro-selo epico" data-filtro="raridade" data-valor="epico" onclick="toggleFiltro(this)">⬤ Épico</button>
+                    <button class="filtro-selo lendario" data-filtro="raridade" data-valor="lendario" onclick="toggleFiltro(this)">⬤ Lendário</button>
+                </div>
+                <span class="filtros-label">Estado:</span>
+                <div class="filtros-grupo">
+                    <button class="filtro-tag ativo" data-filtro="estado" data-valor="todos" onclick="toggleFiltro(this)">Todos</button>
+                    <button class="filtro-tag" data-filtro="estado" data-valor="equipado" onclick="toggleFiltro(this)">✦ Equipados</button>
+                    <button class="filtro-tag" data-filtro="estado" data-valor="guardado" onclick="toggleFiltro(this)">📦 Guardados</button>
+                </div>
+            </div>
+
+            <!-- Filtros dos EXPLORADORES -->
+            <div id="filtros-mural" class="filtros-contextuais" style="display:none">
+                <span class="filtros-label">Casa:</span>
+                <div class="filtros-grupo">
+                    <button class="filtro-tag ativo" data-filtro="casa" data-valor="todos" onclick="toggleFiltro(this)">Todas</button>
+                    <button class="filtro-tag" data-filtro="casa" data-valor="Stark" onclick="toggleFiltro(this)">🐺 Stark</button>
+                    <button class="filtro-tag" data-filtro="casa" data-valor="Lannister" onclick="toggleFiltro(this)">🦁 Lannister</button>
+                    <button class="filtro-tag" data-filtro="casa" data-valor="Targaryen" onclick="toggleFiltro(this)">🐉 Targaryen</button>
+                    <button class="filtro-tag" data-filtro="casa" data-valor="Baratheon" onclick="toggleFiltro(this)">🦌 Baratheon</button>
+                    <button class="filtro-tag" data-filtro="casa" data-valor="Tyrell" onclick="toggleFiltro(this)">🌹 Tyrell</button>
+                    <button class="filtro-tag" data-filtro="casa" data-valor="Arryn" onclick="toggleFiltro(this)">🦅 Arryn</button>
+                    <button class="filtro-tag" data-filtro="casa" data-valor="Sem Casa" onclick="toggleFiltro(this)">⚔️ Sem Casa</button>
+                </div>
+                <span class="filtros-label">Classe:</span>
+                <div class="filtros-grupo">
+                    <button class="filtro-tag ativo" data-filtro="classe" data-valor="todos" onclick="toggleFiltro(this)">Todas</button>
+                    <button class="filtro-tag" data-filtro="classe" data-valor="Cavaleiros" onclick="toggleFiltro(this)">🛡️ Cavaleiros</button>
+                    <button class="filtro-tag" data-filtro="classe" data-valor="Guerreiros" onclick="toggleFiltro(this)">⚔️ Guerreiros</button>
+                    <button class="filtro-tag" data-filtro="classe" data-valor="Comerciantes" onclick="toggleFiltro(this)">💰 Comerciantes</button>
+                    <button class="filtro-tag" data-filtro="classe" data-valor="Ladinos" onclick="toggleFiltro(this)">🗡️ Ladinos</button>
+                    <button class="filtro-tag" data-filtro="classe" data-valor="Meistres" onclick="toggleFiltro(this)">📚 Meistres</button>
+                    <button class="filtro-tag" data-filtro="classe" data-valor="Piromantes" onclick="toggleFiltro(this)">🔥 Piromantes</button>
+                    <button class="filtro-tag" data-filtro="classe" data-valor="Magos de Sangue" onclick="toggleFiltro(this)">🩸 Magos de Sangue</button>
+                </div>
+                <span class="filtros-label">Riqueza:</span>
+                <div class="filtros-grupo">
+                    <button class="filtro-tag ativo" data-filtro="riqueza" data-valor="todos" onclick="toggleFiltro(this)">Qualquer</button>
+                    <button class="filtro-tag" data-filtro="riqueza" data-valor="pobre" onclick="toggleFiltro(this)">🪙 Pobres (−500)</button>
+                    <button class="filtro-tag" data-filtro="riqueza" data-valor="medio" onclick="toggleFiltro(this)">💰 Medianos (500–2000)</button>
+                    <button class="filtro-tag" data-filtro="riqueza" data-valor="rico" onclick="toggleFiltro(this)">👑 Ricos (2000+)</button>
+                </div>
+            </div>
+
+            <!-- Contador de resultados -->
+            <div id="busca-contador" class="busca-contador" style="display:none"></div>
+        </div>
+
         <!-- PÁGINA: VITRINE / MERCADO -->
         <section id="pagina-vitrine" class="pagina-conteudo">
             <nav class="filtros">

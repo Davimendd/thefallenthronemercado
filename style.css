@@ -2123,3 +2123,182 @@ section,
 #banner-global {
     z-index: 9500;
 }
+
+/* =========================================
+   20. PAINEL DE BUSCA CONTEXTUAL
+   ========================================= */
+.painel-busca {
+    background: rgba(10, 9, 8, 0.6);
+    border-bottom: 1px solid var(--borda);
+    padding: 16px 20px 12px;
+    position: relative;
+    z-index: 2;
+}
+
+.busca-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.busca-lupa {
+    position: absolute;
+    left: 14px;
+    width: 18px;
+    height: 18px;
+    color: var(--texto-fraco);
+    pointer-events: none;
+    flex-shrink: 0;
+}
+
+#busca-texto {
+    width: 100%;
+    padding: 11px 40px 11px 42px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--borda);
+    border-radius: 3px;
+    color: var(--texto);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.05em;
+    transition: border-color 0.25s, box-shadow 0.25s;
+    box-sizing: border-box;
+}
+
+#busca-texto:focus {
+    outline: none;
+    border-color: var(--ouro-escuro);
+    box-shadow: 0 0 12px rgba(201, 164, 73, 0.12);
+}
+
+#busca-texto::placeholder {
+    color: var(--texto-fraco);
+    font-style: italic;
+}
+
+.busca-limpar {
+    position: absolute;
+    right: 10px;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    color: var(--texto-fraco);
+    font-size: 0.85em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: none;
+    letter-spacing: 0;
+}
+
+.busca-limpar:hover {
+    background: rgba(163, 55, 43, 0.3);
+    color: #e0a89c;
+    box-shadow: none;
+}
+
+/* Linha de filtros contextuais */
+.filtros-contextuais {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    row-gap: 8px;
+}
+
+.filtros-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.68em;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--texto-fraco);
+    white-space: nowrap;
+    margin-right: 2px;
+}
+
+.filtros-grupo {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    margin-right: 14px;
+}
+
+/* Filtros de raridade — selos coloridos */
+.filtro-selo {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.65em;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border: 1px solid var(--borda);
+    background: transparent;
+    color: var(--texto-fraco);
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: none;
+    line-height: 1.4;
+}
+
+.filtro-selo:hover { border-color: var(--ouro-escuro); color: var(--texto); box-shadow: none; }
+.filtro-selo.ativo { background: rgba(255,255,255,0.06); border-color: var(--ouro); color: var(--ouro-claro); }
+
+.filtro-selo.comum        { color: #9a9a9a; border-color: #555; }
+.filtro-selo.comum.ativo  { background: rgba(154,154,154,0.15); border-color: #9a9a9a; color: #ccc; }
+.filtro-selo.incomum        { color: var(--incomum); border-color: #2d6b3d; }
+.filtro-selo.incomum.ativo  { background: rgba(74,143,92,0.15); border-color: var(--incomum); }
+.filtro-selo.raro        { color: var(--raro); border-color: #1e5577; }
+.filtro-selo.raro.ativo  { background: rgba(61,126,166,0.15); border-color: var(--raro); }
+.filtro-selo.epico        { color: var(--epico); border-color: #5a2f80; }
+.filtro-selo.epico.ativo  { background: rgba(142,79,196,0.15); border-color: var(--epico); }
+.filtro-selo.lendario        { color: var(--lendario); border-color: var(--ouro-escuro); }
+.filtro-selo.lendario.ativo  { background: rgba(201,164,73,0.15); border-color: var(--lendario); }
+
+/* Filtros de tipo/preço/estado/casa etc — tags simples */
+.filtro-tag {
+    padding: 4px 12px;
+    border-radius: 3px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.65em;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    border: 1px solid var(--borda);
+    background: transparent;
+    color: var(--texto-fraco);
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: none;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
+.filtro-tag:hover { border-color: var(--ouro-escuro); color: var(--texto); box-shadow: none; }
+.filtro-tag.ativo {
+    background: rgba(201, 164, 73, 0.12);
+    border-color: var(--ouro-escuro);
+    color: var(--ouro-claro);
+}
+
+/* Contador de resultados */
+.busca-contador {
+    margin-top: 10px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.72em;
+    letter-spacing: 1px;
+    color: var(--texto-fraco);
+    text-align: right;
+}
+
+.contador-numero {
+    color: var(--ouro);
+    font-weight: 700;
+    font-size: 1.1em;
+}
+
+.contador-total {
+    color: var(--texto);
+}
