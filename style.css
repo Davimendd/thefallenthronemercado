@@ -2302,3 +2302,304 @@ section,
 .contador-total {
     color: var(--texto);
 }
+
+/* =========================================
+   21. SISTEMA DE NPCs
+   ========================================= */
+
+/* Cards de NPC na grade */
+.card-npc {
+    background: var(--fundo-card);
+    border: 1px solid var(--borda);
+    border-radius: 4px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: transform 0.3s ease, border-color 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-npc::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+}
+
+.card-npc[data-alinhamento="aliado"]::before { background: #4a8f5c; }
+.card-npc[data-alinhamento="neutro"]::before  { background: var(--ouro-escuro); }
+.card-npc[data-alinhamento="inimigo"]::before { background: #7a2a22; }
+
+.card-npc:hover {
+    transform: translateY(-3px);
+    border-color: var(--ouro-escuro);
+}
+
+.card-npc-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.avatar-npc {
+    width: 54px;
+    height: 54px;
+    border-radius: 4px;
+    object-fit: cover;
+    border: 2px solid var(--ouro-escuro);
+    flex-shrink: 0;
+}
+
+.card-npc-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.card-npc-info strong {
+    font-family: 'Cinzel', serif;
+    color: var(--ouro-claro);
+    font-size: 1.05em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-npc-tipo {
+    font-size: 0.78em;
+    color: var(--texto-fraco);
+}
+
+.card-npc-alinhamento {
+    font-size: 0.72em;
+    font-family: 'Cinzel', serif;
+    letter-spacing: 0.5px;
+}
+
+.card-npc-stats {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 0.82em;
+    color: var(--texto);
+}
+
+.card-npc-stats span strong {
+    font-family: 'Cinzel', serif;
+    color: var(--ouro-claro);
+}
+
+.card-npc-inventario {
+    background: rgba(0,0,0,0.2);
+    border-radius: 3px;
+    padding: 7px;
+    min-height: 30px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+}
+
+.card-npc-botoes {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.card-npc-botoes button {
+    flex: 1;
+    font-size: 0.7em;
+    padding: 7px 8px;
+    min-width: 60px;
+}
+
+/* Preview do tipo de NPC no formulário */
+.npc-tipo-preview {
+    margin: -4px 0 10px;
+}
+
+.npc-preview-inner {
+    background: rgba(0,0,0,0.25);
+    border: 1px solid var(--borda);
+    border-radius: 3px;
+    padding: 12px 14px;
+}
+
+.npc-preview-desc {
+    font-style: italic;
+    color: var(--texto-fraco);
+    font-size: 0.9em;
+    margin: 0 0 10px;
+    line-height: 1.5;
+}
+
+.npc-preview-stats {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: 0.82em;
+    color: var(--texto);
+    margin-bottom: 10px;
+}
+
+.npc-preview-stats span strong {
+    font-family: 'Cinzel', serif;
+    color: var(--ouro-claro);
+}
+
+.npc-preview-kit {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.npc-kit-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.68em;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--texto-fraco);
+}
+
+.npc-kit-tag {
+    background: rgba(201,164,73,0.1);
+    border: 1px solid var(--ouro-escuro);
+    border-radius: 3px;
+    padding: 3px 8px;
+    font-size: 0.75em;
+    color: var(--ouro-claro);
+}
+
+.npc-kit-tag.vazio {
+    background: transparent;
+    border-color: var(--borda);
+    color: var(--texto-fraco);
+    font-style: italic;
+}
+
+/* Modal do NPC — inventário gerenciável */
+.modal-npc-inventario {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.modal-npc-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 3px;
+    background: rgba(0,0,0,0.15);
+    border-left: 3px solid var(--borda);
+    gap: 10px;
+}
+
+.modal-npc-item.comum    { border-color: #8a8a8a; }
+.modal-npc-item.incomum  { border-color: var(--incomum); }
+.modal-npc-item.raro     { border-color: var(--raro); }
+.modal-npc-item.epico    { border-color: var(--epico); }
+.modal-npc-item.lendario { border-color: var(--lendario); }
+
+.modal-npc-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    flex: 1;
+    min-width: 0;
+}
+
+.modal-npc-item-info strong {
+    font-size: 0.92em;
+}
+
+.modal-npc-item-info span {
+    font-size: 0.75em;
+    opacity: 0.65;
+    font-style: italic;
+}
+
+.modal-npc-item-acoes {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.btn-usar-npc {
+    padding: 4px 10px;
+    font-size: 0.7em;
+    border-color: #2a5d7d;
+    color: #5db3e0;
+    letter-spacing: 0;
+}
+
+.btn-usar-npc:hover {
+    background: #2a5d7d;
+    color: #fff;
+    box-shadow: none;
+}
+
+.modal-npc-item-remover {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border-radius: 50%;
+    background: transparent;
+    border: 1px solid #555;
+    color: var(--texto-fraco);
+    font-size: 0.75em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: none;
+    letter-spacing: 0;
+}
+
+.modal-npc-item-remover:hover {
+    background: rgba(163,55,43,0.3);
+    border-color: #a3372b;
+    color: #e0a89c;
+    box-shadow: none;
+}
+
+/* Linha de adicionar item ao NPC */
+.modal-npc-add-item {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.select-add-npc {
+    flex: 1;
+    min-width: 160px;
+    padding: 8px 10px;
+    background: #0d0c0a;
+    border: 1px solid var(--borda);
+    color: var(--texto);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.9em;
+    border-radius: 2px;
+}
+
+.select-add-npc:focus {
+    outline: none;
+    border-color: var(--ouro-escuro);
+}
+
+.modal-npc-add-item .btn-secondary {
+    white-space: nowrap;
+    font-size: 0.72em;
+    padding: 8px 14px;
+}

@@ -77,7 +77,7 @@ const _filtros = {
 };
 
 function mostrarPagina(nomePagina) {
-    const paginas = ['vitrine', 'fichas', 'mochila', 'mural'];
+    const paginas = ['vitrine', 'fichas', 'npcs', 'mochila', 'mural'];
 
     paginas.forEach(p => {
         document.getElementById('pagina-' + p).style.display = (p === nomePagina) ? 'block' : 'none';
@@ -93,8 +93,8 @@ function mostrarPagina(nomePagina) {
     const filtrosMochila = document.getElementById('filtros-mochila');
     const filtrosMural = document.getElementById('filtros-mural');
 
-    // Oculta o painel de busca na aba "Minhas Fichas" (não faz sentido buscar fichas próprias com lista pequena)
-    painelBusca.style.display = (nomePagina === 'fichas') ? 'none' : 'block';
+    // Oculta o painel de busca nas abas que não precisam de busca
+    painelBusca.style.display = (nomePagina === 'fichas' || nomePagina === 'npcs') ? 'none' : 'block';
 
     if (filtrosVitrine) filtrosVitrine.style.display = (nomePagina === 'vitrine') ? 'flex' : 'none';
     if (filtrosMochila) filtrosMochila.style.display = (nomePagina === 'mochila') ? 'flex' : 'none';
@@ -655,6 +655,189 @@ const habilidadesPorClasse = {
     }
 };
 
+// =========================================
+// DADOS DE TIPOS DE NPC
+// Cada tipo define: vida, defesa, atributos, kit inicial de itens e descrição.
+// O kit usa nomes dos itens do mercado — serão clonados no inventário do NPC.
+// =========================================
+const tiposNPC = {
+    "Plebeu": {
+        emoji: "🧑",
+        descricao: "Um habitante comum dos Sete Reinos, sem treinamento militar.",
+        vidaMaxima: 8,
+        defesa: 6,
+        atributos: { for: 1, agi: 1, vig: 1, int: 1, car: 1 },
+        kit: ["Adaga de Aço Comum"]
+    },
+    "Soldado Iniciante": {
+        emoji: "⚔️",
+        descricao: "Recruta recém-incorporado, ainda aprendendo a lutar.",
+        vidaMaxima: 14,
+        defesa: 10,
+        atributos: { for: 2, agi: 2, vig: 2, int: 1, car: 0 },
+        kit: ["Espada de Aço de Castelo", "Gibão de Couro Batido"]
+    },
+    "Soldado Treinado": {
+        emoji: "🗡️",
+        descricao: "Soldado experiente com combate real nas costas.",
+        vidaMaxima: 18,
+        defesa: 14,
+        atributos: { for: 3, agi: 2, vig: 3, int: 1, car: 1 },
+        kit: ["Machado de Guerra", "Cota de Malha"]
+    },
+    "Soldado Veterano": {
+        emoji: "🛡️",
+        descricao: "Guerreiro endurecido por anos de batalha e campanhas.",
+        vidaMaxima: 24,
+        defesa: 18,
+        atributos: { for: 4, agi: 3, vig: 4, int: 2, car: 1 },
+        kit: ["Machado de Guerra", "Armadura de Placas Completa", "Escudo com Brasão"]
+    },
+    "Cavaleiro": {
+        emoji: "🏇",
+        descricao: "Guerreiro nobre juramentado, especialista em combate montado.",
+        vidaMaxima: 28,
+        defesa: 22,
+        atributos: { for: 4, agi: 2, vig: 3, int: 2, car: 3 },
+        kit: ["Lança de Vidro de Dragão", "Armadura de Placas Completa", "Escudo com Brasão"]
+    },
+    "Guarda Real": {
+        emoji: "👑",
+        descricao: "Elite da guarda, jurado a proteger um nobre até a morte.",
+        vidaMaxima: 30,
+        defesa: 24,
+        atributos: { for: 5, agi: 3, vig: 5, int: 2, car: 3 },
+        kit: ["Espada de Aço Valiriano", "Armadura de Placas Completa", "Escudo com Brasão"]
+    },
+    "Capitão": {
+        emoji: "🎖️",
+        descricao: "Líder experiente que comanda tropas em campo.",
+        vidaMaxima: 22,
+        defesa: 16,
+        atributos: { for: 3, agi: 3, vig: 3, int: 3, car: 3 },
+        kit: ["Espada de Aço de Castelo", "Cota de Malha"]
+    },
+    "Assassino": {
+        emoji: "🗡️",
+        descricao: "Matador profissional, especialista em ataques furtivos.",
+        vidaMaxima: 16,
+        defesa: 12,
+        atributos: { for: 2, agi: 5, vig: 2, int: 3, car: 2 },
+        kit: ["Adaga de Aço Comum", "Adaga de Aço Comum", "Irmã Sombria (Réplica)"]
+    },
+    "Bandido": {
+        emoji: "🪓",
+        descricao: "Fora-da-lei que vive de saquear estradas e vilarejos.",
+        vidaMaxima: 14,
+        defesa: 10,
+        atributos: { for: 3, agi: 3, vig: 2, int: 1, car: 0 },
+        kit: ["Machado de Guerra", "Gibão de Couro Batido"]
+    },
+    "Mercenário": {
+        emoji: "💰",
+        descricao: "Lutador que vende sua espada ao melhor pagador.",
+        vidaMaxima: 18,
+        defesa: 12,
+        atributos: { for: 3, agi: 2, vig: 3, int: 1, car: 1 },
+        kit: ["Arco de Madeira de Represeiro", "Gibão de Couro Batido"]
+    },
+    "Comerciante": {
+        emoji: "🏪",
+        descricao: "Negociante que percorre os mercados dos Sete Reinos.",
+        vidaMaxima: 10,
+        defesa: 8,
+        atributos: { for: 1, agi: 2, vig: 1, int: 3, car: 4 },
+        kit: ["Adaga de Aço Comum", "Vinho da Árvore"]
+    },
+    "Diplomata": {
+        emoji: "📜",
+        descricao: "Enviado de uma Casa nobre para negociar acordos e alianças.",
+        vidaMaxima: 10,
+        defesa: 8,
+        atributos: { for: 0, agi: 1, vig: 1, int: 4, car: 5 },
+        kit: ["Vinho da Árvore"]
+    },
+    "Maester": {
+        emoji: "📚",
+        descricao: "Sábio da Cidadela, conselheiro de nobres e curador.",
+        vidaMaxima: 12,
+        defesa: 8,
+        atributos: { for: 0, agi: 1, vig: 2, int: 5, car: 3 },
+        kit: ["Leite de Papoula", "Cura Maior dos Meistres"]
+    },
+    "Septon": {
+        emoji: "✝️",
+        descricao: "Sacerdote dos Sete que guia os fiéis com palavras e fé.",
+        vidaMaxima: 12,
+        defesa: 8,
+        atributos: { for: 1, agi: 1, vig: 2, int: 3, car: 4 },
+        kit: ["Leite de Papoula"]
+    },
+    "Feiticeiro": {
+        emoji: "🔮",
+        descricao: "Praticante de artes sombrias, temido e incompreendido.",
+        vidaMaxima: 14,
+        defesa: 8,
+        atributos: { for: 0, agi: 2, vig: 2, int: 5, car: 2 },
+        kit: ["Fogovivo (Pote)", "Amuleto da Velha Saga"]
+    },
+    "Piromante": {
+        emoji: "🔥",
+        descricao: "Alquimista obcecado pelo fogo vivo, perigoso e instável.",
+        vidaMaxima: 12,
+        defesa: 8,
+        atributos: { for: 0, agi: 2, vig: 1, int: 4, car: 2 },
+        kit: ["Fogovivo (Pote)", "Fogovivo (Pote)"]
+    },
+    "Espião": {
+        emoji: "🎭",
+        descricao: "Mestre dos disfarces que coleta segredos para sobreviver.",
+        vidaMaxima: 14,
+        defesa: 10,
+        atributos: { for: 1, agi: 4, vig: 1, int: 4, car: 4 },
+        kit: ["Adaga de Aço Comum", "Vinho da Árvore"]
+    },
+    "Curandeiro": {
+        emoji: "💊",
+        descricao: "Especialista em ervas e remédios que salva vidas no campo.",
+        vidaMaxima: 10,
+        defesa: 7,
+        atributos: { for: 0, agi: 2, vig: 2, int: 4, car: 3 },
+        kit: ["Leite de Papoula", "Cura Maior dos Meistres", "Cura Maior dos Meistres"]
+    },
+    "Fera Selvagem": {
+        emoji: "🐺",
+        descricao: "Criatura das terras inóspitas, movida por instinto puro.",
+        vidaMaxima: 20,
+        defesa: 14,
+        atributos: { for: 5, agi: 4, vig: 4, int: 0, car: 0 },
+        kit: []
+    },
+    "Morto-Vivo": {
+        emoji: "💀",
+        descricao: "Guerreiro ressuscitado pelo Rei da Noite — não sente dor.",
+        vidaMaxima: 16,
+        defesa: 12,
+        atributos: { for: 4, agi: 1, vig: 5, int: 0, car: 0 },
+        kit: ["Espada de Aço de Castelo"]
+    }
+};
+
+// Cria o inventário de um NPC a partir do kit do seu tipo,
+// clonando os itens do catálogo do mercado com idUnico único.
+function gerarKitNPC(tipoNome) {
+    const tipo = tiposNPC[tipoNome];
+    if (!tipo || !tipo.kit.length) return [];
+    const inventario = [];
+    tipo.kit.forEach((nomeItem, i) => {
+        const itemBase = itensMercado.find(it => it.nome === nomeItem);
+        if (itemBase) {
+            inventario.push({ ...itemBase, idUnico: Date.now() + i });
+        }
+    });
+    return inventario;
+}
+
 // Calcula vida máxima e defesa base de uma ficha a partir da origem e classe
 function calcularStatusBase(origem, classe) {
     const attr = atributosPorClasse[classe] || { for: 0, agi: 0, vig: 0, int: 0, car: 0 };
@@ -736,6 +919,7 @@ if (auth) {
                 document.getElementById('painel-mestre').style.display = 'block';
             }
             escutarDadosUsuario(user.uid);
+            escutarNPCsDoUsuario(user.uid);
             escutarAvisoGlobal(); // Nova função
             esconderTelaDeLogin();
         } else {
@@ -1878,6 +2062,458 @@ window.desequiparItem = desequiparItem;
 window.usarItem = usarItem;
 window.abrirModalFicha = abrirModalFicha;
 window.fecharModalFicha = fecharModalFicha;
+
+// =========================================
+// SISTEMA DE NPCs
+// =========================================
+let npcsDoUsuario = [];
+
+// Popula o <select> de tipos de NPC no formulário
+function popularSelectTiposNPC() {
+    const sel = document.getElementById('npc-tipo');
+    if (!sel || sel.options.length > 1) return;
+    sel.innerHTML = Object.entries(tiposNPC).map(([nome, dados]) =>
+        `<option value="${nome}">${dados.emoji} ${nome}</option>`
+    ).join('');
+    atualizarPreviewTipoNPC();
+}
+
+// Mostra o preview de stats/kit do tipo selecionado no formulário
+function atualizarPreviewTipoNPC() {
+    const tipo = document.getElementById('npc-tipo')?.value;
+    const preview = document.getElementById('npc-tipo-preview');
+    if (!preview || !tipo || !tiposNPC[tipo]) return;
+
+    const t = tiposNPC[tipo];
+    const kitHTML = t.kit.length
+        ? t.kit.map(nome => `<span class="npc-kit-tag">${nome}</span>`).join('')
+        : '<span class="npc-kit-tag vazio">Sem kit inicial</span>';
+
+    preview.innerHTML = `
+        <div class="npc-preview-inner">
+            <p class="npc-preview-desc">${t.descricao}</p>
+            <div class="npc-preview-stats">
+                <span>❤️ Vida: <strong>${t.vidaMaxima}</strong></span>
+                <span>🛡️ Defesa: <strong>${t.defesa}</strong></span>
+                <span>⚔️ FOR <strong>${t.atributos.for}</strong></span>
+                <span>🏃 AGI <strong>${t.atributos.agi}</strong></span>
+                <span>💪 VIG <strong>${t.atributos.vig}</strong></span>
+                <span>📚 INT <strong>${t.atributos.int}</strong></span>
+                <span>💬 CAR <strong>${t.atributos.car}</strong></span>
+            </div>
+            <div class="npc-preview-kit">
+                <span class="npc-kit-label">Kit inicial:</span>
+                ${kitHTML}
+            </div>
+        </div>
+    `;
+}
+
+// Listener Firestore: escuta os NPCs do usuário logado em tempo real
+function escutarNPCsDoUsuario(uid) {
+    onSnapshot(collection(db, "usuarios", uid, "npcs"), (querySnapshot) => {
+        npcsDoUsuario = [];
+        querySnapshot.forEach(snap => {
+            npcsDoUsuario.push({ id: snap.id, ...snap.data() });
+        });
+        renderizarListaNPCs();
+    }, (erro) => {
+        console.error("Erro ao escutar NPCs:", erro.message);
+    });
+}
+
+// Abre formulário em branco ou preenchido para edição
+function abrirFormularioNPC(npcId) {
+    popularSelectTiposNPC();
+    const overlay = document.getElementById('formulario-npc-overlay');
+    overlay.style.display = 'flex';
+
+    const previewImg = document.getElementById('preview-img-foto-npc');
+    const previewNome = document.getElementById('preview-nome-foto-npc');
+
+    if (npcId) {
+        const npc = npcsDoUsuario.find(n => n.id === npcId);
+        if (!npc) return;
+        document.getElementById('formulario-npc-titulo').innerText = 'Editar NPC';
+        overlay.dataset.editandoId = npcId;
+        document.getElementById('npc-nome').value = npc.nome || '';
+        document.getElementById('npc-tipo').value = npc.tipo || Object.keys(tiposNPC)[0];
+        document.getElementById('npc-alinhamento').value = npc.alinhamento || 'neutro';
+        document.getElementById('npc-foto').value = npc.foto || '';
+        document.getElementById('npc-descricao').value = npc.descricao || '';
+        if (npc.foto) {
+            previewImg.src = npc.foto;
+            previewImg.style.display = 'block';
+            previewNome.innerText = '✓ Foto atual';
+        } else {
+            previewImg.style.display = 'none';
+            previewNome.innerText = 'Nenhuma imagem selecionada';
+        }
+    } else {
+        document.getElementById('formulario-npc-titulo').innerText = 'Criar Novo NPC';
+        delete overlay.dataset.editandoId;
+        document.getElementById('npc-nome').value = '';
+        document.getElementById('npc-tipo').value = Object.keys(tiposNPC)[0];
+        document.getElementById('npc-alinhamento').value = 'neutro';
+        document.getElementById('npc-foto').value = '';
+        document.getElementById('npc-descricao').value = '';
+        previewImg.style.display = 'none';
+        previewNome.innerText = 'Nenhuma imagem selecionada';
+        document.getElementById('input-arquivo-foto-npc').value = '';
+    }
+    atualizarPreviewTipoNPC();
+}
+
+function fecharFormularioNPC() {
+    document.getElementById('formulario-npc-overlay').style.display = 'none';
+}
+
+// Salva NPC novo ou atualiza existente
+async function salvarNPC() {
+    const nome = document.getElementById('npc-nome').value.trim();
+    const tipo = document.getElementById('npc-tipo').value;
+    const alinhamento = document.getElementById('npc-alinhamento').value;
+    const foto = document.getElementById('npc-foto').value;
+    const descricao = document.getElementById('npc-descricao').value;
+
+    if (!nome) return mostrarToast('Dê um nome ao NPC.', 'erro', 'Nome obrigatório');
+
+    const overlay = document.getElementById('formulario-npc-overlay');
+    const editandoId = overlay.dataset.editandoId;
+    const dadosTipo = tiposNPC[tipo];
+
+    try {
+        if (editandoId) {
+            // Edição: preserva vida atual e inventário, só atualiza campos editáveis
+            const npcAtual = npcsDoUsuario.find(n => n.id === editandoId);
+            const mudouTipo = npcAtual?.tipo !== tipo;
+
+            const dadosAtualizados = { nome, tipo, alinhamento, foto, descricao };
+
+            if (mudouTipo) {
+                // Se mudou o tipo, recalcula stats e reinicia o kit
+                dadosAtualizados.vidaMaxima = dadosTipo.vidaMaxima;
+                dadosAtualizados.vidaAtual = dadosTipo.vidaMaxima;
+                dadosAtualizados.defesa = dadosTipo.defesa;
+                dadosAtualizados.atributos = dadosTipo.atributos;
+                dadosAtualizados.inventario = gerarKitNPC(tipo);
+            }
+
+            await updateDoc(doc(db, "usuarios", usuarioAtual.uid, "npcs", editandoId), dadosAtualizados);
+            mostrarToast(`${nome} foi atualizado.`, 'sucesso', 'NPC salvo');
+        } else {
+            // Criação nova
+            const novoNPCRef = doc(collection(db, "usuarios", usuarioAtual.uid, "npcs"));
+            await setDoc(novoNPCRef, {
+                nome, tipo, alinhamento, foto, descricao,
+                vidaMaxima: dadosTipo.vidaMaxima,
+                vidaAtual: dadosTipo.vidaMaxima,
+                defesa: dadosTipo.defesa,
+                atributos: dadosTipo.atributos,
+                inventario: gerarKitNPC(tipo)
+            });
+            mostrarToast(`${nome} entrou no reino.`, 'sucesso', 'NPC criado');
+        }
+        fecharFormularioNPC();
+    } catch (erro) {
+        mostrarToast('Não foi possível salvar o NPC.', 'erro', 'Erro');
+        console.error(erro);
+    }
+}
+
+// Exclui um NPC após confirmação
+async function excluirNPC(npcId, nomeNPC) {
+    const confirmado = await mostrarConfirmacao(`Excluir permanentemente <strong>${nomeNPC}</strong>?`);
+    if (!confirmado) return;
+    try {
+        await deleteDoc(doc(db, "usuarios", usuarioAtual.uid, "npcs", npcId));
+        mostrarToast(`${nomeNPC} foi removido.`, 'sucesso', 'NPC excluído');
+    } catch (erro) {
+        mostrarToast('Não foi possível excluir o NPC.', 'erro', 'Erro');
+        console.error(erro);
+    }
+}
+
+// Ajusta a vida atual de um NPC manualmente
+async function ajustarVidaNPC(npcId, quantidade) {
+    const npc = npcsDoUsuario.find(n => n.id === npcId);
+    if (!npc) return;
+    const novaVida = Math.max(0, Math.min(npc.vidaMaxima, (npc.vidaAtual ?? npc.vidaMaxima) + quantidade));
+    try {
+        await updateDoc(doc(db, "usuarios", usuarioAtual.uid, "npcs", npcId), { vidaAtual: novaVida });
+    } catch (erro) {
+        console.error('Erro ao ajustar vida do NPC:', erro);
+    }
+}
+
+// Usa um item consumível da mochila do NPC
+async function usarItemNPC(npcId, idUnico) {
+    const npc = npcsDoUsuario.find(n => n.id === npcId);
+    if (!npc) return;
+    const item = (npc.inventario || []).find(i => i.idUnico === idUnico);
+    if (!item) return;
+
+    const mecanica = item.mecanica || {};
+    const dadosAtualizados = { inventario: npc.inventario.filter(i => i.idUnico !== idUnico) };
+    let mensagem = '';
+
+    if (mecanica.tipo === 'cura') {
+        const antes = npc.vidaAtual ?? npc.vidaMaxima;
+        const depois = Math.min(npc.vidaMaxima, antes + mecanica.vida);
+        dadosAtualizados.vidaAtual = depois;
+        mensagem = `${item.nome} curou ${depois - antes} de vida de ${npc.nome}.`;
+    } else if (mecanica.tipo === 'vidaMaxima') {
+        dadosAtualizados.vidaMaxima = npc.vidaMaxima + mecanica.valor;
+        dadosAtualizados.vidaAtual = (npc.vidaAtual ?? npc.vidaMaxima) + mecanica.valor;
+        mensagem = `${item.nome} aumentou a Vida Máxima de ${npc.nome} em ${mecanica.valor}.`;
+    } else {
+        dadosAtualizados.inventario = npc.inventario.filter(i => i.idUnico !== idUnico);
+        mensagem = `${item.nome} foi usado.`;
+    }
+
+    try {
+        await updateDoc(doc(db, "usuarios", usuarioAtual.uid, "npcs", npcId), dadosAtualizados);
+        mostrarToast(mensagem, 'sucesso', 'Item usado');
+    } catch (erro) {
+        mostrarToast('Não foi possível usar o item.', 'erro', 'Erro');
+        console.error(erro);
+    }
+}
+
+// Adiciona item do mercado ao inventário de um NPC (sem custo de moedas)
+async function adicionarItemNPC(npcId, nomeItem) {
+    const npc = npcsDoUsuario.find(n => n.id === npcId);
+    if (!npc) return;
+    const itemBase = itensMercado.find(i => i.nome === nomeItem);
+    if (!itemBase) return;
+
+    const novoInventario = [...(npc.inventario || []), { ...itemBase, idUnico: Date.now() }];
+    try {
+        await updateDoc(doc(db, "usuarios", usuarioAtual.uid, "npcs", npcId), { inventario: novoInventario });
+        mostrarToast(`${nomeItem} adicionado ao NPC.`, 'sucesso', 'Item adicionado');
+    } catch (erro) {
+        mostrarToast('Erro ao adicionar item.', 'erro', 'Erro');
+        console.error(erro);
+    }
+}
+
+// Remove item do inventário de um NPC
+async function removerItemNPC(npcId, idUnico) {
+    const npc = npcsDoUsuario.find(n => n.id === npcId);
+    if (!npc) return;
+    const novoInventario = npc.inventario.filter(i => i.idUnico !== idUnico);
+    try {
+        await updateDoc(doc(db, "usuarios", usuarioAtual.uid, "npcs", npcId), { inventario: novoInventario });
+    } catch (erro) {
+        console.error('Erro ao remover item do NPC:', erro);
+    }
+}
+
+// Renderiza a lista de NPCs na aba NPCs
+function renderizarListaNPCs() {
+    const container = document.getElementById('lista-npcs');
+    if (!container) return;
+
+    if (npcsDoUsuario.length === 0) {
+        container.innerHTML = '<p class="mochila-vazia">Nenhum NPC criado ainda. Dê vida a personagens secundários para enriquecer sua história!</p>';
+        return;
+    }
+
+    const corAlinhamento = { aliado: '#4a8f5c', neutro: '#c9a449', inimigo: '#a3372b' };
+    const emojiAlinhamento = { aliado: '🟢', neutro: '🟡', inimigo: '🔴' };
+
+    container.innerHTML = '';
+    npcsDoUsuario.forEach(npc => {
+        const tipo = tiposNPC[npc.tipo] || {};
+        const vidaAtual = npc.vidaAtual ?? npc.vidaMaxima;
+        const pct = npc.vidaMaxima > 0 ? Math.round((vidaAtual / npc.vidaMaxima) * 100) : 0;
+
+        const itensHTML = (npc.inventario || []).length > 0
+            ? npc.inventario.map(i => `<span class="item-tag ${i.raridade}">${i.nome}</span>`).join('')
+            : '<span style="color:var(--texto-fraco);font-size:0.8em;font-style:italic;">Kit vazio</span>';
+
+        container.innerHTML += `
+            <div class="card-npc" data-alinhamento="${npc.alinhamento || 'neutro'}">
+                <div class="card-npc-header">
+                    <img class="avatar-npc" src="${npc.foto || AVATAR_PADRAO}" alt="${npc.nome}">
+                    <div class="card-npc-info">
+                        <strong>${npc.nome}</strong>
+                        <span class="card-npc-tipo">${tipo.emoji || ''} ${npc.tipo || ''}</span>
+                        <span class="card-npc-alinhamento" style="color:${corAlinhamento[npc.alinhamento] || '#c9a449'}">
+                            ${emojiAlinhamento[npc.alinhamento] || '🟡'} ${npc.alinhamento ? npc.alinhamento.charAt(0).toUpperCase() + npc.alinhamento.slice(1) : 'Neutro'}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="barra-status">
+                    <div class="barra-status-label">
+                        <span>❤️ Vida</span>
+                        <span>${vidaAtual} / ${npc.vidaMaxima}</span>
+                    </div>
+                    <div class="barra-fundo">
+                        <div class="barra-preenchimento barra-vida" style="width:${pct}%"></div>
+                    </div>
+                    <div class="controles-vida">
+                        <button class="btn-vida-ajuste dano" onclick="ajustarVidaNPC('${npc.id}', -1)">-1</button>
+                        <button class="btn-vida-ajuste dano" onclick="ajustarVidaNPC('${npc.id}', -5)">-5</button>
+                        <button class="btn-vida-ajuste cura" onclick="ajustarVidaNPC('${npc.id}', 5)">+5</button>
+                        <button class="btn-vida-ajuste cura" onclick="ajustarVidaNPC('${npc.id}', 1)">+1</button>
+                    </div>
+                </div>
+
+                <div class="card-npc-stats">
+                    <span>🛡️ <strong>${npc.defesa}</strong> Defesa</span>
+                    <span>⚔️ <strong>${npc.atributos?.for ?? 0}</strong> FOR</span>
+                    <span>🏃 <strong>${npc.atributos?.agi ?? 0}</strong> AGI</span>
+                    <span>📚 <strong>${npc.atributos?.int ?? 0}</strong> INT</span>
+                </div>
+
+                <div class="card-npc-inventario">${itensHTML}</div>
+
+                <div class="card-npc-botoes">
+                    <button class="btn-secondary" onclick="abrirModalNPC('${npc.id}')">📜 Ver Ficha</button>
+                    <button class="btn-secondary" onclick="abrirFormularioNPC('${npc.id}')">Editar</button>
+                    <button class="btn-vender" onclick="excluirNPC('${npc.id}', '${npc.nome.replace(/'/g, "\\'")}')">Excluir</button>
+                </div>
+            </div>
+        `;
+    });
+}
+
+// Abre modal de ficha completa do NPC com inventário gerenciável
+function abrirModalNPC(npcId) {
+    const npc = npcsDoUsuario.find(n => n.id === npcId);
+    if (!npc) return;
+
+    const tipo = tiposNPC[npc.tipo] || {};
+    const vidaAtual = npc.vidaAtual ?? npc.vidaMaxima;
+    const pct = npc.vidaMaxima > 0 ? Math.round((vidaAtual / npc.vidaMaxima) * 100) : 0;
+    const corAlinhamento = { aliado: '#4a8f5c', neutro: '#c9a449', inimigo: '#a3372b' };
+    const emojiAlinhamento = { aliado: '🟢', neutro: '🟡', inimigo: '🔴' };
+
+    const itensHTML = (npc.inventario || []).map(item => {
+        const mecanica = item.mecanica || {};
+        let btnAcao = '';
+        if (mecanica.tipo === 'cura' || mecanica.tipo === 'vidaMaxima') {
+            btnAcao = `<button class="btn-usar-npc" onclick="usarItemNPC('${npcId}', ${item.idUnico})">Usar</button>`;
+        }
+        return `
+            <div class="modal-npc-item ${item.raridade}">
+                <div class="modal-npc-item-info">
+                    <strong>${item.nome}</strong>
+                    <span>${item.efeito}</span>
+                </div>
+                <div class="modal-npc-item-acoes">
+                    ${btnAcao}
+                    <button class="modal-npc-item-remover" onclick="removerItemNPC('${npcId}', ${item.idUnico})" title="Remover">✕</button>
+                </div>
+            </div>
+        `;
+    }).join('') || '<p style="color:var(--texto-fraco);font-style:italic;font-size:0.9em;">Inventário vazio</p>';
+
+    // Select para adicionar itens do mercado
+    const opcoesItens = itensMercado.map(i => `<option value="${i.nome}">${i.nome} (${i.tipo})</option>`).join('');
+
+    document.getElementById('modal-ficha-conteudo').innerHTML = `
+        <div class="modal-ficha-inner theme-dark">
+            <button class="modal-fechar" onclick="fecharModalFicha()">✕</button>
+
+            <div class="modal-ficha-header">
+                <img class="modal-avatar" src="${npc.foto || AVATAR_PADRAO}" alt="${npc.nome}">
+                <div class="modal-ficha-titulo">
+                    <h2>${npc.nome}</h2>
+                    <p>${tipo.emoji || ''} ${npc.tipo || ''}</p>
+                    <p style="color:${corAlinhamento[npc.alinhamento] || '#c9a449'}">
+                        ${emojiAlinhamento[npc.alinhamento] || '🟡'} ${npc.alinhamento ? npc.alinhamento.charAt(0).toUpperCase() + npc.alinhamento.slice(1) : 'Neutro'}
+                    </p>
+                    <p class="modal-sub">${tipo.descricao || ''}</p>
+                </div>
+            </div>
+
+            <div class="modal-section">
+                <div class="modal-status-grid">
+                    <div class="modal-status-bloco">
+                        <div class="barra-status-label"><span>❤️ Vida</span><span>${vidaAtual} / ${npc.vidaMaxima}</span></div>
+                        <div class="barra-fundo"><div class="barra-preenchimento barra-vida" style="width:${pct}%"></div></div>
+                        <div class="controles-vida" style="margin-top:6px;">
+                            <button class="btn-vida-ajuste dano" onclick="ajustarVidaNPC('${npcId}', -1)">-1</button>
+                            <button class="btn-vida-ajuste dano" onclick="ajustarVidaNPC('${npcId}', -5)">-5</button>
+                            <button class="btn-vida-ajuste cura" onclick="ajustarVidaNPC('${npcId}', 5)">+5</button>
+                            <button class="btn-vida-ajuste cura" onclick="ajustarVidaNPC('${npcId}', 1)">+1</button>
+                        </div>
+                    </div>
+                    <div class="modal-stat-box">🛡️ <strong>${npc.defesa}</strong> Defesa</div>
+                </div>
+            </div>
+
+            <div class="modal-section">
+                <h4 class="modal-section-title">Atributos</h4>
+                <div class="modal-atributos">
+                    <div class="attr-box"><span>FOR</span><strong>${npc.atributos?.for ?? 0}</strong></div>
+                    <div class="attr-box"><span>AGI</span><strong>${npc.atributos?.agi ?? 0}</strong></div>
+                    <div class="attr-box"><span>VIG</span><strong>${npc.atributos?.vig ?? 0}</strong></div>
+                    <div class="attr-box"><span>INT</span><strong>${npc.atributos?.int ?? 0}</strong></div>
+                    <div class="attr-box"><span>CAR</span><strong>${npc.atributos?.car ?? 0}</strong></div>
+                </div>
+            </div>
+
+            <div class="modal-section">
+                <h4 class="modal-section-title">Inventário (${(npc.inventario || []).length} itens)</h4>
+                <div class="modal-npc-inventario">${itensHTML}</div>
+
+                <div class="modal-npc-add-item">
+                    <select id="select-add-item-npc" class="select-add-npc">
+                        ${opcoesItens}
+                    </select>
+                    <button class="btn-secondary" onclick="adicionarItemNPC('${npcId}', document.getElementById('select-add-item-npc').value)">+ Adicionar Item</button>
+                </div>
+            </div>
+
+            ${npc.descricao ? `
+            <div class="modal-section">
+                <h4 class="modal-section-title">Descrição</h4>
+                <p class="modal-biografia">${npc.descricao}</p>
+            </div>
+            ` : ''}
+        </div>
+    `;
+
+    document.getElementById('modal-ficha-overlay').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+// Upload de imagem para NPC
+async function onArquivoFotoNPCSelecionado(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const preview = document.getElementById('preview-nome-foto-npc');
+    const previewImg = document.getElementById('preview-img-foto-npc');
+    if (preview) preview.innerText = 'Comprimindo...';
+    try {
+        const base64 = await comprimirImagem(file);
+        document.getElementById('npc-foto').value = base64;
+        if (preview) preview.innerText = '✓ ' + file.name;
+        if (previewImg) { previewImg.src = base64; previewImg.style.display = 'block'; }
+    } catch (erro) {
+        mostrarToast('Não foi possível processar a imagem.', 'erro', 'Erro');
+        if (preview) preview.innerText = 'Erro ao processar';
+    }
+}
+
+// Registra funções de NPC no escopo global (acessíveis via onclick no HTML)
+window.abrirFormularioNPC = abrirFormularioNPC;
+window.fecharFormularioNPC = fecharFormularioNPC;
+window.salvarNPC = salvarNPC;
+window.excluirNPC = excluirNPC;
+window.ajustarVidaNPC = ajustarVidaNPC;
+window.usarItemNPC = usarItemNPC;
+window.adicionarItemNPC = adicionarItemNPC;
+window.removerItemNPC = removerItemNPC;
+window.abrirModalNPC = abrirModalNPC;
+window.atualizarPreviewTipoNPC = atualizarPreviewTipoNPC;
+window.onArquivoFotoNPCSelecionado = onArquivoFotoNPCSelecionado;
+
+
 // =========================================
 // SLIDESHOW DE FUNDO
 // Alterna entre as 8 imagens de fundo a cada 8 segundos

@@ -116,6 +116,10 @@
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 3h10a1 1 0 011 1v16a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 7h6M9 11h6M9 15h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
                 Minhas Fichas
             </button>
+            <button class="pagina-tab" onclick="mostrarPagina('npcs')">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="7" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M2 20c0-3.3 2.7-6 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="17" cy="10" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M12 20c0-2.8 2.2-5 5-5s5 2.2 5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="19" y1="4" x2="19" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="17" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                NPCs
+            </button>
             <button class="pagina-tab" onclick="mostrarPagina('mochila')">
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 7V5.5A2.5 2.5 0 0110.5 3h3A2.5 2.5 0 0116 5.5V7m-9 0h10a2 2 0 012 2v9a2 2 0 01-2 2H7a2 2 0 01-2-2V9a2 2 0 012-2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
                 Mochila
@@ -339,7 +343,74 @@
             </div>
         </section>
 
-        <!-- PÁGINA: MOCHILA -->
+        <!-- PÁGINA: NPCs -->
+        <section id="pagina-npcs" class="pagina-conteudo" style="display: none;">
+            <section class="fichas-container">
+                <div class="fichas-cabecalho">
+                    <h2>Meus NPCs</h2>
+                    <button class="btn-criar-ficha" onclick="abrirFormularioNPC()">+ Criar NPC</button>
+                </div>
+                <div id="lista-npcs" class="grid-fichas">
+                    <!-- Cards de NPC aparecem aqui -->
+                </div>
+            </section>
+
+            <!-- Formulário de criação/edição de NPC -->
+            <div id="formulario-npc-overlay" style="display:none;">
+                <div class="formulario-ficha-box">
+                    <h3 id="formulario-npc-titulo">Criar Novo NPC</h3>
+
+                    <div class="input-group">
+                        <label>Nome do NPC</label>
+                        <input type="text" id="npc-nome" placeholder="Ex: Ser Gregor Clegane">
+                    </div>
+
+                    <div class="ficha-row">
+                        <div class="input-group">
+                            <label>Tipo de NPC</label>
+                            <select id="npc-tipo" onchange="atualizarPreviewTipoNPC()">
+                                <!-- Populado pelo JS -->
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Alinhamento</label>
+                            <select id="npc-alinhamento">
+                                <option value="aliado">🟢 Aliado</option>
+                                <option value="neutro">🟡 Neutro</option>
+                                <option value="inimigo">🔴 Inimigo</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Preview do tipo selecionado -->
+                    <div id="npc-tipo-preview" class="npc-tipo-preview"></div>
+
+                    <div class="input-group">
+                        <label>Imagem do NPC</label>
+                        <div class="file-input-ficha">
+                            <label for="input-arquivo-foto-npc" class="btn-file-label-ficha">
+                                📷 Escolher imagem
+                            </label>
+                            <input type="file" id="input-arquivo-foto-npc" accept="image/*"
+                                   style="display:none" onchange="onArquivoFotoNPCSelecionado(this)">
+                            <span id="preview-nome-foto-npc" class="file-name-preview-mini">Nenhuma imagem selecionada</span>
+                        </div>
+                        <img id="preview-img-foto-npc" src="" alt="" style="display:none; width:80px; height:80px; border-radius:4px; object-fit:cover; margin-top:8px; border:2px solid var(--ouro-escuro);">
+                        <input type="hidden" id="npc-foto">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Descrição / História</label>
+                        <textarea id="npc-descricao" placeholder="Descreva este personagem, seu papel na história..."></textarea>
+                    </div>
+
+                    <div class="formulario-ficha-botoes">
+                        <button class="btn-secondary" onclick="fecharFormularioNPC()">Cancelar</button>
+                        <button class="btn-main" onclick="salvarNPC()">⚔️ Salvar NPC</button>
+                    </div>
+                </div>
+            </div>
+        </section>
         <section id="pagina-mochila" class="pagina-conteudo" style="display: none;">
             <section class="inventario-container">
                 <h2>Minha Mochila</h2>
