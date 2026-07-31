@@ -77,7 +77,7 @@ const _filtros = {
 };
 
 function mostrarPagina(nomePagina) {
-    const paginas = ['vitrine', 'fichas', 'npcs', 'mochila', 'mural'];
+    const paginas = ['vitrine', 'fichas', 'mochila', 'mural', 'npcs'];
 
     paginas.forEach(p => {
         document.getElementById('pagina-' + p).style.display = (p === nomePagina) ? 'block' : 'none';
@@ -920,6 +920,7 @@ if (auth) {
             }
             escutarDadosUsuario(user.uid);
             escutarNPCsDoUsuario(user.uid);
+            monitorarNPCsGlobal();
             escutarAvisoGlobal(); // Nova função
             esconderTelaDeLogin();
         } else {
@@ -2109,16 +2110,93 @@ function atualizarPreviewTipoNPC() {
     `;
 }
 
-// Listener Firestore: escuta os NPCs do usuário logado em tempo real
+// Listener local: rastreia quais NPCs pertencem ao usuário logado (para permissões de edição)
 function escutarNPCsDoUsuario(uid) {
     onSnapshot(collection(db, "usuarios", uid, "npcs"), (querySnapshot) => {
         npcsDoUsuario = [];
         querySnapshot.forEach(snap => {
-            npcsDoUsuario.push({ id: snap.id, ...snap.data() });
+            npcsDoUsuario.push({ id: snap.id, donoUid: uid, ...snap.data() });
         });
-        renderizarListaNPCs();
     }, (erro) => {
-        console.error("Erro ao escutar NPCs:", erro.message);
+        console.error("Erro ao escutar NPCs do usuário:", erro.message);
+    });
+}
+
+// Cores e emojis por lealdade de Casa
+const lealdadeCores = {
+    "Stark":       { cor: "#7ab3d4", emoji: "🐺" },
+    "Lannister":   { cor: "#c9a449", emoji: "🦁" },
+    "Targaryen":   { cor: "#a63a2a", emoji: "🐉" },
+    "Baratheon":   { cor: "#4a4a6a", emoji: "🦌" },
+    "Tyrell":      { cor: "#4a8f5c", emoji: "🌹" },
+    "Arryn":       { cor: "#6a9ecf", emoji: "🦅" },
+    "Casa Menor":  { cor: "#8a7f68", emoji: "🏰" },
+    "Essos":       { cor: "#c07030", emoji: "🌊" },
+    "Sem Lealdade":{ cor: "#6a6a6a", emoji: "⚔️" }
+};
+
+// Galeria global de NPCs usando collectionGroup
+function monitorarNPCsGlobal() {
+    const container = document.getElementById('lista-npcs');
+    onSnapshot(collectionGroup(db, "npcs"), (querySnapshot) => {
+        if (!container) return;
+        container.innerHTML = '';
+        if (querySnapshot.empty) {
+            container.innerHTML = '<p class="mochila-vazia">Nenhum NPC criado ainda no reino. Seja o primeiro a dar vida a um personagem!</p>';
+            return;
+        }
+        querySnapshot.forEach(snap => {
+            const npc = snap.data();
+            const npcId = snap.id;
+            const donoUid = snap.ref.parent.parent.id;
+            const podEditar = usuarioAtual && (usuarioAtual.uid === donoUid || usuarioAtual.uid === ADMIN_UID);
+            const tipo = tiposNPC[npc.tipo] || {};
+            const vidaAtual = npc.vidaAtual ?? npc.vidaMaxima;
+            const pct = npc.vidaMaxima > 0 ? Math.round((vidaAtual / npc.vidaMaxima) * 100) : 0;
+            const lealdade = lealdadeCores[npc.alinhamento] || lealdadeCores["Sem Lealdade"];
+            const itensHTML = (npc.inventario || []).length > 0
+                ? npc.inventario.map(i => `<span class="item-tag ${i.raridade}">${i.nome}</span>`).join('')
+                : '<span style="color:var(--texto-fraco);font-size:0.8em;font-style:italic;">Kit vazio</span>';
+            const botoesEdicao = podEditar ? `
+                <button class="btn-secondary" onclick="abrirFormularioNPCEdicao('${donoUid}','${npcId}')">Editar</button>
+                <button class="btn-vender" onclick="excluirNPCGlobal('${donoUid}','${npcId}','${(npc.nome||'').replace(/'/g,"\'")}')">Excluir</button>` : '';
+            container.innerHTML += `
+                <div class="player-card-novo card-npc-global">
+                    <div class="player-card-banner" style="background-image:url('${npc.foto||''}')">
+                        <div class="player-card-banner-overlay"></div>
+                        <img class="player-card-avatar" src="${npc.foto||AVATAR_PADRAO}" alt="${npc.nome||''}">
+                    </div>
+                    <div class="player-card-corpo">
+                        <div class="player-card-titulo">
+                            <div>
+                                <h3>${npc.nome||'Sem Nome'}</h3>
+                                <span class="player-card-subtitulo">${tipo.emoji||''} ${npc.tipo||''}</span>
+                            </div>
+                        </div>
+                        <div class="npc-lealdade-badge" style="border-color:${lealdade.cor};color:${lealdade.cor}">
+                            ${lealdade.emoji} ${npc.alinhamento||'Sem Lealdade'}
+                        </div>
+                        <div class="player-card-barra-vida">
+                            <div class="barra-status-label"><span>❤️ Vida</span><span>${vidaAtual} / ${npc.vidaMaxima||0}</span></div>
+                            <div class="barra-fundo"><div class="barra-preenchimento barra-vida" style="width:${pct}%"></div></div>
+                        </div>
+                        <div class="player-card-stats">
+                            <div class="stat-item">🛡️ <strong>${npc.defesa||0}</strong><span>Defesa</span></div>
+                            <div class="stat-item">⚔️ <strong>${npc.atributos?.for??0}</strong><span>FOR</span></div>
+                            <div class="stat-item">🏃 <strong>${npc.atributos?.agi??0}</strong><span>AGI</span></div>
+                            <div class="stat-item">📚 <strong>${npc.atributos?.int??0}</strong><span>INT</span></div>
+                        </div>
+                        <div class="player-card-mochila">${itensHTML}</div>
+                        <div class="card-npc-botoes">
+                            <button class="btn-ver-ficha" onclick="abrirModalNPCGlobal('${donoUid}','${npcId}')">📜 Ver Ficha</button>
+                            ${botoesEdicao}
+                        </div>
+                    </div>
+                </div>`;
+        });
+    }, (erro) => {
+        console.warn("NPCs indisponíveis:", erro.message);
+        if (container) container.innerHTML = '<p class="mochila-vazia">Não foi possível carregar os NPCs.</p>';
     });
 }
 
@@ -2184,22 +2262,19 @@ async function salvarNPC() {
 
     try {
         if (editandoId) {
-            // Edição: preserva vida atual e inventário, só atualiza campos editáveis
-            const npcAtual = npcsDoUsuario.find(n => n.id === editandoId);
-            const mudouTipo = npcAtual?.tipo !== tipo;
-
+            const editandoDonoUid = overlay.dataset.editandoDonoUid || usuarioAtual.uid;
+            const snap = await getDoc(doc(db, "usuarios", editandoDonoUid, "npcs", editandoId));
+            const npcAtual = snap.exists() ? snap.data() : {};
+            const mudouTipo = npcAtual.tipo !== tipo;
             const dadosAtualizados = { nome, tipo, alinhamento, foto, descricao };
-
             if (mudouTipo) {
-                // Se mudou o tipo, recalcula stats e reinicia o kit
                 dadosAtualizados.vidaMaxima = dadosTipo.vidaMaxima;
                 dadosAtualizados.vidaAtual = dadosTipo.vidaMaxima;
                 dadosAtualizados.defesa = dadosTipo.defesa;
                 dadosAtualizados.atributos = dadosTipo.atributos;
                 dadosAtualizados.inventario = gerarKitNPC(tipo);
             }
-
-            await updateDoc(doc(db, "usuarios", usuarioAtual.uid, "npcs", editandoId), dadosAtualizados);
+            await updateDoc(doc(db, "usuarios", editandoDonoUid, "npcs", editandoId), dadosAtualizados);
             mostrarToast(`${nome} foi atualizado.`, 'sucesso', 'NPC salvo');
         } else {
             // Criação nova
@@ -2513,6 +2588,151 @@ window.abrirModalNPC = abrirModalNPC;
 window.atualizarPreviewTipoNPC = atualizarPreviewTipoNPC;
 window.onArquivoFotoNPCSelecionado = onArquivoFotoNPCSelecionado;
 
+
+// ---- Funções para galeria pública de NPCs ----
+function abrirFormularioNPCEdicao(donoUid, npcId) {
+    getDoc(doc(db, "usuarios", donoUid, "npcs", npcId)).then(snap => {
+        if (!snap.exists()) return;
+        const npc = snap.data();
+        popularSelectTiposNPC();
+        const overlay = document.getElementById('formulario-npc-overlay');
+        overlay.style.display = 'flex';
+        overlay.dataset.editandoId = npcId;
+        overlay.dataset.editandoDonoUid = donoUid;
+        document.getElementById('formulario-npc-titulo').innerText = 'Editar NPC';
+        document.getElementById('npc-nome').value = npc.nome || '';
+        document.getElementById('npc-tipo').value = npc.tipo || Object.keys(tiposNPC)[0];
+        document.getElementById('npc-alinhamento').value = npc.alinhamento || 'Sem Lealdade';
+        document.getElementById('npc-foto').value = npc.foto || '';
+        document.getElementById('npc-descricao').value = npc.descricao || '';
+        const pi = document.getElementById('preview-img-foto-npc');
+        const pn = document.getElementById('preview-nome-foto-npc');
+        if (npc.foto) { pi.src = npc.foto; pi.style.display = 'block'; pn.innerText = '✓ Foto atual'; }
+        else { pi.style.display = 'none'; pn.innerText = 'Nenhuma imagem selecionada'; }
+        atualizarPreviewTipoNPC();
+    });
+}
+window.abrirFormularioNPCEdicao = abrirFormularioNPCEdicao;
+
+async function excluirNPCGlobal(donoUid, npcId, nomeNPC) {
+    const confirmado = await mostrarConfirmacao(`Excluir permanentemente <strong>${nomeNPC}</strong>?`);
+    if (!confirmado) return;
+    try {
+        await deleteDoc(doc(db, "usuarios", donoUid, "npcs", npcId));
+        mostrarToast(`${nomeNPC} foi removido do reino.`, 'sucesso', 'NPC excluído');
+    } catch (e) { mostrarToast('Erro ao excluir NPC.', 'erro', 'Erro'); }
+}
+window.excluirNPCGlobal = excluirNPCGlobal;
+
+function abrirModalNPCGlobal(donoUid, npcId) {
+    getDoc(doc(db, "usuarios", donoUid, "npcs", npcId)).then(snap => {
+        if (!snap.exists()) return;
+        const npc = snap.data();
+        const podEditar = usuarioAtual && (usuarioAtual.uid === donoUid || usuarioAtual.uid === ADMIN_UID);
+        const tipo = tiposNPC[npc.tipo] || {};
+        const vidaAtual = npc.vidaAtual ?? npc.vidaMaxima;
+        const pct = npc.vidaMaxima > 0 ? Math.round((vidaAtual/npc.vidaMaxima)*100) : 0;
+        const lealdade = lealdadeCores[npc.alinhamento] || lealdadeCores["Sem Lealdade"];
+        const controleVida = podEditar ? `<div class="controles-vida" style="margin-top:6px;">
+            <button class="btn-vida-ajuste dano" onclick="ajustarVidaNPCGlobal('${donoUid}','${npcId}',-1)">-1</button>
+            <button class="btn-vida-ajuste dano" onclick="ajustarVidaNPCGlobal('${donoUid}','${npcId}',-5)">-5</button>
+            <button class="btn-vida-ajuste cura" onclick="ajustarVidaNPCGlobal('${donoUid}','${npcId}',5)">+5</button>
+            <button class="btn-vida-ajuste cura" onclick="ajustarVidaNPCGlobal('${donoUid}','${npcId}',1)">+1</button>
+        </div>` : '';
+        const itensHTML = (npc.inventario||[]).map(item => {
+            const m = item.mecanica||{};
+            const bu = (podEditar&&(m.tipo==='cura'||m.tipo==='vidaMaxima'))
+                ? `<button class="btn-usar-npc" onclick="usarItemNPCGlobal('${donoUid}','${npcId}',${item.idUnico})">Usar</button>` : '';
+            const br = podEditar ? `<button class="modal-npc-item-remover" onclick="removerItemNPCGlobal('${donoUid}','${npcId}',${item.idUnico})">✕</button>` : '';
+            return `<div class="modal-npc-item ${item.raridade}"><div class="modal-npc-item-info"><strong>${item.nome}</strong><span>${item.efeito}</span></div><div class="modal-npc-item-acoes">${bu}${br}</div></div>`;
+        }).join('') || '<p style="color:var(--texto-fraco);font-style:italic;font-size:.9em;">Inventário vazio</p>';
+        const addHTML = podEditar ? `<div class="modal-npc-add-item"><select id="sel-add-npc" class="select-add-npc">${itensMercado.map(i=>`<option value="${i.nome}">${i.nome}</option>`).join('')}</select><button class="btn-secondary" onclick="adicionarItemNPCGlobal('${donoUid}','${npcId}',document.getElementById('sel-add-npc').value)">+ Adicionar Item</button></div>` : '';
+        document.getElementById('modal-ficha-conteudo').innerHTML = `
+            <div class="modal-ficha-inner theme-dark">
+                <button class="modal-fechar" onclick="fecharModalFicha()">✕</button>
+                <div class="modal-ficha-header">
+                    <img class="modal-avatar" src="${npc.foto||AVATAR_PADRAO}" alt="${npc.nome}">
+                    <div class="modal-ficha-titulo">
+                        <h2>${npc.nome||'Sem Nome'}</h2>
+                        <p>${tipo.emoji||''} ${npc.tipo||''}</p>
+                        <p style="color:${lealdade.cor}">${lealdade.emoji} ${npc.alinhamento||'Sem Lealdade'}</p>
+                        <p class="modal-sub">${tipo.descricao||''}</p>
+                    </div>
+                </div>
+                <div class="modal-section">
+                    <div class="modal-status-grid">
+                        <div class="modal-status-bloco">
+                            <div class="barra-status-label"><span>❤️ Vida</span><span>${vidaAtual}/${npc.vidaMaxima||0}</span></div>
+                            <div class="barra-fundo"><div class="barra-preenchimento barra-vida" style="width:${pct}%"></div></div>
+                            ${controleVida}
+                        </div>
+                        <div class="modal-stat-box">🛡️ <strong>${npc.defesa||0}</strong> Defesa</div>
+                    </div>
+                </div>
+                <div class="modal-section">
+                    <h4 class="modal-section-title">Atributos</h4>
+                    <div class="modal-atributos">
+                        <div class="attr-box"><span>FOR</span><strong>${npc.atributos?.for??0}</strong></div>
+                        <div class="attr-box"><span>AGI</span><strong>${npc.atributos?.agi??0}</strong></div>
+                        <div class="attr-box"><span>VIG</span><strong>${npc.atributos?.vig??0}</strong></div>
+                        <div class="attr-box"><span>INT</span><strong>${npc.atributos?.int??0}</strong></div>
+                        <div class="attr-box"><span>CAR</span><strong>${npc.atributos?.car??0}</strong></div>
+                    </div>
+                </div>
+                <div class="modal-section">
+                    <h4 class="modal-section-title">Inventário (${(npc.inventario||[]).length} itens)</h4>
+                    <div class="modal-npc-inventario">${itensHTML}</div>
+                    ${addHTML}
+                </div>
+                ${npc.descricao?`<div class="modal-section"><h4 class="modal-section-title">Descrição</h4><p class="modal-biografia">${npc.descricao}</p></div>`:''}
+            </div>`;
+        document.getElementById('modal-ficha-overlay').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    });
+}
+window.abrirModalNPCGlobal = abrirModalNPCGlobal;
+
+async function ajustarVidaNPCGlobal(donoUid, npcId, qtd) {
+    const s = await getDoc(doc(db,"usuarios",donoUid,"npcs",npcId));
+    if(!s.exists()) return;
+    const n=s.data();
+    await updateDoc(doc(db,"usuarios",donoUid,"npcs",npcId),{vidaAtual:Math.max(0,Math.min(n.vidaMaxima,(n.vidaAtual??n.vidaMaxima)+qtd))});
+}
+window.ajustarVidaNPCGlobal = ajustarVidaNPCGlobal;
+
+async function usarItemNPCGlobal(donoUid, npcId, idUnico) {
+    const s=await getDoc(doc(db,"usuarios",donoUid,"npcs",npcId));
+    if(!s.exists()) return;
+    const n=s.data(), item=(n.inventario||[]).find(i=>i.idUnico===idUnico);
+    if(!item) return;
+    const m=item.mecanica||{}, upd={inventario:n.inventario.filter(i=>i.idUnico!==idUnico)};
+    if(m.tipo==='cura'){const a=n.vidaAtual??n.vidaMaxima;upd.vidaAtual=Math.min(n.vidaMaxima,a+m.vida);mostrarToast(`Curou ${upd.vidaAtual-a} de vida.`,'sucesso','Item usado');}
+    else if(m.tipo==='vidaMaxima'){upd.vidaMaxima=n.vidaMaxima+m.valor;upd.vidaAtual=(n.vidaAtual??n.vidaMaxima)+m.valor;mostrarToast(`Vida máxima +${m.valor}`,'sucesso','Item usado');}
+    await updateDoc(doc(db,"usuarios",donoUid,"npcs",npcId),upd);
+    abrirModalNPCGlobal(donoUid,npcId);
+}
+window.usarItemNPCGlobal = usarItemNPCGlobal;
+
+async function removerItemNPCGlobal(donoUid, npcId, idUnico) {
+    const s=await getDoc(doc(db,"usuarios",donoUid,"npcs",npcId));
+    if(!s.exists()) return;
+    const n=s.data();
+    await updateDoc(doc(db,"usuarios",donoUid,"npcs",npcId),{inventario:n.inventario.filter(i=>i.idUnico!==idUnico)});
+    abrirModalNPCGlobal(donoUid,npcId);
+}
+window.removerItemNPCGlobal = removerItemNPCGlobal;
+
+async function adicionarItemNPCGlobal(donoUid, npcId, nomeItem) {
+    const itemBase=itensMercado.find(i=>i.nome===nomeItem);
+    if(!itemBase) return;
+    const s=await getDoc(doc(db,"usuarios",donoUid,"npcs",npcId));
+    if(!s.exists()) return;
+    const n=s.data();
+    await updateDoc(doc(db,"usuarios",donoUid,"npcs",npcId),{inventario:[...(n.inventario||[]),{...itemBase,idUnico:Date.now()}]});
+    mostrarToast(`${nomeItem} adicionado.`,'sucesso','Item adicionado');
+    abrirModalNPCGlobal(donoUid,npcId);
+}
+window.adicionarItemNPCGlobal = adicionarItemNPCGlobal;
 
 // =========================================
 // SLIDESHOW DE FUNDO

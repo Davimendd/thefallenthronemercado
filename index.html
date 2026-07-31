@@ -116,10 +116,6 @@
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 3h10a1 1 0 011 1v16a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 7h6M9 11h6M9 15h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
                 Minhas Fichas
             </button>
-            <button class="pagina-tab" onclick="mostrarPagina('npcs')">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="7" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M2 20c0-3.3 2.7-6 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="17" cy="10" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M12 20c0-2.8 2.2-5 5-5s5 2.2 5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="19" y1="4" x2="19" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="17" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                NPCs
-            </button>
             <button class="pagina-tab" onclick="mostrarPagina('mochila')">
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 7V5.5A2.5 2.5 0 0110.5 3h3A2.5 2.5 0 0116 5.5V7m-9 0h10a2 2 0 012 2v9a2 2 0 01-2 2H7a2 2 0 01-2-2V9a2 2 0 012-2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
                 Mochila
@@ -127,6 +123,10 @@
             <button class="pagina-tab" onclick="mostrarPagina('mural')">
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="8" r="2.5" stroke="currentColor" stroke-width="1.5"/><circle cx="17" cy="9" r="2" stroke="currentColor" stroke-width="1.5"/><path d="M4 19c0-2.8 2.2-5 5-5s5 2.2 5 5M14 19c0-1.8.6-3.4 1.6-4.6.5-.2 1-.4 1.4-.4 2 0 3.5 1.6 3.5 3.5v1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
                 Exploradores
+            </button>
+            <button class="pagina-tab" onclick="mostrarPagina('npcs')">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="7" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M2 20c0-3.3 2.7-6 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="17" cy="10" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M12 20c0-2.8 2.2-5 5-5s5 2.2 5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="19" y1="4" x2="19" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="17" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                NPCs
             </button>
         </nav>
 
@@ -343,15 +343,15 @@
             </div>
         </section>
 
-        <!-- PÁGINA: NPCs -->
+        <!-- PÁGINA: NPCs (galeria pública) -->
         <section id="pagina-npcs" class="pagina-conteudo" style="display: none;">
-            <section class="fichas-container">
+            <section class="comunidade-container">
                 <div class="fichas-cabecalho">
-                    <h2>Meus NPCs</h2>
+                    <h2>Personagens do Reino</h2>
                     <button class="btn-criar-ficha" onclick="abrirFormularioNPC()">+ Criar NPC</button>
                 </div>
-                <div id="lista-npcs" class="grid-fichas">
-                    <!-- Cards de NPC aparecem aqui -->
+                <div id="lista-npcs" class="grid-comunidade">
+                    <!-- Cards de NPC de todos os usuários aparecem aqui -->
                 </div>
             </section>
 
@@ -373,11 +373,17 @@
                             </select>
                         </div>
                         <div class="input-group">
-                            <label>Alinhamento</label>
+                            <label>Lealdade</label>
                             <select id="npc-alinhamento">
-                                <option value="aliado">🟢 Aliado</option>
-                                <option value="neutro">🟡 Neutro</option>
-                                <option value="inimigo">🔴 Inimigo</option>
+                                <option value="Sem Lealdade">⚔️ Sem Lealdade</option>
+                                <option value="Stark">🐺 Casa Stark</option>
+                                <option value="Lannister">🦁 Casa Lannister</option>
+                                <option value="Targaryen">🐉 Casa Targaryen</option>
+                                <option value="Baratheon">🦌 Casa Baratheon</option>
+                                <option value="Tyrell">🌹 Casa Tyrell</option>
+                                <option value="Arryn">🦅 Casa Arryn</option>
+                                <option value="Casa Menor">🏰 Casa Menor</option>
+                                <option value="Essos">🌊 Essos</option>
                             </select>
                         </div>
                     </div>

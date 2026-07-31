@@ -2603,3 +2603,19 @@ section,
     font-size: 0.72em;
     padding: 8px 14px;
 }
+
+/* Badge de lealdade por Casa */
+.npc-lealdade-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border: 1px solid;
+    border-radius: 20px;
+    font-family: "Cinzel", serif;
+    font-size: 0.68em;
+    letter-spacing: 0.8px;
+    background: rgba(0,0,0,0.2);
+    width: fit-content;
+}
+.card-npc-global .player-card-corpo { gap: 10px; }
