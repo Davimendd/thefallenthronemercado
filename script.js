@@ -2697,6 +2697,7 @@ async function ajustarVidaNPCGlobal(donoUid, npcId, qtd) {
     if(!s.exists()) return;
     const n=s.data();
     await updateDoc(doc(db,"usuarios",donoUid,"npcs",npcId),{vidaAtual:Math.max(0,Math.min(n.vidaMaxima,(n.vidaAtual??n.vidaMaxima)+qtd))});
+    abrirModalNPCGlobal(donoUid, npcId);
 }
 window.ajustarVidaNPCGlobal = ajustarVidaNPCGlobal;
 
