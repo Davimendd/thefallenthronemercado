@@ -35,6 +35,18 @@
         </button>
         <div id="menu-conta" style="display: none;">
             <span id="menu-conta-nome">Carregando...</span>
+            <div class="menu-conta-separador"></div>
+            <div id="menu-conta-troca-nome" style="display:none; margin-bottom:6px;">
+                <input type="text" id="menu-input-novo-nome" placeholder="Novo nome de usuário" class="menu-conta-input">
+                <button onclick="salvarNomeUsuario()" class="btn-secondary" style="width:100%;margin-top:4px;font-size:0.7em;">Confirmar</button>
+            </div>
+            <div id="menu-conta-troca-foto" style="display:none; margin-bottom:6px;">
+                <label for="menu-input-foto" class="btn-file-label-perfil" style="width:100%;text-align:center;box-sizing:border-box;">📷 Escolher imagem</label>
+                <input type="file" id="menu-input-foto" accept="image/*" style="display:none" onchange="salvarFotoUsuario(this)">
+                <span id="menu-preview-foto" class="file-name-preview-mini"></span>
+            </div>
+            <button onclick="alternarTrocaNomeUsuario()" class="btn-secondary" style="font-size:0.72em;">✏️ Trocar Nome</button>
+            <button onclick="alternarTrocaFotoUsuario()" class="btn-secondary" style="font-size:0.72em;">📷 Trocar Foto</button>
             <button onclick="trocarDeConta()" class="btn-vender">Sair / Trocar de conta</button>
         </div>
     </div>
@@ -42,7 +54,7 @@
     <div id="auth-overlay">
         <div id="auth-container" class="auth-box">
             <h2>Entrar no Reino</h2>
-            <input type="text" id="login-nome" placeholder="Nome do Personagem (ex: Ned Stark)">
+            <input type="text" id="login-nome" placeholder="Nome de Usuário">
             <input type="email" id="login-email" placeholder="Seu e-mail">
             <input type="password" id="login-senha" placeholder="Sua senha">
             <div class="auth-buttons">
@@ -74,31 +86,6 @@
                 <span class="linha"></span>
                 <span class="losango"></span>
                 <span class="linha direita"></span>
-            </div>
-
-            <div id="perfil-jogador" class="perfil-box">
-              <img id="avatar-perfil" class="avatar" src="" alt="Avatar do personagem">
-              <div class="perfil-textos">
-                  <span id="nome-perfil">Carregando personagem...</span>
-                  <div class="perfil-acoes">
-                      <button onclick="mostrarTrocaNome()" class="btn-pequeno">Trocar Nome</button>
-                      <button onclick="mostrarTrocaFoto()" class="btn-pequeno">Trocar Foto</button>
-                  </div>
-
-                  <div id="input-troca-nome" style="display: none; margin-top: 10px;">
-                      <input type="text" id="novo-nome-input" placeholder="Novo nome do herói">
-                      <button onclick="salvarNovoNome()">Confirmar</button>
-                  </div>
-
-                  <div id="input-troca-foto" style="display: none; margin-top: 10px;">
-                      <label for="input-arquivo-foto-perfil" class="btn-file-label-perfil">
-                          📷 Escolher imagem
-                      </label>
-                      <input type="file" id="input-arquivo-foto-perfil" accept="image/*"
-                             style="display:none" onchange="onArquivoFotoPerfilSelecionado(this)">
-                      <span id="preview-nome-foto-perfil" class="file-name-preview-mini"></span>
-                  </div>
-              </div>
             </div>
 
             <div id="saldo-jogador">

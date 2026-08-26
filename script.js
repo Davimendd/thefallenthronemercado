@@ -955,18 +955,60 @@ function mostrarTrocaNome() {
 }
 
 async function salvarNovoNome() {
-    const novoNome = document.getElementById('novo-nome-input').value;
-    if (!novoNome) return mostrarToast('Escolha um nome válido para seu herói.', 'erro', 'Nome inválido');
-    if (!fichaAtivaId) return mostrarToast('Nenhuma ficha ativa selecionada.', 'erro', 'Erro');
-
+    // Mantida para compatibilidade com fichas
+    const novoNome = document.getElementById('novo-nome-input')?.value;
+    if (!novoNome || !fichaAtivaId) return;
     try {
         await updateDoc(doc(db, "usuarios", usuarioAtual.uid, "fichas", fichaAtivaId), { nome: novoNome });
-        
-        document.getElementById('input-troca-nome').style.display = 'none';
-        document.getElementById('novo-nome-input').value = '';
-        mostrarToast(`Agora sois conhecido como ${novoNome}.`, 'sucesso', 'Nome alterado');
-    } catch (error) {
-        mostrarToast('Não foi possível trocar o nome agora.', 'erro', 'Erro');
+        const el = document.getElementById('input-troca-nome');
+        if (el) el.style.display = 'none';
+    } catch (error) { console.error(error); }
+}
+
+// Funções do menu de conta — operam no documento raiz do usuário
+function alternarTrocaNomeUsuario() {
+    const div = document.getElementById('menu-conta-troca-nome');
+    const aberto = div.style.display !== 'none';
+    div.style.display = aberto ? 'none' : 'block';
+    document.getElementById('menu-conta-troca-foto').style.display = 'none';
+    if (!aberto) {
+        document.getElementById('menu-input-novo-nome').value = nomeUsuarioAtual || '';
+        document.getElementById('menu-input-novo-nome').focus();
+    }
+}
+
+async function salvarNomeUsuario() {
+    const novoNome = document.getElementById('menu-input-novo-nome').value.trim();
+    if (!novoNome) return mostrarToast('Digite um nome válido.', 'erro', 'Nome inválido');
+    try {
+        await updateDoc(doc(db, "usuarios", usuarioAtual.uid), { nomeUsuario: novoNome });
+        document.getElementById('menu-conta-troca-nome').style.display = 'none';
+        document.getElementById('menu-conta').style.display = 'none';
+        mostrarToast(`Nome alterado para ${novoNome}.`, 'sucesso', 'Nome atualizado');
+    } catch (e) { mostrarToast('Erro ao alterar nome.', 'erro', 'Erro'); }
+}
+
+function alternarTrocaFotoUsuario() {
+    const div = document.getElementById('menu-conta-troca-foto');
+    const aberto = div.style.display !== 'none';
+    div.style.display = aberto ? 'none' : 'block';
+    document.getElementById('menu-conta-troca-nome').style.display = 'none';
+}
+
+async function salvarFotoUsuario(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const preview = document.getElementById('menu-preview-foto');
+    if (preview) preview.innerText = 'Comprimindo...';
+    try {
+        const base64 = await comprimirImagem(file);
+        await updateDoc(doc(db, "usuarios", usuarioAtual.uid), { fotoUsuario: base64 });
+        document.getElementById('menu-conta-troca-foto').style.display = 'none';
+        document.getElementById('menu-conta').style.display = 'none';
+        mostrarToast('Foto de perfil atualizada.', 'sucesso', 'Foto alterada');
+    } catch (e) {
+        mostrarToast('Não foi possível processar a imagem.', 'erro', 'Erro');
+        if (preview) preview.innerText = 'Erro ao processar';
     }
 }
 
@@ -1022,31 +1064,7 @@ function comprimirImagem(file) {
 
 // Chamado quando o usuário seleciona um arquivo no input de foto do PERFIL
 async function onArquivoFotoPerfilSelecionado(input) {
-    const file = input.files[0];
-    if (!file) return;
-
-    const preview = document.getElementById('preview-nome-foto-perfil');
-    if (preview) preview.innerText = 'Comprimindo...';
-
-    try {
-        const base64 = await comprimirImagem(file);
-
-        // Salva imediatamente na ficha ativa
-        if (!fichaAtivaId) {
-            mostrarToast('Nenhuma ficha ativa selecionada.', 'erro', 'Erro');
-            return;
-        }
-
-        await updateDoc(doc(db, "usuarios", usuarioAtual.uid, "fichas", fichaAtivaId), { foto: base64 });
-
-        if (preview) preview.innerText = '✓ ' + file.name;
-        document.getElementById('input-troca-foto').style.display = 'none';
-        mostrarToast('Seu retrato foi atualizado no reino.', 'sucesso', 'Foto alterada');
-    } catch (error) {
-        mostrarToast('Não foi possível processar a imagem.', 'erro', 'Erro');
-        if (preview) preview.innerText = 'Erro ao processar';
-        console.error(error);
-    }
+    await salvarFotoUsuario(input);
 }
 
 // Chamado quando o usuário seleciona um arquivo no input de foto da FICHA (formulário)
@@ -1077,21 +1095,26 @@ async function onArquivoFotoFichaSelecionado(input) {
 }
 
 function mostrarTrocaFoto() {
-    const div = document.getElementById('input-troca-foto');
-    div.style.display = div.style.display === 'none' ? 'block' : 'none';
+    alternarTrocaFotoUsuario();
+    document.getElementById('menu-conta').style.display = 'flex';
 }
 
 // Estado em memória: lista de fichas da conta logada e qual está ativa.
 // É atualizado em tempo real pelos listeners abaixo.
 let fichasDoUsuario = [];
 let fichaAtivaId = null;
+let nomeUsuarioAtual = '';
+let fotoUsuarioAtual = '';
 
 function escutarDadosUsuario(uid) {
-    // Observa o documento raiz do usuário: guarda apenas qual ficha está ativa.
     onSnapshot(doc(db, "usuarios", uid), (docSnap) => {
         if (docSnap.exists()) {
             const dados = docSnap.data();
             fichaAtivaId = dados.fichaAtivaId || null;
+            nomeUsuarioAtual = dados.nomeUsuario || '';
+            fotoUsuarioAtual = dados.fotoUsuario || '';
+            document.getElementById('avatar-flutuante').src = fotoUsuarioAtual || AVATAR_PADRAO;
+            document.getElementById('menu-conta-nome').innerText = nomeUsuarioAtual || 'Usuário';
             atualizarPerfilComFichaAtiva();
             renderizarListaDeFichas();
         }
@@ -1121,23 +1144,12 @@ function obterFichaAtiva() {
 // Atualiza o cabeçalho (perfil, saldo, avatar) com os dados da ficha ativa.
 function atualizarPerfilComFichaAtiva() {
     const ficha = obterFichaAtiva();
-
     if (!ficha) {
         document.getElementById('coins').innerText = '0';
-        document.getElementById('nome-perfil').innerText = 'Nenhuma ficha ativa';
-        document.getElementById('avatar-perfil').src = AVATAR_PADRAO;
-        document.getElementById('avatar-flutuante').src = AVATAR_PADRAO;
-        document.getElementById('menu-conta-nome').innerText = 'Sem personagem';
         renderizarInventario([]);
         return;
     }
-
     document.getElementById('coins').innerText = ficha.moedas;
-    document.getElementById('nome-perfil').innerText = 'Personagem: ' + (ficha.nome || 'Sem Nome');
-    document.getElementById('avatar-perfil').src = ficha.foto || AVATAR_PADRAO;
-    document.getElementById('avatar-flutuante').src = ficha.foto || AVATAR_PADRAO;
-    document.getElementById('menu-conta-nome').innerText = ficha.nome || 'Sem Nome';
-
     renderizarInventario(ficha.inventario || []);
 }
 
@@ -1672,12 +1684,12 @@ async function venderItemNoFirebase(idUnico, precoOriginal, nomeItem, botao) {
 }
 
 async function fazerCadastro() {
-    const nomePersonagem = document.getElementById('login-nome').value; // Captura o nome
+    const nomePersonagem = document.getElementById('login-nome').value.trim();
     const email = document.getElementById('login-email').value;
     const senha = document.getElementById('login-senha').value;
     const botao = event ? event.target : null;
 
-    if (!nomePersonagem) return mostrarToast('Escolha um nome para seu personagem.', 'erro', 'Nome obrigatório');
+    if (!nomePersonagem) return mostrarToast('Escolha um nome de usuário.', 'erro', 'Nome obrigatório');
 
     if (botao) { botao.classList.add('carregando'); botao.disabled = true; }
 
@@ -1693,7 +1705,7 @@ async function fazerCadastro() {
 
         const novaFichaRef = doc(collection(db, "usuarios", user.uid, "fichas"));
         await setDoc(novaFichaRef, {
-            nome: nomePersonagem,
+            nome: "Meu Personagem",
             casa: "Sem Casa",
             origem: origemInicial,
             classe: classeInicial,
@@ -1711,12 +1723,13 @@ async function fazerCadastro() {
             equipado: { arma: null, armadura: null }
         });
 
-        // Cria o documento raiz do usuário já apontando para essa primeira ficha
         await setDoc(doc(db, "usuarios", user.uid), {
-            fichaAtivaId: novaFichaRef.id
+            fichaAtivaId: novaFichaRef.id,
+            nomeUsuario: nomePersonagem,
+            fotoUsuario: ""
         });
 
-        mostrarToast(`Cavaleiro ${nomePersonagem} foi registrado no reino.`, 'sucesso', 'Bem-vindo');
+        mostrarToast(`Bem-vindo ao reino, ${nomePersonagem}!`, 'sucesso', 'Conta criada');
     } catch (error) {
         mostrarToast(traduzirErroFirebase(error), 'erro', 'Erro ao cadastrar');
     } finally {
@@ -2039,6 +2052,10 @@ window.mostrarTrocaNome = mostrarTrocaNome;
 window.salvarNovoNome = salvarNovoNome;
 window.mostrarTrocaFoto = mostrarTrocaFoto;
 window.onArquivoFotoPerfilSelecionado = onArquivoFotoPerfilSelecionado;
+window.alternarTrocaNomeUsuario = alternarTrocaNomeUsuario;
+window.salvarNomeUsuario = salvarNomeUsuario;
+window.alternarTrocaFotoUsuario = alternarTrocaFotoUsuario;
+window.salvarFotoUsuario = salvarFotoUsuario;
 window.onArquivoFotoFichaSelecionado = onArquivoFotoFichaSelecionado;
 window.alternarMenuConta = alternarMenuConta;
 window.mostrarPagina = mostrarPagina;

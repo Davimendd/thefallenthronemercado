@@ -2619,3 +2619,34 @@ section,
     width: fit-content;
 }
 .card-npc-global .player-card-corpo { gap: 10px; }
+
+/* Menu de conta expandido (trocar nome/foto de usuário) */
+.menu-conta-separador {
+    height: 1px;
+    background: var(--borda);
+    margin: 6px 0;
+}
+
+.menu-conta-input {
+    width: 100%;
+    padding: 8px;
+    background: #0d0c0a;
+    border: 1px solid var(--borda);
+    color: var(--texto);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.95em;
+    border-radius: 2px;
+    box-sizing: border-box;
+}
+
+.menu-conta-input:focus {
+    outline: none;
+    border-color: var(--ouro-escuro);
+}
+
+#menu-conta .btn-secondary {
+    width: 100%;
+    font-size: 0.72em;
+    text-align: left;
+    padding: 8px 12px;
+}
