@@ -77,7 +77,7 @@ const _filtros = {
 };
 
 function mostrarPagina(nomePagina) {
-    const paginas = ['vitrine', 'fichas', 'mochila', 'mural', 'npcs'];
+    const paginas = ['vitrine', 'fichas', 'mochila', 'mural', 'npcs', 'photoplayers'];
 
     paginas.forEach(p => {
         document.getElementById('pagina-' + p).style.display = (p === nomePagina) ? 'block' : 'none';
@@ -87,6 +87,11 @@ function mostrarPagina(nomePagina) {
         tab.classList.toggle('ativa', paginas[i] === nomePagina);
     });
 
+    // A aba de Photoplayers tem sua própria busca embutida (não usa o painel contextual)
+    if (nomePagina === 'photoplayers') {
+        renderizarListaPhotoplayers();
+    }
+
     // Mostra/oculta o painel de busca e os filtros corretos para cada aba
     const painelBusca = document.getElementById('painel-busca');
     const filtrosVitrine = document.getElementById('filtros-vitrine');
@@ -94,7 +99,7 @@ function mostrarPagina(nomePagina) {
     const filtrosMural = document.getElementById('filtros-mural');
 
     // Oculta o painel de busca nas abas que não precisam de busca
-    painelBusca.style.display = (nomePagina === 'fichas' || nomePagina === 'npcs') ? 'none' : 'block';
+    painelBusca.style.display = (nomePagina === 'fichas' || nomePagina === 'npcs' || nomePagina === 'photoplayers') ? 'none' : 'block';
 
     if (filtrosVitrine) filtrosVitrine.style.display = (nomePagina === 'vitrine') ? 'flex' : 'none';
     if (filtrosMochila) filtrosMochila.style.display = (nomePagina === 'mochila') ? 'flex' : 'none';
@@ -917,6 +922,8 @@ if (auth) {
             usuarioAtual = user;
             if (user.uid === ADMIN_UID) {
                 document.getElementById('painel-mestre').style.display = 'block';
+                const caixaAdminPhotoplayer = document.getElementById('photoplayers-admin-add');
+                if (caixaAdminPhotoplayer) caixaAdminPhotoplayer.style.display = 'flex';
             }
             escutarDadosUsuario(user.uid);
             escutarNPCsDoUsuario(user.uid);
@@ -1185,6 +1192,8 @@ function abrirFormularioFicha(fichaIdParaEditar) {
         document.getElementById('ficha-idade').value = ficha.idade || '';
         document.getElementById('ficha-genero').value = ficha.genero || '';
         document.getElementById('ficha-altura').value = ficha.altura || '';
+        document.getElementById('ficha-photoplayer').value = ficha.photoplayer || '';
+        limparAvisoPhotoplayerFicha();
         document.getElementById('ficha-foto').value = ficha.foto || '';
         document.getElementById('ficha-tema').value = ficha.tema || 'theme-classic';
         document.getElementById('ficha-sobre').value = ficha.sobre || '';
@@ -1211,6 +1220,8 @@ function abrirFormularioFicha(fichaIdParaEditar) {
         document.getElementById('ficha-idade').value = '';
         document.getElementById('ficha-genero').value = '';
         document.getElementById('ficha-altura').value = '';
+        document.getElementById('ficha-photoplayer').value = '';
+        limparAvisoPhotoplayerFicha();
         document.getElementById('ficha-foto').value = '';
         document.getElementById('ficha-tema').value = 'theme-classic';
         document.getElementById('ficha-sobre').value = '';
@@ -1241,11 +1252,30 @@ async function salvarFicha() {
     const foto = document.getElementById('ficha-foto').value.trim();
     const tema = document.getElementById('ficha-tema').value;
     const sobre = document.getElementById('ficha-sobre').value;
+    const photoplayer = document.getElementById('ficha-photoplayer').value.trim();
 
     if (!nome) return mostrarToast('Dê um nome ao seu personagem.', 'erro', 'Nome obrigatório');
     if (!classe) return mostrarToast('Escolha uma classe para o personagem.', 'erro', 'Classe obrigatória');
 
     const editandoId = document.getElementById('formulario-ficha-overlay').dataset.editandoId;
+
+    // Verifica se o photoplayer informado já está em uso por outro personagem
+    // (ou reservado manualmente pelo Mestre) antes de salvar.
+    if (photoplayer) {
+        const duplicado = encontrarPhotoplayerDuplicado(photoplayer, {
+            ignorarDonoUid: usuarioAtual.uid,
+            ignorarFichaId: editandoId
+        });
+        if (duplicado) {
+            const detalhe = duplicado.tipo === 'personagem'
+                ? ` Já está sendo usado por ${duplicado.nome}.`
+                : ' Está reservado pelo Mestre.';
+            mostrarAvisoPhotoplayerFicha(`Esse photoplayer já está sendo usado.${detalhe}`);
+            mostrarToast(`Esse photoplayer já está sendo usado.${detalhe}`, 'erro', 'Photoplayer em uso');
+            return;
+        }
+    }
+    limparAvisoPhotoplayerFicha();
 
     try {
         if (editandoId) {
@@ -1256,7 +1286,7 @@ async function salvarFicha() {
             const mudouClasseOuOrigem = fichaAtual.classe !== classe || fichaAtual.origem !== origem;
 
             const dadosAtualizados = {
-                nome, casa, origem, classe, idade, genero, altura, foto, tema, sobre,
+                nome, casa, origem, classe, idade, genero, altura, foto, tema, sobre, photoplayer,
                 defesaBase: statusRecalculado.defesaBase,
                 vidaMaxima: statusRecalculado.vidaMaxima,
             };
@@ -1275,7 +1305,7 @@ async function salvarFicha() {
             const novaFichaRef = doc(collection(db, "usuarios", usuarioAtual.uid, "fichas"));
 
             await setDoc(novaFichaRef, {
-                nome, casa, origem, classe, idade, genero, altura, foto, tema, sobre,
+                nome, casa, origem, classe, idade, genero, altura, foto, tema, sobre, photoplayer,
                 vidaMaxima: status.vidaMaxima,
                 vidaAtual: status.vidaMaxima,
                 defesaBase: status.defesaBase,
@@ -1902,6 +1932,10 @@ function monitorarComunidade() {
                 _fichasMuralCache = _fichasMuralCache || {};
                 _fichasMuralCache[fichaDataId] = ficha;
             });
+
+            // Mantém a lista de Photoplayers sincronizada automaticamente sempre
+            // que qualquer ficha (de qualquer jogador) for criada, editada ou removida.
+            if (_paginaAtivaBusca === 'photoplayers') renderizarListaPhotoplayers();
         }, (erro) => {
             console.warn("Mural indisponível (verifique o índice de grupo de coleção 'fichas' no Firestore):", erro.message);
             if (mural) {
@@ -1910,6 +1944,210 @@ function monitorarComunidade() {
         });
     } catch (erroComunidade) {
         console.error("Erro ao iniciar listener do mural:", erroComunidade);
+    }
+}
+
+// =========================================
+// SISTEMA DE PHOTOPLAYERS (Aparências)
+// =========================================
+// Cache dos photoplayers reservados manualmente pelo Mestre (não ligados a
+// nenhuma ficha), mantido em tempo real via onSnapshot.
+let _photoplayersAdminCache = {};
+
+function normalizarTextoPhotoplayer(texto) {
+    return (texto || '').trim().toLowerCase();
+}
+
+// Procura se o texto informado já está em uso por outra ficha (de qualquer
+// jogador) ou já foi reservado manualmente pelo Mestre. Os parâmetros
+// "ignorar" servem para não acusar a própria ficha que está sendo editada.
+function encontrarPhotoplayerDuplicado(texto, opcoes = {}) {
+    const alvo = normalizarTextoPhotoplayer(texto);
+    if (!alvo) return null;
+
+    for (const chave in _fichasMuralCache) {
+        const ficha = _fichasMuralCache[chave];
+        if (!ficha || !ficha.photoplayer) continue;
+        const [donoUid, fichaId] = chave.split('__');
+        if (opcoes.ignorarDonoUid && opcoes.ignorarFichaId &&
+            donoUid === opcoes.ignorarDonoUid && fichaId === opcoes.ignorarFichaId) continue;
+        if (normalizarTextoPhotoplayer(ficha.photoplayer) === alvo) {
+            return { tipo: 'personagem', nome: ficha.nome || 'um personagem' };
+        }
+    }
+
+    for (const id in _photoplayersAdminCache) {
+        if (opcoes.ignorarAdminId && id === opcoes.ignorarAdminId) continue;
+        const entrada = _photoplayersAdminCache[id];
+        if (normalizarTextoPhotoplayer(entrada.texto) === alvo) {
+            return { tipo: 'reservado' };
+        }
+    }
+
+    return null;
+}
+
+function mostrarAvisoPhotoplayerFicha(mensagem) {
+    const el = document.getElementById('aviso-photoplayer-ficha');
+    if (!el) return;
+    el.textContent = mensagem;
+    el.style.display = 'block';
+}
+
+function limparAvisoPhotoplayerFicha() {
+    const el = document.getElementById('aviso-photoplayer-ficha');
+    if (!el) return;
+    el.textContent = '';
+    el.style.display = 'none';
+}
+
+// Escuta em tempo real a coleção de photoplayers reservados manualmente pelo Mestre.
+function monitorarPhotoplayersAdmin() {
+    try {
+        onSnapshot(collection(db, "photoplayersAdmin"), (querySnapshot) => {
+            _photoplayersAdminCache = {};
+            querySnapshot.forEach((docSnap) => {
+                _photoplayersAdminCache[docSnap.id] = docSnap.data();
+            });
+            if (_paginaAtivaBusca === 'photoplayers') renderizarListaPhotoplayers();
+        }, (erro) => {
+            console.warn("Lista de photoplayers reservados indisponível:", erro.message);
+        });
+    } catch (erroPhotoplayers) {
+        console.error("Erro ao iniciar listener de photoplayers reservados:", erroPhotoplayers);
+    }
+}
+
+// Constrói a lista completa (fichas + reservas do Mestre), ordenada por
+// ordem alfabética e agrupada por letra inicial para facilitar a leitura.
+function renderizarListaPhotoplayers() {
+    const container = document.getElementById('lista-photoplayers');
+    if (!container) return;
+
+    const filtro = normalizarTextoPhotoplayer(document.getElementById('busca-photoplayer')?.value || '');
+    const souMestre = usuarioAtual && usuarioAtual.uid === ADMIN_UID;
+
+    let entradas = [];
+
+    for (const chave in _fichasMuralCache) {
+        const ficha = _fichasMuralCache[chave];
+        if (!ficha || !ficha.photoplayer) continue;
+        const [donoUid, fichaId] = chave.split('__');
+        entradas.push({
+            texto: ficha.photoplayer,
+            personagem: ficha.nome || 'Sem Nome',
+            tipo: 'personagem',
+            donoUid, fichaId
+        });
+    }
+
+    for (const id in _photoplayersAdminCache) {
+        entradas.push({
+            texto: _photoplayersAdminCache[id].texto,
+            personagem: null,
+            tipo: 'reservado',
+            adminId: id
+        });
+    }
+
+    if (filtro) {
+        entradas = entradas.filter(e =>
+            normalizarTextoPhotoplayer(e.texto).includes(filtro) ||
+            (e.personagem && normalizarTextoPhotoplayer(e.personagem).includes(filtro))
+        );
+    }
+
+    entradas.sort((a, b) => a.texto.localeCompare(b.texto, 'pt-BR', { sensitivity: 'base' }));
+
+    if (entradas.length === 0) {
+        container.innerHTML = '<p class="mochila-vazia">Nenhum photoplayer cadastrado ainda.</p>';
+        return;
+    }
+
+    // Agrupa por letra inicial para uma leitura mais organizada
+    let html = '';
+    let letraAtual = null;
+    entradas.forEach(e => {
+        const letra = (e.texto.trim()[0] || '#').toUpperCase();
+        if (letra !== letraAtual) {
+            if (letraAtual !== null) html += '</div>';
+            html += `<div class="photoplayers-letra-grupo"><h3 class="photoplayers-letra-titulo">${letra}</h3>`;
+            letraAtual = letra;
+        }
+
+        const botaoRemover = souMestre
+            ? (e.tipo === 'reservado'
+                ? `<button class="photoplayer-remover" onclick="removerPhotoplayerAdmin('${e.adminId}')" title="Remover reserva">✕</button>`
+                : `<button class="photoplayer-remover" onclick="removerPhotoplayerDeFicha('${e.donoUid}', '${e.fichaId}')" title="Remover photoplayer desta ficha">✕</button>`)
+            : '';
+
+        html += `
+            <div class="photoplayer-linha">
+                <div class="photoplayer-info">
+                    <span class="photoplayer-nome">${e.texto}</span>
+                    ${e.personagem
+                        ? `<span class="photoplayer-personagem">${e.personagem}</span>`
+                        : `<span class="photoplayer-badge-reservado">Reservado pelo Mestre</span>`}
+                </div>
+                ${botaoRemover}
+            </div>
+        `;
+    });
+    if (letraAtual !== null) html += '</div>';
+
+    container.innerHTML = html;
+}
+
+function filtrarPhotoplayers() {
+    renderizarListaPhotoplayers();
+}
+
+// Mestre reserva manualmente um photoplayer (sem ligar a nenhuma ficha)
+async function adicionarPhotoplayerAdmin() {
+    const input = document.getElementById('input-novo-photoplayer-admin');
+    const texto = input.value.trim();
+    if (!texto) return mostrarToast('Escreva o nome do photoplayer antes de reservar.', 'erro', 'Campo vazio');
+
+    const duplicado = encontrarPhotoplayerDuplicado(texto);
+    if (duplicado) {
+        const detalhe = duplicado.tipo === 'personagem' ? ` Já é usado por ${duplicado.nome}.` : ' Já está reservado.';
+        return mostrarToast(`Esse photoplayer já está sendo usado.${detalhe}`, 'erro', 'Photoplayer em uso');
+    }
+
+    try {
+        const novaRef = doc(collection(db, "photoplayersAdmin"));
+        await setDoc(novaRef, { texto });
+        input.value = '';
+        mostrarToast(`"${texto}" foi reservado.`, 'sucesso', 'Photoplayer reservado');
+    } catch (erro) {
+        mostrarToast('Não foi possível reservar o photoplayer.', 'erro', 'Erro');
+        console.error(erro);
+    }
+}
+
+// Mestre remove uma reserva manual (não ligada a nenhuma ficha)
+async function removerPhotoplayerAdmin(id) {
+    const confirmado = await mostrarConfirmacao('Remover esta reserva de photoplayer?');
+    if (!confirmado) return;
+    try {
+        await deleteDoc(doc(db, "photoplayersAdmin", id));
+        mostrarToast('Reserva removida.', 'sucesso', 'Photoplayer liberado');
+    } catch (erro) {
+        mostrarToast('Não foi possível remover a reserva.', 'erro', 'Erro');
+        console.error(erro);
+    }
+}
+
+// Mestre libera o photoplayer de uma ficha de qualquer jogador (limpa o campo)
+async function removerPhotoplayerDeFicha(donoUid, fichaId) {
+    const confirmado = await mostrarConfirmacao('Remover o photoplayer desta ficha?');
+    if (!confirmado) return;
+    try {
+        await updateDoc(doc(db, "usuarios", donoUid, "fichas", fichaId), { photoplayer: '' });
+        mostrarToast('Photoplayer removido da ficha.', 'sucesso', 'Photoplayer liberado');
+    } catch (erro) {
+        mostrarToast('Não foi possível remover o photoplayer.', 'erro', 'Erro');
+        console.error(erro);
     }
 }
 
@@ -2037,6 +2275,7 @@ function fecharModalFicha(event) {
 
 try {
     monitorarComunidade();
+    monitorarPhotoplayersAdmin();
 } catch (erroComunidade) {
     console.error("Erro ao carregar o mural da comunidade:", erroComunidade);
 }
@@ -2080,6 +2319,11 @@ window.desequiparItem = desequiparItem;
 window.usarItem = usarItem;
 window.abrirModalFicha = abrirModalFicha;
 window.fecharModalFicha = fecharModalFicha;
+window.limparAvisoPhotoplayerFicha = limparAvisoPhotoplayerFicha;
+window.filtrarPhotoplayers = filtrarPhotoplayers;
+window.adicionarPhotoplayerAdmin = adicionarPhotoplayerAdmin;
+window.removerPhotoplayerAdmin = removerPhotoplayerAdmin;
+window.removerPhotoplayerDeFicha = removerPhotoplayerDeFicha;
 
 // =========================================
 // SISTEMA DE NPCs

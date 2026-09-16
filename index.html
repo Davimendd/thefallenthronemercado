@@ -115,6 +115,10 @@
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="7" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M2 20c0-3.3 2.7-6 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="17" cy="10" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M12 20c0-2.8 2.2-5 5-5s5 2.2 5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="19" y1="4" x2="19" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="17" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
                 NPCs
             </button>
+            <button class="pagina-tab" onclick="mostrarPagina('photoplayers')">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 4h6l1 2h3a1 1 0 011 1v11a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h3l1-2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="1.5"/></svg>
+                Photoplayers
+            </button>
         </nav>
 
         <!-- ============================================================ -->
@@ -292,6 +296,12 @@
                     </div>
 
                     <div class="input-group">
+                        <label>Photoplayer (Aparência)</label>
+                        <input type="text" id="ficha-photoplayer" placeholder="Ex: Emilia Clarke" oninput="limparAvisoPhotoplayerFicha()">
+                        <span id="aviso-photoplayer-ficha" class="aviso-campo-erro" style="display:none;"></span>
+                    </div>
+
+                    <div class="input-group">
                         <label>Retrato do Personagem</label>
                         <div class="file-input-ficha">
                             <label for="input-arquivo-foto-ficha" class="btn-file-label-ficha">
@@ -419,6 +429,30 @@
                 <h2>Exploradores de Westeros</h2>
                 <div id="lista-comunidade" class="grid-comunidade">
                     <!-- Dados de outros jogadores aparecerão aqui -->
+                </div>
+            </section>
+        </section>
+
+        <!-- PÁGINA: PHOTOPLAYERS (aparências usadas no RPG) -->
+        <section id="pagina-photoplayers" class="pagina-conteudo" style="display: none;">
+            <section class="fichas-container">
+                <div class="fichas-cabecalho">
+                    <h2>Photoplayers do Reino</h2>
+                </div>
+
+                <div class="photoplayers-busca-wrapper">
+                    <input type="text" id="busca-photoplayer" class="photoplayers-busca-input"
+                           placeholder="Buscar por photoplayer ou personagem..." oninput="filtrarPhotoplayers()">
+                </div>
+
+                <!-- Só aparece para o Mestre (ADMIN_UID) -->
+                <div id="photoplayers-admin-add" class="photoplayers-admin-add" style="display:none;">
+                    <input type="text" id="input-novo-photoplayer-admin" placeholder="Reservar um photoplayer manualmente...">
+                    <button class="btn-main" onclick="adicionarPhotoplayerAdmin()">+ Reservar</button>
+                </div>
+
+                <div id="lista-photoplayers" class="lista-photoplayers">
+                    <!-- Preenchido dinamicamente pelo JS -->
                 </div>
             </section>
         </section>
