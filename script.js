@@ -1848,9 +1848,11 @@ function monitorarComunidade() {
     try {
         onSnapshot(collectionGroup(db, "fichas"), (querySnapshot) => {
             mural.innerHTML = '';
+            _fichasMuralCache = {};
 
             if (querySnapshot.empty) {
                 mural.innerHTML = '<p class="mochila-vazia">Nenhum explorador forjou sua lenda ainda.</p>';
+                if (_paginaAtivaBusca === 'photoplayers') renderizarListaPhotoplayers();
                 return;
             }
 
@@ -1954,13 +1956,18 @@ function monitorarComunidade() {
 // nenhuma ficha), mantido em tempo real via onSnapshot.
 let _photoplayersAdminCache = {};
 
+// Cache de todos os NPCs de todos os jogadores (populado por monitorarNPCsGlobal),
+// usado para checar duplicidade de photoplayer e alimentar a lista.
+let _npcsGlobalCache = {};
+
 function normalizarTextoPhotoplayer(texto) {
     return (texto || '').trim().toLowerCase();
 }
 
 // Procura se o texto informado já está em uso por outra ficha (de qualquer
-// jogador) ou já foi reservado manualmente pelo Mestre. Os parâmetros
-// "ignorar" servem para não acusar a própria ficha que está sendo editada.
+// jogador), por um NPC (de qualquer jogador) ou já foi reservado manualmente
+// pelo Mestre. Os parâmetros "ignorar" servem para não acusar a própria
+// ficha/NPC que está sendo editado.
 function encontrarPhotoplayerDuplicado(texto, opcoes = {}) {
     const alvo = normalizarTextoPhotoplayer(texto);
     if (!alvo) return null;
@@ -1973,6 +1980,17 @@ function encontrarPhotoplayerDuplicado(texto, opcoes = {}) {
             donoUid === opcoes.ignorarDonoUid && fichaId === opcoes.ignorarFichaId) continue;
         if (normalizarTextoPhotoplayer(ficha.photoplayer) === alvo) {
             return { tipo: 'personagem', nome: ficha.nome || 'um personagem' };
+        }
+    }
+
+    for (const chave in _npcsGlobalCache) {
+        const npc = _npcsGlobalCache[chave];
+        if (!npc || !npc.photoplayer) continue;
+        const [donoUid, npcId] = chave.split('__');
+        if (opcoes.ignorarNpcDonoUid && opcoes.ignorarNpcId &&
+            donoUid === opcoes.ignorarNpcDonoUid && npcId === opcoes.ignorarNpcId) continue;
+        if (normalizarTextoPhotoplayer(npc.photoplayer) === alvo) {
+            return { tipo: 'npc', nome: npc.nome || 'um NPC' };
         }
     }
 
@@ -1996,6 +2014,20 @@ function mostrarAvisoPhotoplayerFicha(mensagem) {
 
 function limparAvisoPhotoplayerFicha() {
     const el = document.getElementById('aviso-photoplayer-ficha');
+    if (!el) return;
+    el.textContent = '';
+    el.style.display = 'none';
+}
+
+function mostrarAvisoPhotoplayerNPC(mensagem) {
+    const el = document.getElementById('aviso-photoplayer-npc');
+    if (!el) return;
+    el.textContent = mensagem;
+    el.style.display = 'block';
+}
+
+function limparAvisoPhotoplayerNPC() {
+    const el = document.getElementById('aviso-photoplayer-npc');
     if (!el) return;
     el.textContent = '';
     el.style.display = 'none';
@@ -2041,6 +2073,18 @@ function renderizarListaPhotoplayers() {
         });
     }
 
+    for (const chave in _npcsGlobalCache) {
+        const npc = _npcsGlobalCache[chave];
+        if (!npc || !npc.photoplayer) continue;
+        const [donoUid, npcId] = chave.split('__');
+        entradas.push({
+            texto: npc.photoplayer,
+            personagem: npc.nome || 'Sem Nome',
+            tipo: 'npc',
+            donoUid, npcId
+        });
+    }
+
     for (const id in _photoplayersAdminCache) {
         entradas.push({
             texto: _photoplayersAdminCache[id].texto,
@@ -2078,15 +2122,19 @@ function renderizarListaPhotoplayers() {
         const botaoRemover = souMestre
             ? (e.tipo === 'reservado'
                 ? `<button class="photoplayer-remover" onclick="removerPhotoplayerAdmin('${e.adminId}')" title="Remover reserva">✕</button>`
-                : `<button class="photoplayer-remover" onclick="removerPhotoplayerDeFicha('${e.donoUid}', '${e.fichaId}')" title="Remover photoplayer desta ficha">✕</button>`)
+                : e.tipo === 'npc'
+                    ? `<button class="photoplayer-remover" onclick="removerPhotoplayerDeNPC('${e.donoUid}', '${e.npcId}')" title="Remover photoplayer deste NPC">✕</button>`
+                    : `<button class="photoplayer-remover" onclick="removerPhotoplayerDeFicha('${e.donoUid}', '${e.fichaId}')" title="Remover photoplayer desta ficha">✕</button>`)
             : '';
+
+        const tagTipo = e.tipo === 'npc' ? '<span class="photoplayer-badge-npc">NPC</span>' : '';
 
         html += `
             <div class="photoplayer-linha">
                 <div class="photoplayer-info">
                     <span class="photoplayer-nome">${e.texto}</span>
                     ${e.personagem
-                        ? `<span class="photoplayer-personagem">${e.personagem}</span>`
+                        ? `<span class="photoplayer-personagem">${e.personagem}</span> ${tagTipo}`
                         : `<span class="photoplayer-badge-reservado">Reservado pelo Mestre</span>`}
                 </div>
                 ${botaoRemover}
@@ -2145,6 +2193,19 @@ async function removerPhotoplayerDeFicha(donoUid, fichaId) {
     try {
         await updateDoc(doc(db, "usuarios", donoUid, "fichas", fichaId), { photoplayer: '' });
         mostrarToast('Photoplayer removido da ficha.', 'sucesso', 'Photoplayer liberado');
+    } catch (erro) {
+        mostrarToast('Não foi possível remover o photoplayer.', 'erro', 'Erro');
+        console.error(erro);
+    }
+}
+
+// Mestre libera o photoplayer de um NPC de qualquer jogador (limpa o campo)
+async function removerPhotoplayerDeNPC(donoUid, npcId) {
+    const confirmado = await mostrarConfirmacao('Remover o photoplayer deste NPC?');
+    if (!confirmado) return;
+    try {
+        await updateDoc(doc(db, "usuarios", donoUid, "npcs", npcId), { photoplayer: '' });
+        mostrarToast('Photoplayer removido do NPC.', 'sucesso', 'Photoplayer liberado');
     } catch (erro) {
         mostrarToast('Não foi possível remover o photoplayer.', 'erro', 'Erro');
         console.error(erro);
@@ -2324,6 +2385,8 @@ window.filtrarPhotoplayers = filtrarPhotoplayers;
 window.adicionarPhotoplayerAdmin = adicionarPhotoplayerAdmin;
 window.removerPhotoplayerAdmin = removerPhotoplayerAdmin;
 window.removerPhotoplayerDeFicha = removerPhotoplayerDeFicha;
+window.removerPhotoplayerDeNPC = removerPhotoplayerDeNPC;
+window.limparAvisoPhotoplayerNPC = limparAvisoPhotoplayerNPC;
 
 // =========================================
 // SISTEMA DE NPCs
@@ -2402,14 +2465,20 @@ function monitorarNPCsGlobal() {
     onSnapshot(collectionGroup(db, "npcs"), (querySnapshot) => {
         if (!container) return;
         container.innerHTML = '';
+        _npcsGlobalCache = {};
         if (querySnapshot.empty) {
             container.innerHTML = '<p class="mochila-vazia">Nenhum NPC criado ainda no reino. Seja o primeiro a dar vida a um personagem!</p>';
+            if (_paginaAtivaBusca === 'photoplayers') renderizarListaPhotoplayers();
             return;
         }
         querySnapshot.forEach(snap => {
             const npc = snap.data();
             const npcId = snap.id;
             const donoUid = snap.ref.parent.parent.id;
+
+            // Guarda os dados do NPC num mapa global (usado pela lista de Photoplayers)
+            _npcsGlobalCache[`${donoUid}__${npcId}`] = npc;
+
             const podEditar = usuarioAtual && (usuarioAtual.uid === donoUid || usuarioAtual.uid === ADMIN_UID);
             const tipo = tiposNPC[npc.tipo] || {};
             const vidaAtual = npc.vidaAtual ?? npc.vidaMaxima;
@@ -2455,6 +2524,7 @@ function monitorarNPCsGlobal() {
                     </div>
                 </div>`;
         });
+        if (_paginaAtivaBusca === 'photoplayers') renderizarListaPhotoplayers();
     }, (erro) => {
         console.warn("NPCs indisponíveis:", erro.message);
         if (container) container.innerHTML = '<p class="mochila-vazia">Não foi possível carregar os NPCs.</p>';
@@ -2480,6 +2550,8 @@ function abrirFormularioNPC(npcId) {
         document.getElementById('npc-alinhamento').value = npc.alinhamento || 'neutro';
         document.getElementById('npc-foto').value = npc.foto || '';
         document.getElementById('npc-descricao').value = npc.descricao || '';
+        document.getElementById('npc-photoplayer').value = npc.photoplayer || '';
+        limparAvisoPhotoplayerNPC();
         if (npc.foto) {
             previewImg.src = npc.foto;
             previewImg.style.display = 'block';
@@ -2496,6 +2568,8 @@ function abrirFormularioNPC(npcId) {
         document.getElementById('npc-alinhamento').value = 'neutro';
         document.getElementById('npc-foto').value = '';
         document.getElementById('npc-descricao').value = '';
+        document.getElementById('npc-photoplayer').value = '';
+        limparAvisoPhotoplayerNPC();
         previewImg.style.display = 'none';
         previewNome.innerText = 'Nenhuma imagem selecionada';
         document.getElementById('input-arquivo-foto-npc').value = '';
@@ -2514,12 +2588,32 @@ async function salvarNPC() {
     const alinhamento = document.getElementById('npc-alinhamento').value;
     const foto = document.getElementById('npc-foto').value;
     const descricao = document.getElementById('npc-descricao').value;
+    const photoplayer = document.getElementById('npc-photoplayer').value.trim();
 
     if (!nome) return mostrarToast('Dê um nome ao NPC.', 'erro', 'Nome obrigatório');
 
     const overlay = document.getElementById('formulario-npc-overlay');
     const editandoId = overlay.dataset.editandoId;
+    const editandoDonoUidVerificacao = overlay.dataset.editandoDonoUid || usuarioAtual.uid;
     const dadosTipo = tiposNPC[tipo];
+
+    // Verifica se o photoplayer informado já está em uso (por ficha, por outro
+    // NPC ou reservado pelo Mestre) antes de salvar.
+    if (photoplayer) {
+        const duplicado = encontrarPhotoplayerDuplicado(photoplayer, {
+            ignorarNpcDonoUid: editandoDonoUidVerificacao,
+            ignorarNpcId: editandoId
+        });
+        if (duplicado) {
+            const detalhe = duplicado.tipo === 'reservado'
+                ? ' Está reservado pelo Mestre.'
+                : ` Já está sendo usado por ${duplicado.nome}.`;
+            mostrarAvisoPhotoplayerNPC(`Esse photoplayer já está sendo usado.${detalhe}`);
+            mostrarToast(`Esse photoplayer já está sendo usado.${detalhe}`, 'erro', 'Photoplayer em uso');
+            return;
+        }
+    }
+    limparAvisoPhotoplayerNPC();
 
     try {
         if (editandoId) {
@@ -2527,7 +2621,7 @@ async function salvarNPC() {
             const snap = await getDoc(doc(db, "usuarios", editandoDonoUid, "npcs", editandoId));
             const npcAtual = snap.exists() ? snap.data() : {};
             const mudouTipo = npcAtual.tipo !== tipo;
-            const dadosAtualizados = { nome, tipo, alinhamento, foto, descricao };
+            const dadosAtualizados = { nome, tipo, alinhamento, foto, descricao, photoplayer };
             if (mudouTipo) {
                 dadosAtualizados.vidaMaxima = dadosTipo.vidaMaxima;
                 dadosAtualizados.vidaAtual = dadosTipo.vidaMaxima;
@@ -2541,7 +2635,7 @@ async function salvarNPC() {
             // Criação nova
             const novoNPCRef = doc(collection(db, "usuarios", usuarioAtual.uid, "npcs"));
             await setDoc(novoNPCRef, {
-                nome, tipo, alinhamento, foto, descricao,
+                nome, tipo, alinhamento, foto, descricao, photoplayer,
                 vidaMaxima: dadosTipo.vidaMaxima,
                 vidaAtual: dadosTipo.vidaMaxima,
                 defesa: dadosTipo.defesa,
@@ -2866,6 +2960,8 @@ function abrirFormularioNPCEdicao(donoUid, npcId) {
         document.getElementById('npc-alinhamento').value = npc.alinhamento || 'Sem Lealdade';
         document.getElementById('npc-foto').value = npc.foto || '';
         document.getElementById('npc-descricao').value = npc.descricao || '';
+        document.getElementById('npc-photoplayer').value = npc.photoplayer || '';
+        limparAvisoPhotoplayerNPC();
         const pi = document.getElementById('preview-img-foto-npc');
         const pn = document.getElementById('preview-nome-foto-npc');
         if (npc.foto) { pi.src = npc.foto; pi.style.display = 'block'; pn.innerText = '✓ Foto atual'; }
