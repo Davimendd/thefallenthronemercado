@@ -76,6 +76,43 @@ const _filtros = {
     mural:   { casa: 'todos', classe: 'todos', riqueza: 'todos' }
 };
 
+// Recolhe/expande o painel de filtros e lembra a preferência do usuário
+// (persistida no navegador, então continua do jeito que a pessoa deixou).
+function toggleFiltrosPainel() {
+    const painel = document.getElementById('filtros-colapsavel');
+    const btn = document.getElementById('btn-toggle-filtros');
+    if (!painel || !btn) return;
+    const recolher = !painel.classList.contains('recolhido');
+    painel.classList.toggle('recolhido', recolher);
+    btn.classList.toggle('recolhido', recolher);
+    try { localStorage.setItem('tft_filtros_recolhidos', recolher ? '1' : '0'); } catch (e) { /* ignora */ }
+}
+
+// Aplica a preferência salva assim que a página carrega
+(function inicializarEstadoFiltros() {
+    try {
+        if (localStorage.getItem('tft_filtros_recolhidos') === '1') {
+            document.getElementById('filtros-colapsavel')?.classList.add('recolhido');
+            document.getElementById('btn-toggle-filtros')?.classList.add('recolhido');
+        }
+    } catch (e) { /* ignora */ }
+})();
+
+// Atualiza o numerozinho no botão de Filtros com quantos filtros estão ativos
+// na seção da aba atual (ignora os que estão em "todos"/"qualquer")
+function atualizarBadgeFiltrosAtivos() {
+    const badge = document.getElementById('badge-filtros-ativos');
+    if (!badge) return;
+    const secao = _filtros[_paginaAtivaBusca];
+    const ativos = secao ? Object.values(secao).filter(v => v !== 'todos').length : 0;
+    if (ativos > 0) {
+        badge.textContent = ativos;
+        badge.style.display = 'flex';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
 function mostrarPagina(nomePagina) {
     const paginas = ['vitrine', 'fichas', 'mochila', 'mural', 'npcs', 'photoplayers'];
 
@@ -104,6 +141,12 @@ function mostrarPagina(nomePagina) {
     if (filtrosVitrine) filtrosVitrine.style.display = (nomePagina === 'vitrine') ? 'flex' : 'none';
     if (filtrosMochila) filtrosMochila.style.display = (nomePagina === 'mochila') ? 'flex' : 'none';
     if (filtrosMural) filtrosMural.style.display = (nomePagina === 'mural') ? 'flex' : 'none';
+
+    // Esconde o botão de recolher/expandir filtros nas abas sem filtros
+    const btnToggleFiltros = document.getElementById('btn-toggle-filtros');
+    if (btnToggleFiltros) {
+        btnToggleFiltros.style.display = (nomePagina === 'vitrine' || nomePagina === 'mochila' || nomePagina === 'mural') ? 'inline-flex' : 'none';
+    }
 
     // Atualiza placeholder da busca conforme contexto
     const inputBusca = document.getElementById('busca-texto');
@@ -141,6 +184,7 @@ function toggleFiltro(btn) {
         _filtros[_paginaAtivaBusca][filtro] = valor;
     }
 
+    atualizarBadgeFiltrosAtivos();
     executarBusca();
 }
 
@@ -170,6 +214,7 @@ function limparBusca() {
     Object.keys(_filtros).forEach(sec => {
         Object.keys(_filtros[sec]).forEach(k => _filtros[sec][k] = 'todos');
     });
+    atualizarBadgeFiltrosAtivos();
 
     _esconderContador();
 
@@ -2360,6 +2405,7 @@ window.onArquivoFotoFichaSelecionado = onArquivoFotoFichaSelecionado;
 window.alternarMenuConta = alternarMenuConta;
 window.mostrarPagina = mostrarPagina;
 window.toggleFiltro = toggleFiltro;
+window.toggleFiltrosPainel = toggleFiltrosPainel;
 window.executarBusca = executarBusca;
 window.limparBusca = limparBusca;
 window.trocarDeConta = trocarDeConta;

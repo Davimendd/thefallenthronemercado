@@ -134,6 +134,15 @@
                 <button class="busca-limpar" id="busca-btn-limpar" onclick="limparBusca()" title="Limpar busca" style="display:none">✕</button>
             </div>
 
+            <!-- Botão para recolher/expandir os filtros -->
+            <button id="btn-toggle-filtros" class="btn-toggle-filtros" type="button" onclick="toggleFiltrosPainel()">
+                <svg class="icone-filtro" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                <span>Filtros</span>
+                <span id="badge-filtros-ativos" class="badge-filtros-ativos" style="display:none">0</span>
+                <svg class="icone-chevron" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+
+            <div id="filtros-colapsavel" class="filtros-colapsavel">
             <!-- Filtros do MERCADO -->
             <div id="filtros-vitrine" class="filtros-contextuais">
                 <span class="filtros-label">Raridade:</span>
@@ -212,6 +221,7 @@
                     <button class="filtro-tag" data-filtro="riqueza" data-valor="rico" onclick="toggleFiltro(this)">👑 Ricos (2000+)</button>
                 </div>
             </div>
+            </div> <!-- /filtros-colapsavel -->
 
             <!-- Contador de resultados -->
             <div id="busca-contador" class="busca-contador" style="display:none"></div>
