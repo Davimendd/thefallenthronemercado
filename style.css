@@ -1352,6 +1352,20 @@ button.carregando {
     overflow-y: auto;
 }
 
+/* O formulário de NPC reaproveita a mesma caixa (.formulario-ficha-box),
+   mas precisa da própria regra de overlay (fundo escurecido e centralização). */
+#formulario-npc-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 9500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    overflow-y: auto;
+}
+
 .formulario-ficha-box {
     background: linear-gradient(180deg, var(--fundo-card), var(--fundo));
     border: 1px solid var(--ouro-escuro);
@@ -2908,4 +2922,288 @@ section,
 .photoplayer-remover:hover {
     border-color: #d97f7f;
     color: #d97f7f;
+}
+
+/* =========================================
+   22. RESPONSIVO / MOBILE
+   ========================================= */
+
+/* ---------- Tablets e celulares grandes ---------- */
+@media (max-width: 768px) {
+    .container {
+        padding: 14px;
+    }
+
+    header {
+        padding: 34px 14px 26px;
+    }
+
+    .brasao-trono {
+        width: 96px;
+        height: 96px;
+        margin-bottom: 4px;
+    }
+
+    header h1 {
+        font-size: 1.8em;
+        margin: 8px 0 4px;
+    }
+
+    header .eyebrow {
+        font-size: 0.62em;
+        letter-spacing: 2.5px;
+    }
+
+    header .subtitulo {
+        font-size: 0.75em;
+        letter-spacing: 2px;
+    }
+
+    .ornamento-linha {
+        margin-top: 14px;
+    }
+
+    .ornamento-linha .linha {
+        width: 44px;
+    }
+
+    #saldo-jogador {
+        font-size: 1.05em;
+        margin-top: 4px;
+    }
+
+    /* Ícones flutuantes um pouco menores para não competir com o cabeçalho */
+    #conta-flutuante {
+        top: 12px;
+        right: 12px;
+    }
+
+    #botao-conta {
+        width: 38px;
+        height: 38px;
+    }
+
+    #botao-mochila-flutuante {
+        top: 12px;
+        right: 60px;
+        width: 38px;
+        height: 38px;
+        padding: 7px;
+    }
+
+    /* Navegação vira uma faixa horizontal deslizável, estilo app */
+    .paginas-nav {
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x proximity;
+        gap: 8px;
+        margin: 24px -14px 0;
+        padding: 0 14px 4px;
+        scrollbar-width: none;
+    }
+
+    .paginas-nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .pagina-tab {
+        flex-shrink: 0;
+        scroll-snap-align: start;
+        padding: 10px 16px;
+        font-size: 0.72em;
+        letter-spacing: 1px;
+    }
+
+    .pagina-tab svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    /* Painel de busca e filtros com menos respiro */
+    .painel-busca {
+        padding: 12px 14px 10px;
+    }
+
+    .filtros-contextuais {
+        padding: 12px 14px;
+        gap: 6px;
+    }
+
+    .filtros-label:not(:first-child) {
+        margin-left: 2px;
+        padding-left: 10px;
+    }
+
+    .filtros-grupo {
+        margin-right: 8px;
+    }
+
+    /* Cabeçalhos de seção quebram para o botão de ação ficar abaixo do título */
+    .fichas-cabecalho {
+        gap: 10px;
+    }
+
+    .fichas-cabecalho h2 {
+        font-size: 1.2em;
+    }
+
+    /* Grids de cards em coluna única — mais confortável de rolar no polegar */
+    .grid-mercado,
+    .grid-comunidade,
+    .grid-fichas {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    /* Formulários (ficha/NPC) ocupam a tela com folga menor nas bordas */
+    #formulario-ficha-overlay,
+    #formulario-npc-overlay {
+        padding: 10px;
+    }
+
+    .formulario-ficha-box {
+        padding: 20px 18px;
+        max-height: 94vh;
+    }
+
+    .ficha-row,
+    .ficha-row.tripartite {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    /* Ficha de personagem (modal de visualização) */
+    .modal-ficha-inner {
+        padding: 22px 16px;
+    }
+
+    .modal-ficha-header {
+        flex-wrap: wrap;
+    }
+
+    .modal-avatar {
+        width: 72px;
+        height: 72px;
+    }
+
+    .modal-ficha-titulo h2 {
+        font-size: 1.25em;
+    }
+
+    .modal-status-bloco {
+        min-width: 100%;
+    }
+
+    /* Diálogo de confirmação */
+    .confirm-box {
+        padding: 22px 20px;
+        width: 88%;
+    }
+
+    /* Lista de photoplayers */
+    .photoplayers-admin-add {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .photoplayers-admin-add input {
+        min-width: 0;
+    }
+
+    .photoplayer-linha {
+        flex-wrap: wrap;
+        row-gap: 8px;
+    }
+}
+
+/* ---------- Celulares pequenos ---------- */
+@media (max-width: 480px) {
+    .container {
+        padding: 10px;
+    }
+
+    header {
+        padding: 26px 10px 20px;
+    }
+
+    .brasao-trono {
+        width: 78px;
+        height: 78px;
+    }
+
+    header h1 {
+        font-size: 1.5em;
+        letter-spacing: 0.5px;
+    }
+
+    header .eyebrow {
+        letter-spacing: 1.8px;
+    }
+
+    #saldo-jogador {
+        font-size: 0.95em;
+    }
+
+    .paginas-nav {
+        gap: 6px;
+    }
+
+    .pagina-tab {
+        padding: 9px 13px;
+        font-size: 0.66em;
+        letter-spacing: 0.6px;
+        gap: 6px;
+    }
+
+    #busca-texto {
+        font-size: 0.95em;
+        padding: 10px 36px 10px 38px;
+    }
+
+    .btn-toggle-filtros {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .ficha-row,
+    .ficha-row.tripartite {
+        grid-template-columns: 1fr;
+    }
+
+    .formulario-ficha-box {
+        padding: 16px 14px;
+        border-radius: 3px;
+    }
+
+    .formulario-ficha-botoes {
+        flex-direction: column;
+    }
+
+    .modal-avatar {
+        width: 64px;
+        height: 64px;
+    }
+
+    .modal-atributos {
+        justify-content: center;
+    }
+
+    .attr-box {
+        min-width: 48px;
+        padding: 6px 10px;
+    }
+
+    /* Botões de ação em cards ganham alvo de toque mais confortável */
+    .card-inventario .btn-vender,
+    .btn-equipar,
+    .btn-criar-ficha {
+        padding: 10px 14px;
+    }
+
+    #menu-conta {
+        min-width: 180px;
+        right: -6px;
+    }
 }
