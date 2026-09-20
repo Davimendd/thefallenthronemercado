@@ -98,6 +98,27 @@ function toggleFiltrosPainel() {
     } catch (e) { /* ignora */ }
 })();
 
+// Alternador de 1/2 colunas (Minhas Fichas, NPCs e Exploradores) no mobile.
+// A escolha do usuário fica salva no navegador e vale para as três abas.
+function definirLayoutColunas(n) {
+    document.body.classList.toggle('colunas-1', n === 1);
+    document.body.classList.toggle('colunas-2', n === 2);
+    document.querySelectorAll('.toggle-colunas button').forEach(btn => {
+        btn.classList.toggle('ativo', Number(btn.dataset.colunas) === n);
+    });
+    try { localStorage.setItem('tft_colunas_mobile', String(n)); } catch (e) { /* ignora */ }
+}
+
+// Aplica a preferência salva (ou o padrão de 2 colunas) assim que a página carrega
+(function inicializarLayoutColunas() {
+    let n = 2;
+    try {
+        const salvo = localStorage.getItem('tft_colunas_mobile');
+        if (salvo === '1' || salvo === '2') n = Number(salvo);
+    } catch (e) { /* ignora */ }
+    definirLayoutColunas(n);
+})();
+
 // Atualiza o numerozinho no botão de Filtros com quantos filtros estão ativos
 // na seção da aba atual (ignora os que estão em "todos"/"qualquer")
 function atualizarBadgeFiltrosAtivos() {
@@ -2406,6 +2427,7 @@ window.alternarMenuConta = alternarMenuConta;
 window.mostrarPagina = mostrarPagina;
 window.toggleFiltro = toggleFiltro;
 window.toggleFiltrosPainel = toggleFiltrosPainel;
+window.definirLayoutColunas = definirLayoutColunas;
 window.executarBusca = executarBusca;
 window.limparBusca = limparBusca;
 window.trocarDeConta = trocarDeConta;

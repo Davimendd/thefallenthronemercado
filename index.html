@@ -246,6 +246,14 @@
                 <div class="fichas-cabecalho">
                     <h2>Minhas Fichas</h2>
                     <button class="btn-criar-ficha" onclick="abrirFormularioFicha()">+ Criar Nova Ficha</button>
+                    <div class="toggle-colunas" role="group" aria-label="Colunas por linha">
+                        <button data-colunas="1" onclick="definirLayoutColunas(1)" title="1 coluna">
+                            <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="14" rx="1.5" stroke="currentColor" stroke-width="1.6"/></svg>
+                        </button>
+                        <button data-colunas="2" onclick="definirLayoutColunas(2)" title="2 colunas">
+                            <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="7" height="14" rx="1.2" stroke="currentColor" stroke-width="1.6"/><rect x="14" y="5" width="7" height="14" rx="1.2" stroke="currentColor" stroke-width="1.6"/></svg>
+                        </button>
+                    </div>
                 </div>
 
                 <div id="lista-fichas" class="grid-fichas">
@@ -356,6 +364,14 @@
                 <div class="fichas-cabecalho">
                     <h2>Personagens do Reino</h2>
                     <button class="btn-criar-ficha" onclick="abrirFormularioNPC()">+ Criar NPC</button>
+                    <div class="toggle-colunas" role="group" aria-label="Colunas por linha">
+                        <button data-colunas="1" onclick="definirLayoutColunas(1)" title="1 coluna">
+                            <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="14" rx="1.5" stroke="currentColor" stroke-width="1.6"/></svg>
+                        </button>
+                        <button data-colunas="2" onclick="definirLayoutColunas(2)" title="2 colunas">
+                            <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="7" height="14" rx="1.2" stroke="currentColor" stroke-width="1.6"/><rect x="14" y="5" width="7" height="14" rx="1.2" stroke="currentColor" stroke-width="1.6"/></svg>
+                        </button>
+                    </div>
                 </div>
                 <div id="lista-npcs" class="grid-comunidade">
                     <!-- Cards de NPC de todos os usuários aparecem aqui -->
@@ -442,7 +458,17 @@
         <!-- PÁGINA: MURAL DA COMUNIDADE -->
         <section id="pagina-mural" class="pagina-conteudo" style="display: none;">
             <section class="comunidade-container">
-                <h2>Exploradores de Westeros</h2>
+                <div class="fichas-cabecalho">
+                    <h2>Exploradores de Westeros</h2>
+                    <div class="toggle-colunas" role="group" aria-label="Colunas por linha">
+                        <button data-colunas="1" onclick="definirLayoutColunas(1)" title="1 coluna">
+                            <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="14" rx="1.5" stroke="currentColor" stroke-width="1.6"/></svg>
+                        </button>
+                        <button data-colunas="2" onclick="definirLayoutColunas(2)" title="2 colunas">
+                            <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="7" height="14" rx="1.2" stroke="currentColor" stroke-width="1.6"/><rect x="14" y="5" width="7" height="14" rx="1.2" stroke="currentColor" stroke-width="1.6"/></svg>
+                        </button>
+                    </div>
+                </div>
                 <div id="lista-comunidade" class="grid-comunidade">
                     <!-- Dados de outros jogadores aparecerão aqui -->
                 </div>

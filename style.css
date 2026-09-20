@@ -1213,6 +1213,44 @@ button.carregando {
     color: #1a1305;
 }
 
+/* Alternador de colunas (1/2) — só aparece no mobile, ver breakpoint 768px */
+.toggle-colunas {
+    display: none;
+    gap: 6px;
+    margin-left: auto;
+}
+
+.toggle-colunas button {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    border: 1px solid var(--borda);
+    background: transparent;
+    color: var(--texto-fraco);
+    box-shadow: none;
+}
+
+.toggle-colunas button svg {
+    width: 16px;
+    height: 16px;
+}
+
+.toggle-colunas button:hover {
+    border-color: var(--ouro-escuro);
+    color: var(--texto);
+    box-shadow: none;
+}
+
+.toggle-colunas button.ativo {
+    border-color: var(--ouro);
+    color: var(--ouro-claro);
+    background: rgba(201, 164, 73, 0.08);
+}
+
 .grid-fichas {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -3050,12 +3088,30 @@ section,
         font-size: 1.2em;
     }
 
-    /* Minhas Fichas, NPCs e Exploradores: grade compacta de 2 colunas, cards mais enxutos */
+    .fichas-container,
+    .comunidade-container {
+        padding: 16px;
+    }
+
+    /* Alternador de 1/2 colunas só faz sentido no mobile */
+    .toggle-colunas {
+        display: flex;
+    }
+
+    /* Minhas Fichas, NPCs e Exploradores: grade compacta de 2 colunas por padrão
+       (o usuário pode trocar para 1 coluna pelo alternador acima) */
     .grid-fichas,
     #lista-npcs.grid-comunidade,
     #lista-comunidade.grid-comunidade {
         grid-template-columns: 1fr 1fr;
         gap: 10px;
+    }
+
+    /* Preferência do usuário: 1 coluna só */
+    body.colunas-1 .grid-fichas,
+    body.colunas-1 #lista-npcs.grid-comunidade,
+    body.colunas-1 #lista-comunidade.grid-comunidade {
+        grid-template-columns: 1fr;
     }
 
     .card-ficha {
@@ -3221,6 +3277,23 @@ section,
     .btn-ver-ficha {
         font-size: 0.62em;
         padding: 7px 4px;
+    }
+
+    /* Controles do Mestre (+100/-100/Limpar) — corrige o transbordo dos
+       botões quando o card fica estreito (2 colunas) */
+    .controles-admin {
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-top: 4px;
+    }
+
+    .controles-admin .btn-admin {
+        flex: 1 1 auto;
+        min-width: 0;
+        padding: 5px 4px;
+        font-size: 0.56em;
+        letter-spacing: 0.2px;
+        white-space: nowrap;
     }
 
     /* Mercado: grade compacta de 2 colunas, cards menores e mais leves de rolar */
