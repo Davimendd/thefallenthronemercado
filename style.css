@@ -3050,11 +3050,177 @@ section,
         font-size: 1.2em;
     }
 
-    /* Grids de cards em coluna única — mais confortável de rolar no polegar */
-    .grid-comunidade,
-    .grid-fichas {
-        grid-template-columns: 1fr;
-        gap: 14px;
+    /* Minhas Fichas, NPCs e Exploradores: grade compacta de 2 colunas, cards mais enxutos */
+    .grid-fichas,
+    #lista-npcs.grid-comunidade,
+    #lista-comunidade.grid-comunidade {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .card-ficha {
+        padding: 12px;
+        gap: 10px;
+    }
+
+    .card-ficha-topo {
+        gap: 8px;
+    }
+
+    .avatar-ficha {
+        width: 38px;
+        height: 38px;
+        border-width: 1px;
+    }
+
+    .card-ficha-info strong {
+        font-size: 0.82em;
+        line-height: 1.15;
+    }
+
+    .card-ficha-classe {
+        font-size: 0.65em;
+    }
+
+    .selo-ativa {
+        font-size: 0.52em;
+        padding: 2px 6px;
+    }
+
+    .barra-status-label {
+        font-size: 0.65em;
+    }
+
+    .barra-fundo {
+        height: 6px;
+    }
+
+    .card-ficha-stats {
+        font-size: 0.68em;
+        flex-wrap: wrap;
+        gap: 4px;
+        justify-content: flex-start;
+    }
+
+    .card-ficha-botoes {
+        gap: 5px;
+    }
+
+    .card-ficha-botoes button {
+        font-size: 0.58em;
+        padding: 6px 4px;
+        min-width: 0;
+    }
+
+    /* NPCs — mesmo tratamento compacto */
+    .card-npc {
+        padding: 12px;
+        gap: 8px;
+    }
+
+    .card-npc-header {
+        gap: 8px;
+    }
+
+    .avatar-npc {
+        width: 38px;
+        height: 38px;
+    }
+
+    .card-npc-info strong {
+        font-size: 0.82em;
+    }
+
+    .card-npc-tipo {
+        font-size: 0.65em;
+    }
+
+    .card-npc-alinhamento {
+        font-size: 0.6em;
+    }
+
+    .card-npc-stats {
+        font-size: 0.68em;
+        gap: 5px;
+    }
+
+    .card-npc-inventario {
+        padding: 5px;
+        min-height: 24px;
+        gap: 3px;
+    }
+
+    .card-npc-botoes {
+        gap: 4px;
+    }
+
+    .card-npc-botoes button {
+        font-size: 0.58em;
+        padding: 5px 4px;
+        min-width: 0;
+    }
+
+    /* Exploradores (mural) — mesmo tratamento compacto */
+    .player-card-banner {
+        height: 56px;
+        padding: 0 10px;
+    }
+
+    .player-card-avatar {
+        width: 42px;
+        height: 42px;
+        border-width: 2px;
+        margin-bottom: -21px;
+    }
+
+    .player-card-corpo {
+        padding: 24px 10px 12px;
+        gap: 8px;
+    }
+
+    .player-card-titulo h3 {
+        font-size: 0.85em;
+    }
+
+    .player-card-subtitulo {
+        font-size: 0.65em;
+        margin-top: 2px;
+    }
+
+    .player-card-stats {
+        gap: 5px;
+    }
+
+    .stat-item {
+        padding: 4px 6px;
+        font-size: 0.65em;
+        min-width: 0;
+        flex: 1;
+    }
+
+    .stat-item strong {
+        font-size: 0.95em;
+    }
+
+    .stat-item span {
+        font-size: 0.6em;
+    }
+
+    .player-card-mochila {
+        padding: 5px;
+        min-height: 24px;
+        gap: 3px;
+    }
+
+    .player-card-mochila .item-tag {
+        padding: 2px 7px;
+        margin: 2px;
+        font-size: 0.62em;
+    }
+
+    .btn-ver-ficha {
+        font-size: 0.62em;
+        padding: 7px 4px;
     }
 
     /* Mercado: grade compacta de 2 colunas, cards menores e mais leves de rolar */
@@ -3218,6 +3384,23 @@ section,
         height: 78px;
     }
 
+    /* Fichas, NPCs e Exploradores ainda mais compactos em telas bem pequenas */
+    .grid-fichas,
+    #lista-npcs.grid-comunidade,
+    #lista-comunidade.grid-comunidade {
+        gap: 8px;
+    }
+
+    .player-card-banner {
+        height: 48px;
+    }
+
+    .player-card-avatar {
+        width: 36px;
+        height: 36px;
+        margin-bottom: -18px;
+    }
+
     .pagina-tab {
         padding: 9px 13px;
         font-size: 0.66em;
@@ -3273,5 +3456,15 @@ section,
     #menu-conta {
         min-width: 180px;
         right: -6px;
+    }
+}
+
+/* ---------- Telas muito estreitas: volta pra 1 coluna pra não espremer demais ---------- */
+@media (max-width: 360px) {
+    .grid-fichas,
+    #lista-npcs.grid-comunidade,
+    #lista-comunidade.grid-comunidade,
+    .grid-mercado {
+        grid-template-columns: 1fr;
     }
 }
