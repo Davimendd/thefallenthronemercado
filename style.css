@@ -1312,10 +1312,17 @@ button.carregando {
     color: var(--texto-fraco);
 }
 
-.selo-ativa {
+.card-ficha-selos {
     position: absolute;
     top: -4px;
     right: -4px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.selo-ativa {
     background: var(--ouro);
     color: #1a1305;
     font-family: 'Cinzel', serif;
@@ -1324,6 +1331,20 @@ button.carregando {
     font-weight: 700;
     padding: 3px 8px;
     border-radius: 10px;
+    white-space: nowrap;
+}
+
+.selo-pendente {
+    background: #3a2a10;
+    color: #e0b060;
+    border: 1px solid #8a6a2a;
+    font-family: 'Cinzel', serif;
+    font-size: 0.58em;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 10px;
+    white-space: nowrap;
 }
 
 .barra-status {
@@ -1587,6 +1608,7 @@ button.carregando {
 }
 
 .player-card-novo {
+    position: relative;
     background: var(--fundo-card);
     border: 1px solid var(--borda);
     border-radius: 4px;
@@ -1594,6 +1616,38 @@ button.carregando {
     display: flex;
     flex-direction: column;
     transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.player-card-novo.player-card-pendente {
+    border: 1px dashed #8a6a2a;
+    opacity: 0.92;
+}
+
+.selo-pendente-mural {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 5;
+    background: #3a2a10;
+    color: #e0b060;
+    border: 1px solid #8a6a2a;
+    font-family: 'Cinzel', serif;
+    font-size: 0.62em;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+.btn-admin.btn-aprovar {
+    background: rgba(111, 207, 134, 0.15);
+    border-color: #4a9a5f;
+    color: #8fdf9f;
+}
+
+.btn-admin.btn-aprovar:hover {
+    background: rgba(111, 207, 134, 0.28);
 }
 
 .player-card-novo:hover {

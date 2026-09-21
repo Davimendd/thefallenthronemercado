@@ -1377,10 +1377,16 @@ async function salvarFicha() {
                 defesaBase: status.defesaBase,
                 moedas: moedasIniciaisPorClasse[classe] || 1000,
                 inventario: [],
-                equipado: { arma: null, armadura: null }
+                equipado: { arma: null, armadura: null },
+                statusAprovacao: usuarioAtual.uid === ADMIN_UID ? 'aprovada' : 'pendente'
             });
 
-            mostrarToast(`${nome} foi forjado e está pronto para a aventura.`, 'sucesso', 'Personagem criado');
+            mostrarToast(
+                usuarioAtual.uid === ADMIN_UID
+                    ? `${nome} foi forjado e está pronto para a aventura.`
+                    : `${nome} foi forjado! Ele aparecerá no mural assim que o Mestre aprovar.`,
+                'sucesso', 'Personagem criado'
+            );
         }
 
         fecharFormularioFicha();
@@ -1481,7 +1487,10 @@ function renderizarListaDeFichas() {
                         <strong>${ficha.nome}</strong>
                         <span class="card-ficha-classe">${ficha.classe} · ${ficha.casa}</span>
                     </div>
-                    ${ehAtiva ? '<span class="selo-ativa">EM JOGO</span>' : ''}
+                    <div class="card-ficha-selos">
+                        ${ehAtiva ? '<span class="selo-ativa">EM JOGO</span>' : ''}
+                        ${ficha.statusAprovacao === 'pendente' ? '<span class="selo-pendente" title="Aguardando o Mestre aprovar para aparecer no mural">⏳ Pendente</span>' : ''}
+                    </div>
                 </div>
 
                 <div class="barra-status">
@@ -1816,7 +1825,8 @@ async function fazerCadastro() {
             defesaBase: status.defesaBase,
             moedas: moedasIniciaisPorClasse[classeInicial] || 1000,
             inventario: [],
-            equipado: { arma: null, armadura: null }
+            equipado: { arma: null, armadura: null },
+            statusAprovacao: user.uid === ADMIN_UID ? 'aprovada' : 'pendente'
         });
 
         await setDoc(doc(db, "usuarios", user.uid), {
@@ -1904,6 +1914,32 @@ async function limparInventario(donoUid, fichaId) {
     await updateDoc(doc(db, "usuarios", donoUid, "fichas", fichaId), { inventario: [], equipado: { arma: null, armadura: null } });
 }
 
+// Mestre aprova uma ficha pendente, liberando-a publicamente no mural
+async function aprovarFicha(donoUid, fichaId, nomeFicha) {
+    try {
+        await updateDoc(doc(db, "usuarios", donoUid, "fichas", fichaId), { statusAprovacao: 'aprovada' });
+        mostrarToast(`${nomeFicha || 'A ficha'} foi aprovada e já aparece no mural.`, 'sucesso', 'Ficha aprovada');
+    } catch (erro) {
+        mostrarToast('Não foi possível aprovar a ficha.', 'erro', 'Erro');
+        console.error(erro);
+    }
+}
+
+// Mestre exclui permanentemente a ficha de QUALQUER jogador (com confirmação)
+async function excluirFichaAdmin(donoUid, fichaId, nomeFicha) {
+    const confirmado = await mostrarConfirmacao(
+        `Excluir permanentemente a ficha de <strong>${nomeFicha || 'este personagem'}</strong>? Essa ação não pode ser desfeita.`
+    );
+    if (!confirmado) return;
+    try {
+        await deleteDoc(doc(db, "usuarios", donoUid, "fichas", fichaId));
+        mostrarToast(`${nomeFicha || 'A ficha'} foi removida pelo Mestre.`, 'sucesso', 'Ficha excluída');
+    } catch (erro) {
+        mostrarToast('Não foi possível excluir a ficha.', 'erro', 'Erro');
+        console.error(erro);
+    }
+}
+
 // Carrega todas as fichas de todos os jogadores em tempo real (collection group:
 // busca a subcoleção "fichas" através de TODAS as contas de uma vez).
 // Requer um índice de grupo de coleção no Firestore — se não existir ainda,
@@ -1926,12 +1962,26 @@ function monitorarComunidade() {
                 const ficha = fichaSnap.data();
                 const fichaId = fichaSnap.id;
                 const donoUid = fichaSnap.ref.parent.parent.id;
+                const fichaDataId = `${donoUid}__${fichaId}`;
 
-                const botoesMestre = (usuarioAtual && usuarioAtual.uid === ADMIN_UID) ? `
+                // Guarda os dados da ficha no cache mesmo se ela não for exibida
+                // (fichas pendentes ainda entram na checagem de Photoplayer duplicado)
+                _fichasMuralCache[fichaDataId] = ficha;
+
+                const souMestre = usuarioAtual && usuarioAtual.uid === ADMIN_UID;
+                const pendente = ficha.statusAprovacao === 'pendente';
+
+                // Fichas pendentes de aprovação só aparecem no mural para o Mestre revisar
+                if (pendente && !souMestre) return;
+
+                const nomeEscapado = (ficha.nome || '').replace(/'/g, "\\'");
+                const botoesMestre = souMestre ? `
                     <div class="controles-admin">
+                        ${pendente ? `<button class="btn-admin btn-aprovar" onclick="aprovarFicha('${donoUid}', '${fichaId}', '${nomeEscapado}')">✅ Aprovar</button>` : ''}
                         <button class="btn-admin" onclick="ajustarMoedas('${donoUid}', '${fichaId}', 100)">+100</button>
                         <button class="btn-admin" onclick="ajustarMoedas('${donoUid}', '${fichaId}', -100)">-100</button>
                         <button class="btn-admin btn-vender" onclick="limparInventario('${donoUid}', '${fichaId}')">💀 Limpar</button>
+                        <button class="btn-admin btn-vender" onclick="excluirFichaAdmin('${donoUid}', '${fichaId}', '${nomeEscapado}')">🗑️ Excluir</button>
                     </div>
                 ` : '';
 
@@ -1952,11 +2002,9 @@ function monitorarComunidade() {
                     }).join('')
                     : '<span style="color:var(--texto-fraco);font-size:0.85em;">Mochila vazia</span>';
 
-                // ID seguro para usar no onclick (sem aspas problemáticas)
-                const fichaDataId = `${donoUid}__${fichaId}`;
-
                 mural.innerHTML += `
-                    <div class="player-card-novo">
+                    <div class="player-card-novo ${pendente ? 'player-card-pendente' : ''}">
+                        ${pendente ? '<span class="selo-pendente-mural">⏳ Pendente</span>' : ''}
                         <div class="player-card-banner" style="background-image: url('${ficha.foto || ''}')">
                             <div class="player-card-banner-overlay"></div>
                             <img class="player-card-avatar" src="${ficha.foto || AVATAR_PADRAO}" alt="${ficha.nome || 'jogador'}">
@@ -1995,11 +2043,13 @@ function monitorarComunidade() {
                         </div>
                     </div>
                 `;
-
-                // Guarda os dados da ficha num mapa global para o modal acessar depois
-                _fichasMuralCache = _fichasMuralCache || {};
-                _fichasMuralCache[fichaDataId] = ficha;
             });
+
+            // Se todas as fichas existentes ainda estão pendentes de aprovação,
+            // o mural fica sem cards — mostra uma mensagem em vez de ficar em branco.
+            if (mural.innerHTML.trim() === '') {
+                mural.innerHTML = '<p class="mochila-vazia">Nenhuma ficha aprovada ainda. Assim que o Mestre revisar, os exploradores aparecem aqui.</p>';
+            }
 
             // Mantém a lista de Photoplayers sincronizada automaticamente sempre
             // que qualquer ficha (de qualquer jogador) for criada, editada ou removida.
@@ -2435,6 +2485,8 @@ window.enviarAviso = enviarAviso;
 window.limparAviso = limparAviso;
 window.ajustarMoedas = ajustarMoedas;
 window.limparInventario = limparInventario;
+window.aprovarFicha = aprovarFicha;
+window.excluirFichaAdmin = excluirFichaAdmin;
 window.atualizarClassesDisponiveis = atualizarClassesDisponiveis;
 window.abrirFormularioFicha = abrirFormularioFicha;
 window.fecharFormularioFicha = fecharFormularioFicha;
