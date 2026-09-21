@@ -1041,6 +1041,7 @@ header .subtitulo {
 
 .controles-admin {
     display: flex;
+    flex-wrap: wrap;
     gap: 6px;
 }
 
