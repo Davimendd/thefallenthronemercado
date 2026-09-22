@@ -450,8 +450,8 @@ const itensMercado = [
       raridade: "raro",
       preco: 150,
       imagem: "https://awoiaf.westeros.org/images/thumb/9/99/Milk_of_the_poppy.jpg/350px-Milk_of_the_poppy.jpg", // Link da imagem
-      efeito: "Cura 6 de Vida",
-      mecanica: { tipo: "cura", vida: 6 },
+      efeito: "Cura 3 de Vida",
+      mecanica: { tipo: "cura", vida: 3 },
       desc: "Analgésico." },
 
     { 
@@ -548,8 +548,8 @@ const itensMercado = [
         raridade: "epico", 
         preco: 1200, 
         imagem: "https://i.pinimg.com/736x/02/61/38/0261388649a6a5d8559dcea0e27443c7.jpg",
-        efeito: "Cura 14 de Vida", 
-        mecanica: { tipo: "cura", vida: 14 },
+        efeito: "Cura 30 de Vida", 
+        mecanica: { tipo: "cura", vida: 30 },
         desc: "Preparo avançado da Cidadela, reservado a feridas graves." 
     },
 
