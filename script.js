@@ -536,7 +536,7 @@ const itensMercado = [
         tipo: "Consumível", 
         raridade: "lendario", 
         preco: 6500, 
-        imagem: "https://i.pinimg.com/originals/9c/9b/2e/9c9b2e3e6f4b6f4d6f4b6f4b6f4b6f4b.jpg",
+        imagem: "https://i.pinimg.com/736x/13/c7/ed/13c7ed5c31b0510d58cd165b0c7d7213.jpg",
         efeito: "Aumenta a Vida Máxima em 8 permanentemente", 
         mecanica: { tipo: "vidaMaxima", valor: 8 },
         desc: "Uma relíquia gravada com runas perdidas. Diz-se que fortalece o próprio sangue de quem a consome." 
@@ -547,7 +547,7 @@ const itensMercado = [
         tipo: "Consumível", 
         raridade: "epico", 
         preco: 1200, 
-        imagem: "https://i.pinimg.com/originals/3b/3a/3e/3b3a3e6f4b6f4d6f4b6f4b6f4b6f4b6f.jpg",
+        imagem: "https://i.pinimg.com/736x/02/61/38/0261388649a6a5d8559dcea0e27443c7.jpg",
         efeito: "Cura 14 de Vida", 
         mecanica: { tipo: "cura", vida: 14 },
         desc: "Preparo avançado da Cidadela, reservado a feridas graves." 
