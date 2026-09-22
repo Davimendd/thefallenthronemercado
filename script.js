@@ -2574,6 +2574,7 @@ const lealdadeCores = {
     "Baratheon":   { cor: "#4a4a6a", emoji: "🦌" },
     "Tyrell":      { cor: "#4a8f5c", emoji: "🌹" },
     "Arryn":       { cor: "#6a9ecf", emoji: "🦅" },
+    "Allaryon":    { cor: "#e0a83a", emoji: "☀️" },
     "Casa Menor":  { cor: "#8a7f68", emoji: "🏰" },
     "Essos":       { cor: "#c07030", emoji: "🌊" },
     "Sem Lealdade":{ cor: "#6a6a6a", emoji: "⚔️" }
