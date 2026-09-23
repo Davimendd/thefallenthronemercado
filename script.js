@@ -135,7 +135,7 @@ function atualizarBadgeFiltrosAtivos() {
 }
 
 function mostrarPagina(nomePagina) {
-    const paginas = ['vitrine', 'fichas', 'mochila', 'mural', 'npcs', 'photoplayers'];
+    const paginas = ['vitrine', 'fichas', 'mochila', 'mural', 'npcs', 'photoplayers', 'guia'];
 
     paginas.forEach(p => {
         document.getElementById('pagina-' + p).style.display = (p === nomePagina) ? 'block' : 'none';
@@ -157,7 +157,7 @@ function mostrarPagina(nomePagina) {
     const filtrosMural = document.getElementById('filtros-mural');
 
     // Oculta o painel de busca nas abas que não precisam de busca
-    painelBusca.style.display = (nomePagina === 'fichas' || nomePagina === 'npcs' || nomePagina === 'photoplayers') ? 'none' : 'block';
+    painelBusca.style.display = (nomePagina === 'fichas' || nomePagina === 'npcs' || nomePagina === 'photoplayers' || nomePagina === 'guia') ? 'none' : 'block';
 
     if (filtrosVitrine) filtrosVitrine.style.display = (nomePagina === 'vitrine') ? 'flex' : 'none';
     if (filtrosMochila) filtrosMochila.style.display = (nomePagina === 'mochila') ? 'flex' : 'none';

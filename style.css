@@ -1,5 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Cinzel+Decorative:wght@700&display=swap');
 
+html {
+    scroll-behavior: smooth;
+}
+
 /* =========================================
    1. TOKENS
    ========================================= */
@@ -3018,7 +3022,206 @@ section,
 }
 
 /* =========================================
-   22. RESPONSIVO / MOBILE
+   22. GUIA DO REINO
+   ========================================= */
+
+.guia-container {
+    background: rgba(15, 13, 10, 0.7);
+    border: 1px solid var(--borda);
+    border-radius: 4px;
+    padding: 40px 48px;
+}
+
+.guia-cabecalho {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 26px;
+    border-bottom: 1px solid var(--borda);
+}
+
+.guia-cabecalho h2 {
+    font-size: 1.8em;
+    letter-spacing: 3px;
+    margin: 0 0 10px;
+    color: var(--ouro-claro);
+}
+
+.guia-subtitulo {
+    font-style: italic;
+    color: var(--texto-fraco);
+    font-size: 1.05em;
+    letter-spacing: 0.5px;
+    margin: 0;
+}
+
+/* Índice — pílulas de navegação rápida entre as seções */
+.guia-indice {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 40px;
+}
+
+.guia-indice a {
+    display: inline-block;
+    padding: 7px 16px;
+    border: 1px solid var(--borda);
+    border-radius: 20px;
+    color: var(--texto-fraco);
+    text-decoration: none;
+    font-family: 'Cinzel', serif;
+    font-size: 0.68em;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+
+.guia-indice a:hover {
+    border-color: var(--ouro-escuro);
+    color: var(--ouro-claro);
+    background: rgba(201, 164, 73, 0.06);
+}
+
+/* Seções numeradas, ao estilo de capítulos de um tomo */
+.guia-secao {
+    max-width: 780px;
+    margin: 0 auto 44px;
+    scroll-margin-top: 90px;
+}
+
+.guia-secao:last-child {
+    margin-bottom: 0;
+}
+
+.guia-secao h3 {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 1.35em;
+    letter-spacing: 1px;
+    color: var(--ouro-claro);
+    margin: 0 0 16px;
+    border: none;
+    padding: 0;
+}
+
+.guia-numero {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--ouro-escuro);
+    border-radius: 50%;
+    font-family: 'Cinzel', serif;
+    font-size: 0.55em;
+    color: var(--ouro);
+}
+
+.guia-secao p {
+    line-height: 1.75;
+    font-size: 1.08em;
+    color: var(--texto);
+    margin: 0 0 16px;
+}
+
+.guia-secao p:last-of-type {
+    margin-bottom: 0;
+}
+
+.guia-secao em {
+    color: var(--texto-fraco);
+    font-style: italic;
+}
+
+.guia-destaque {
+    background: rgba(201, 164, 73, 0.08);
+    border-left: 3px solid var(--ouro);
+    padding: 12px 18px;
+    border-radius: 0 4px 4px 0;
+    font-weight: 600;
+    color: var(--ouro-claro) !important;
+}
+
+/* Cartões de exemplo (ON/OFF, Ações Pragmáticas/Belas) */
+.guia-exemplos {
+    display: flex;
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.guia-exemplo {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--borda);
+    border-left-width: 3px;
+    border-radius: 0 4px 4px 0;
+    padding: 16px 18px;
+}
+
+.guia-exemplo p {
+    margin: 8px 0 0;
+    font-size: 0.96em;
+    line-height: 1.6;
+    color: var(--texto);
+}
+
+.guia-exemplo-tag {
+    display: inline-block;
+    font-family: 'Cinzel', serif;
+    font-size: 0.62em;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 10px;
+}
+
+.guia-exemplo-on {
+    border-left-color: #4a9a5f;
+}
+
+.guia-exemplo-on .guia-exemplo-tag {
+    background: rgba(111, 207, 134, 0.15);
+    color: #8fdf9f;
+}
+
+.guia-exemplo-off {
+    border-left-color: #7a7a7a;
+}
+
+.guia-exemplo-off .guia-exemplo-tag {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--texto-fraco);
+}
+
+.guia-exemplo-off p {
+    font-style: italic;
+    color: var(--texto-fraco);
+}
+
+.guia-exemplo-pragmatica {
+    border-left-color: var(--raro);
+}
+
+.guia-exemplo-pragmatica .guia-exemplo-tag {
+    background: rgba(93, 179, 224, 0.15);
+    color: #7ec4e8;
+}
+
+.guia-exemplo-bela {
+    border-left-color: var(--epico);
+}
+
+.guia-exemplo-bela .guia-exemplo-tag {
+    background: rgba(142, 79, 196, 0.15);
+    color: #b07fdb;
+}
+
+/* =========================================
+   23. RESPONSIVO / MOBILE
    ========================================= */
 
 /* ---------- Tablets e celulares grandes ---------- */
@@ -3144,8 +3347,42 @@ section,
     }
 
     .fichas-container,
-    .comunidade-container {
-        padding: 16px;
+    .comunidade-container,
+    .guia-container {
+        padding: 20px 16px;
+    }
+
+    .guia-cabecalho h2 {
+        font-size: 1.4em;
+        letter-spacing: 1.5px;
+    }
+
+    .guia-indice {
+        gap: 6px;
+    }
+
+    .guia-indice a {
+        padding: 6px 12px;
+        font-size: 0.62em;
+    }
+
+    .guia-secao h3 {
+        font-size: 1.1em;
+        gap: 10px;
+    }
+
+    .guia-numero {
+        width: 28px;
+        height: 28px;
+    }
+
+    .guia-secao p {
+        font-size: 1em;
+    }
+
+    .guia-exemplos {
+        flex-direction: column;
+        gap: 12px;
     }
 
     /* Alternador de 1/2 colunas só faz sentido no mobile */

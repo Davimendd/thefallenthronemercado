@@ -119,6 +119,10 @@
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 4h6l1 2h3a1 1 0 011 1v11a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h3l1-2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="1.5"/></svg>
                 Photoplayers
             </button>
+            <button class="pagina-tab" onclick="mostrarPagina('guia')">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H12v16H5.5A1.5 1.5 0 014 18.5v-13z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H12v16h6.5a1.5 1.5 0 001.5-1.5v-13z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+                Guia do Reino
+            </button>
         </nav>
 
         <!-- ============================================================ -->
@@ -499,6 +503,76 @@
                 <div id="lista-photoplayers" class="lista-photoplayers">
                     <!-- Preenchido dinamicamente pelo JS -->
                 </div>
+            </section>
+        </section>
+
+        <!-- PÁGINA: GUIA DO REINO -->
+        <section id="pagina-guia" class="pagina-conteudo" style="display: none;">
+            <section class="guia-container">
+                <div class="guia-cabecalho">
+                    <h2>📖 Guia do Reino</h2>
+                    <p class="guia-subtitulo">Tudo que você precisa saber antes de forjar sua lenda em Westeros</p>
+                </div>
+
+                <nav class="guia-indice">
+                    <a href="#guia-ambientacao">I. Ambientação</a>
+                    <a href="#guia-senso">II. Senso, Dedicação e Dinâmica</a>
+                    <a href="#guia-onoff">III. ON e OFF</a>
+                    <a href="#guia-acoes">IV. Ações Pragmáticas e Belas</a>
+                    <a href="#guia-morte">V. Personagem, Morte e Resetação</a>
+                </nav>
+
+                <article class="guia-secao" id="guia-ambientacao">
+                    <h3><span class="guia-numero">I</span> Ambientação</h3>
+                    <p>O RPG é ambientado e doravante numa realidade alternativa do universo das <em>"Crônicas de Gelo e Fogo"</em>, de George R. R. Martin. Basicamente a temática é estilo medieval e sua estrutura abrangente derivada a incontáveis culturas diferentes, cede ao player a liberdade em escolher ser um simples camponês à um Lorde de território, ou de uma meretriz famosa pelas ancas à um pirata saqueador.</p>
+                    <p>Os acontecimentos decorridos da chegada dos Targaryens em Westeros serão mantidos com fidelidade: como A Conquista; assim como os personagens envolvidos.</p>
+                </article>
+
+                <article class="guia-secao" id="guia-senso">
+                    <h3><span class="guia-numero">II</span> Senso, Dedicação e Dinâmica</h3>
+                    <p>A interpretação, o senso e a dedicação são os aspectos mais importantes para atingir destaque dentro do RPG — e assim sendo, as pessoas que não respeitarem esses determinados parâmetros serão lesadas e/ou não irão evoluir dentro do game.</p>
+                    <p>Recorde-se sempre que errar é humano e que ninguém é dono da razão. Ensine aqueles que não entendem certas matérias e procure ajudar os players menos experientes. Aceite falhar e tenha consciência de que nem sempre se conseguirá defender. Caso seja derrotado deve procurar averiguar a situação, e se os motivos que levaram à sua derrota forem legítimos deve aceitá-la.</p>
+                    <p>Quando tratamos da dedicação, buscamos influenciar o player a usar sua criatividade. Não fique simplesmente sentado no quarto esperando algo acontecer. Vá atrás de sua própria diversão, renove em sua história e aventure sua personagem com seus colegas. Saber como prender a atenção dos outros jogadores em suas pequenas tramas é um bom passo para mostrar sua evolução.</p>
+                </article>
+
+                <article class="guia-secao" id="guia-onoff">
+                    <h3><span class="guia-numero">III</span> Noções Básicas de ON e OFF</h3>
+                    <p>O uso do ON e OFF é indispensável para qualquer RPG que seja, como praxe. Consiste no seu estado dentro de um grupo: ON do RPG, ou seja, o modo que está interagindo no local — se está interpretando ou dialogando trivialmente entre colegas.</p>
+                    <p>Recomenda-se pouco uso do OFF, principalmente no decorrer de atividades ou tramas, para não atrapalhar a dinâmica interpretativa (famoso spam) — o uso excessivo pode gerar expulsão.</p>
+                    <div class="guia-exemplos">
+                        <div class="guia-exemplo guia-exemplo-on">
+                            <span class="guia-exemplo-tag">ON</span>
+                            <p>Que o vinho realmente seja de uma boa safra, ou a Árvore se incendeia caso me desaponte. <em>*Enlaçou a taça de ouro diante de si levando aos lábios, bebericou um gole e exibiu uma expressão satisfatória, aprovando*.</em></p>
+                        </div>
+                        <div class="guia-exemplo guia-exemplo-off">
+                            <span class="guia-exemplo-tag">OFF</span>
+                            <p>[Cara, detestável o final de GOT, não?]</p>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="guia-secao" id="guia-acoes">
+                    <h3><span class="guia-numero">IV</span> Ações Pragmáticas e Belas</h3>
+                    <p>Para representar os atos do seu personagem surgiram as ações. As ações geralmente são escritas entre asteriscos ("*") e devem ter no mínimo 3 palavras, das quais um verbo. Numa ação você deve dar o máximo de informações pertinentes possíveis, assim os outros players terão uma noção do seu ato mais próxima da sua.</p>
+                    <p>Lembrando que é livre o uso alternado ou definitivo de ações belas e pragmáticas, mas prefere-se objetividade durante as tramas para maior dinâmica.</p>
+                    <div class="guia-exemplos">
+                        <div class="guia-exemplo guia-exemplo-pragmatica">
+                            <span class="guia-exemplo-tag">Ação Pragmática</span>
+                            <p><em>*Ergue o machado, ainda repleto de sangue, brandindo vitória diante do morto*.</em></p>
+                        </div>
+                        <div class="guia-exemplo guia-exemplo-bela">
+                            <span class="guia-exemplo-tag">Ação Bela</span>
+                            <p><em>*Segurando o machado com a mão canhota ensandecida, o ergue pro alto brandindo vitória diante do corpo moribundo escalpado. Emite um urro gutural enquanto dispara o armamento em direção à um tronco próximo, fincando-se em sua estrutura*.</em></p>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="guia-secao" id="guia-morte">
+                    <h3><span class="guia-numero">V</span> Personagem, Morte e Resetação</h3>
+                    <p>Em primeira instância, é crucial que o player crie uma ficha para ingressar no RPG, de forma que fique fácil o reconhecimento de seus personagens para os outros e também para a ordem e estética do site. Não há personagens oficiais (como das séries) no contexto do game — há uma datação, mas seus personagens (em realidade alternativa) são inexistentes, cedendo a liberdade para o player modelar sua estrutura.</p>
+                    <p>Quando seu personagem é derrotado, ocorre-se a resetação, onde você perde os IC's (Iron Coins, moeda do RPG) conquistados, além de todos seus itens. A morte definitiva só ocorre se assim você permitir ou então algum evento dentro do RPG determinar isso (como uma execução em praça pública, aprovada pela Staff).</p>
+                    <p class="guia-destaque">⚔️ Qualquer jogador com razões credíveis pode tentar derrotar o seu personagem.</p>
+                </article>
             </section>
         </section>
     </div>
