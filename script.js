@@ -1240,12 +1240,23 @@ function obterFichaAtiva() {
 // Atualiza o cabeçalho (perfil, saldo, avatar) com os dados da ficha ativa.
 function atualizarPerfilComFichaAtiva() {
     const ficha = obterFichaAtiva();
+    const avatarNav = document.getElementById('saldo-avatar-nav');
+    const nomeNav = document.getElementById('saldo-nome-nav');
+    const pillNav = document.getElementById('topbar-saldo');
+
     if (!ficha) {
         document.getElementById('coins').innerText = '0';
+        if (nomeNav) nomeNav.innerText = 'Sem personagem ativo';
+        if (avatarNav) avatarNav.src = AVATAR_PADRAO;
+        if (pillNav) pillNav.title = '';
         renderizarInventario([]);
         return;
     }
+
     document.getElementById('coins').innerText = ficha.moedas;
+    if (nomeNav) nomeNav.innerText = ficha.nome || 'Personagem';
+    if (avatarNav) avatarNav.src = ficha.foto || AVATAR_PADRAO;
+    if (pillNav) pillNav.title = ficha.nome || '';
     renderizarInventario(ficha.inventario || []);
 }
 

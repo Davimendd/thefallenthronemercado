@@ -260,6 +260,61 @@ h1, h2, h3 {
     flex-shrink: 0;
 }
 
+/* Selo do personagem ativo — avatar, nome e moedas, bem visível na topbar */
+.topbar-saldo {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 5px 14px 5px 5px;
+    border: 1px solid var(--ouro-escuro);
+    border-radius: 30px;
+    background: linear-gradient(135deg, rgba(201, 164, 73, 0.14), rgba(201, 164, 73, 0.02));
+    box-shadow: 0 0 12px rgba(201, 164, 73, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+.topbar-saldo-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--ouro-escuro);
+    flex-shrink: 0;
+    background: var(--fundo-card);
+}
+
+.topbar-saldo-texto {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+    min-width: 0;
+}
+
+.topbar-saldo-nome {
+    font-family: 'Cinzel', serif;
+    font-size: 0.64em;
+    letter-spacing: 0.4px;
+    color: var(--texto-fraco);
+    white-space: nowrap;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.topbar-saldo-moedas {
+    font-family: 'Cinzel', serif;
+    font-size: 0.82em;
+    font-weight: 700;
+    color: var(--ouro-claro);
+    white-space: nowrap;
+}
+
+.topbar-saldo-moedas small {
+    font-size: 0.72em;
+    font-weight: 400;
+    color: var(--texto-fraco);
+    text-transform: uppercase;
+}
+
 #conta-flutuante {
     position: relative;
 }
@@ -535,6 +590,25 @@ body.menu-mobile-travado {
     .topbar-nome {
         display: none;
     }
+
+    /* Selo de moedas mais enxuto no mobile: avatar + moedas, sem o nome */
+    .topbar-saldo {
+        padding: 4px 10px 4px 4px;
+        gap: 7px;
+    }
+
+    .topbar-saldo-avatar {
+        width: 26px;
+        height: 26px;
+    }
+
+    .topbar-saldo-nome {
+        display: none;
+    }
+
+    .topbar-saldo-moedas {
+        font-size: 0.74em;
+    }
 }
 
 /* =========================================
@@ -642,87 +716,8 @@ button:active {
 }
 
 /* =========================================
-   7. HEADER
+   7. PERFIL DO JOGADOR (legado — ver .topbar-saldo para o selo atual)
    ========================================= */
-header {
-    position: relative;
-    text-align: center;
-    padding: 50px 20px 38px;
-    border-bottom: 1px solid var(--borda);
-    margin-bottom: 10px;
-    overflow: hidden;
-    background:
-        radial-gradient(ellipse at top, rgba(201, 164, 73, 0.08), transparent 65%),
-        repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.015) 0px, rgba(255, 255, 255, 0.015) 2px, transparent 2px, transparent 8px),
-        repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.15) 0px, rgba(0, 0, 0, 0.15) 2px, transparent 2px, transparent 8px);
-}
-
-.brasao-trono {
-    width: 140px;
-    height: 140px;
-    object-fit: contain;
-    margin: 0 auto 8px;
-    display: block;
-    filter: drop-shadow(0 0 18px rgba(201, 164, 73, 0.35));
-    transition: filter 0.4s ease;
-}
-
-.brasao-trono:hover {
-    filter: drop-shadow(0 0 30px rgba(201, 164, 73, 0.6));
-}
-
-header .eyebrow {
-    font-family: 'Cinzel', serif;
-    font-size: 0.72em;
-    letter-spacing: 4px;
-    color: var(--texto-fraco);
-    text-transform: uppercase;
-    margin: 0;
-}
-
-header h1 {
-    font-family: 'Cinzel Decorative', serif;
-    font-size: 2.5em;
-    letter-spacing: 1px;
-    text-shadow: 0 0 25px rgba(201, 164, 73, 0.25);
-    margin: 10px 0 4px;
-}
-
-header .subtitulo {
-    font-family: 'Cinzel', serif;
-    font-size: 0.85em;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: var(--texto-fraco);
-    margin: 0;
-}
-
-.ornamento-linha {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
-    margin-top: 18px;
-}
-
-.ornamento-linha .linha {
-    height: 1px;
-    width: 80px;
-    background: linear-gradient(90deg, transparent, var(--ouro-escuro));
-}
-
-.ornamento-linha .linha.direita {
-    background: linear-gradient(90deg, var(--ouro-escuro), transparent);
-}
-
-.ornamento-linha .losango {
-    width: 6px;
-    height: 6px;
-    background: var(--ouro);
-    transform: rotate(45deg);
-    flex-shrink: 0;
-}
-
 /* Perfil do jogador */
 .perfil-box {
     display: inline-flex;
@@ -782,13 +777,6 @@ header .subtitulo {
     border-radius: 2px;
     font-family: 'Cormorant Garamond', serif;
     min-width: 220px;
-}
-
-#saldo-jogador {
-    font-family: 'Cinzel', serif;
-    font-size: 1.25em;
-    color: var(--texto-fraco);
-    letter-spacing: 1px;
 }
 
 #coins {
@@ -3469,44 +3457,6 @@ section,
         padding: 14px;
     }
 
-    header {
-        padding: 34px 14px 26px;
-    }
-
-    .brasao-trono {
-        width: 96px;
-        height: 96px;
-        margin-bottom: 4px;
-    }
-
-    header h1 {
-        font-size: 1.8em;
-        margin: 8px 0 4px;
-    }
-
-    header .eyebrow {
-        font-size: 0.62em;
-        letter-spacing: 2.5px;
-    }
-
-    header .subtitulo {
-        font-size: 0.75em;
-        letter-spacing: 2px;
-    }
-
-    .ornamento-linha {
-        margin-top: 14px;
-    }
-
-    .ornamento-linha .linha {
-        width: 44px;
-    }
-
-    #saldo-jogador {
-        font-size: 1.05em;
-        margin-top: 4px;
-    }
-
     /* Topbar mais compacta no mobile */
     .topbar {
         padding: 8px 12px;
@@ -3923,32 +3873,6 @@ section,
 @media (max-width: 480px) {
     .container {
         padding: 10px;
-    }
-
-    header {
-        padding: 26px 10px 20px;
-    }
-
-    .brasao-trono {
-        width: 78px;
-        height: 78px;
-    }
-
-    header h1 {
-        font-size: 1.5em;
-        letter-spacing: 0.5px;
-    }
-
-    header .eyebrow {
-        letter-spacing: 1.8px;
-    }
-
-    #saldo-jogador {
-        font-size: 0.95em;
-    }
-
-    .paginas-nav {
-        gap: 6px;
     }
 
     /* Mercado ainda mais compacto em telas bem pequenas */

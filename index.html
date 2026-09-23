@@ -44,6 +44,15 @@
         </div>
 
         <div class="topbar-acoes">
+            <!-- Selo do personagem ativo: avatar, nome e moedas -->
+            <div id="topbar-saldo" class="topbar-saldo" title="">
+                <img id="saldo-avatar-nav" class="topbar-saldo-avatar" src="" alt="">
+                <div class="topbar-saldo-texto">
+                    <span id="saldo-nome-nav" class="topbar-saldo-nome">Sem personagem ativo</span>
+                    <span class="topbar-saldo-moedas">💰 <span id="coins">0</span> <small>IC's</small></span>
+                </div>
+            </div>
+
             <!-- Ícone de mochila: acesso rápido à página da mochila -->
             <button id="botao-mochila-flutuante" style="display: none;" onclick="mostrarPagina('mochila')" title="Minha Mochila">
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 7V5.5A2.5 2.5 0 0110.5 3h3A2.5 2.5 0 0116 5.5V7m-9 0h10a2 2 0 012 2v9a2 2 0 01-2 2H7a2 2 0 01-2-2V9a2 2 0 012-2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
@@ -127,22 +136,6 @@
            <button onclick="enviarAviso()">Enviar Mensagem</button>
            <button onclick="limparAviso()" class="btn-vender">Remover Aviso</button>
         </div>
-
-        <header>
-            <img src="throne.png" class="brasao-trono" alt="The Fallen Throne">
-            <p class="eyebrow">The Fallen Throne · RPG System</p>
-            <h1>The Fallen Throne</h1>
-            <p class="subtitulo">Sistema de RPG de Westeros</p>
-            <div class="ornamento-linha">
-                <span class="linha"></span>
-                <span class="losango"></span>
-                <span class="linha direita"></span>
-            </div>
-
-            <div id="saldo-jogador">
-                Moedas: <span id="coins">1500</span> ic's
-            </div>
-        </header>
 
         <!-- ============================================================ -->
         <!-- PAINEL DE BUSCA CONTEXTUAL                                   -->
