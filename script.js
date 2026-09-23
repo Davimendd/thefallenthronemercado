@@ -141,8 +141,8 @@ function mostrarPagina(nomePagina) {
         document.getElementById('pagina-' + p).style.display = (p === nomePagina) ? 'block' : 'none';
     });
 
-    document.querySelectorAll('.pagina-tab').forEach((tab, i) => {
-        tab.classList.toggle('ativa', paginas[i] === nomePagina);
+    document.querySelectorAll('.topbar-link, .menu-mobile-links button').forEach(link => {
+        link.classList.toggle('ativa', link.dataset.pagina === nomePagina);
     });
 
     // A aba de Photoplayers tem sua própria busca embutida (não usa o painel contextual)
@@ -1008,6 +1008,29 @@ function alternarMenuConta() {
     const menu = document.getElementById('menu-conta');
     menu.style.display = menu.style.display === 'none' ? 'flex' : 'none';
 }
+
+// Menu mobile (gaveta lateral) — abre/fecha o menu de navegação em telas pequenas
+function toggleMenuMobile() {
+    const aberto = document.getElementById('menu-mobile').classList.contains('aberto');
+    if (aberto) {
+        fecharMenuMobile();
+    } else {
+        document.getElementById('menu-mobile').classList.add('aberto');
+        document.getElementById('overlay-menu-mobile').classList.add('aberto');
+        document.body.classList.add('menu-mobile-travado');
+    }
+}
+
+function fecharMenuMobile() {
+    document.getElementById('menu-mobile').classList.remove('aberto');
+    document.getElementById('overlay-menu-mobile').classList.remove('aberto');
+    document.body.classList.remove('menu-mobile-travado');
+}
+
+// Fecha o menu mobile com a tecla Esc
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') fecharMenuMobile();
+});
 
 async function trocarDeConta() {
     const confirmado = await mostrarConfirmacao('Sair da conta atual e voltar à tela de login?');
@@ -2476,6 +2499,8 @@ window.onArquivoFotoFichaSelecionado = onArquivoFotoFichaSelecionado;
 window.alternarMenuConta = alternarMenuConta;
 window.mostrarPagina = mostrarPagina;
 window.toggleFiltro = toggleFiltro;
+window.toggleMenuMobile = toggleMenuMobile;
+window.fecharMenuMobile = fecharMenuMobile;
 window.toggleFiltrosPainel = toggleFiltrosPainel;
 window.definirLayoutColunas = definirLayoutColunas;
 window.executarBusca = executarBusca;

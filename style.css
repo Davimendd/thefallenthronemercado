@@ -136,18 +136,137 @@ h1, h2, h3 {
 }
 
 /* =========================================
-   3.1 ÍCONE FLUTUANTE DE CONTA
+   3.1 TOPBAR — barra de navegação principal
    ========================================= */
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 10px 26px;
+    background: linear-gradient(180deg, #1c1712, #14100c);
+    border-bottom: 1px solid var(--ouro-escuro);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+}
+
+.topbar-hamburguer {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    flex-shrink: 0;
+    border: 1px solid var(--borda);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--ouro-claro);
+    box-shadow: none;
+}
+
+.topbar-hamburguer:hover {
+    border-color: var(--ouro-escuro);
+    box-shadow: none;
+}
+
+.topbar-hamburguer svg {
+    width: 20px;
+    height: 20px;
+}
+
+.topbar-marca {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    padding: 0;
+    background: none;
+    border: none;
+    box-shadow: none;
+    cursor: pointer;
+}
+
+.topbar-marca:hover {
+    box-shadow: none;
+}
+
+.topbar-brasao {
+    width: 34px;
+    height: 34px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 4px rgba(201, 164, 73, 0.35));
+}
+
+.topbar-nome {
+    font-family: 'Cinzel', serif;
+    font-size: 0.82em;
+    letter-spacing: 0.5px;
+    text-transform: none;
+    color: var(--texto-fraco);
+    white-space: nowrap;
+}
+
+.topbar-nome strong {
+    color: var(--ouro-claro);
+    font-weight: 700;
+}
+
+.topbar-links {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.topbar-links::-webkit-scrollbar {
+    display: none;
+}
+
+.topbar-link {
+    flex-shrink: 0;
+    padding: 8px 14px;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    color: var(--texto-fraco);
+    font-family: 'Cinzel', serif;
+    font-size: 0.72em;
+    letter-spacing: 0.8px;
+    box-shadow: none;
+    transition: color 0.2s, background 0.2s, border-color 0.2s;
+}
+
+.topbar-link:hover {
+    color: var(--texto);
+    background: rgba(255, 255, 255, 0.03);
+    box-shadow: none;
+}
+
+.topbar-link.ativa {
+    color: var(--ouro-claro);
+    background: rgba(201, 164, 73, 0.1);
+    border-color: var(--ouro-escuro);
+}
+
+.topbar-acoes {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
 #conta-flutuante {
-    position: fixed;
-    top: 18px;
-    right: 18px;
-    z-index: 9000;
+    position: relative;
 }
 
 #botao-conta {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     padding: 0;
     border-radius: 50%;
     overflow: hidden;
@@ -158,8 +277,8 @@ h1, h2, h3 {
 
 #botao-conta:hover {
     border-color: var(--ouro);
-    box-shadow: 0 0 12px rgba(201, 164, 73, 0.4);
     background: var(--fundo-card);
+    box-shadow: 0 0 12px rgba(201, 164, 73, 0.4);
 }
 
 #avatar-flutuante {
@@ -171,7 +290,7 @@ h1, h2, h3 {
 
 #menu-conta {
     position: absolute;
-    top: 54px;
+    top: 50px;
     right: 0;
     background: linear-gradient(180deg, var(--fundo-card), var(--fundo));
     border: 1px solid var(--ouro-escuro);
@@ -199,15 +318,13 @@ h1, h2, h3 {
 }
 
 /* =========================================
-   3.2 ÍCONE FLUTUANTE DE MOCHILA
+   3.2 ÍCONE DE MOCHILA NA TOPBAR
    ========================================= */
 #botao-mochila-flutuante {
-    position: fixed;
-    top: 18px;
-    right: 72px;
-    z-index: 9000;
-    width: 44px;
-    height: 44px;
+    position: relative;
+    display: flex;
+    width: 40px;
+    height: 40px;
     padding: 9px;
     border-radius: 50%;
     border: 2px solid var(--ouro-escuro);
@@ -245,6 +362,179 @@ h1, h2, h3 {
     align-items: center;
     justify-content: center;
     box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+}
+
+/* =========================================
+   3.3 MENU MOBILE (gaveta lateral)
+   ========================================= */
+.overlay-menu-mobile {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    z-index: 3000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+
+.overlay-menu-mobile.aberto {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+body.menu-mobile-travado {
+    overflow: hidden;
+}
+
+.menu-mobile {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    max-width: 82vw;
+    z-index: 3001;
+    background: linear-gradient(180deg, #1c1712, #100d0a);
+    border-right: 1px solid var(--ouro-escuro);
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.6);
+    padding: 22px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+}
+
+.menu-mobile.aberto {
+    transform: translateX(0);
+}
+
+.menu-mobile-fechar {
+    align-self: flex-end;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--borda);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--texto-fraco);
+    box-shadow: none;
+}
+
+.menu-mobile-fechar:hover {
+    border-color: var(--ouro-escuro);
+    color: var(--texto);
+    box-shadow: none;
+}
+
+.menu-mobile-fechar svg {
+    width: 16px;
+    height: 16px;
+}
+
+.menu-mobile-marca {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--borda);
+}
+
+.menu-mobile-marca img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 4px rgba(201, 164, 73, 0.35));
+}
+
+.menu-mobile-marca span {
+    font-family: 'Cinzel', serif;
+    font-size: 0.85em;
+    letter-spacing: 0.5px;
+    color: var(--texto-fraco);
+    line-height: 1.3;
+}
+
+.menu-mobile-marca strong {
+    color: var(--ouro-claro);
+}
+
+.menu-mobile-links {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+
+.menu-mobile-links button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 12px 12px;
+    background: none;
+    border: none;
+    border-radius: 4px;
+    color: var(--texto);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1em;
+    letter-spacing: 0.3px;
+    text-transform: none;
+    box-shadow: none;
+}
+
+.menu-mobile-links button:hover {
+    background: rgba(255, 255, 255, 0.04);
+    box-shadow: none;
+}
+
+.menu-mobile-links button.ativa {
+    background: rgba(201, 164, 73, 0.12);
+    color: var(--ouro-claro);
+    font-weight: 600;
+}
+
+.menu-mobile-rodape {
+    padding-top: 14px;
+    border-top: 1px solid var(--borda);
+}
+
+.menu-mobile-rodape button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 10px 12px;
+    background: none;
+    border: none;
+    border-radius: 4px;
+    color: #d97f7f;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.05em;
+    text-transform: none;
+    box-shadow: none;
+}
+
+.menu-mobile-rodape button:hover {
+    background: rgba(163, 55, 43, 0.12);
+    box-shadow: none;
+}
+
+/* Esconde a topbar de links e mostra o hamburguer abaixo de ~920px */
+@media (max-width: 920px) {
+    .topbar-links {
+        display: none;
+    }
+
+    .topbar-hamburguer {
+        display: flex;
+    }
+
+    .topbar-nome {
+        display: none;
+    }
 }
 
 /* =========================================
@@ -303,7 +593,7 @@ button:active {
     font-weight: 700;
     letter-spacing: 1px;
     border-radius: 6px;
-    margin: 60px 0 24px;
+    margin: 20px 0 24px;
     animation: pulso-aviso 2.4s infinite;
 }
 
@@ -319,7 +609,7 @@ button:active {
     background: linear-gradient(145deg, #2a0808, #14100c);
     border: 1px solid #7a2a22;
     padding: 22px;
-    margin: 60px 0 24px;
+    margin: 20px 0 24px;
     border-radius: 4px;
 }
 
@@ -509,51 +799,8 @@ header .subtitulo {
 }
 
 /* =========================================
-   7.1 NAVEGAÇÃO ENTRE PÁGINAS
+   7.1 CONTEÚDO DAS PÁGINAS
    ========================================= */
-.paginas-nav {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin: 36px 0 0;
-    flex-wrap: wrap;
-}
-
-.pagina-tab {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--fundo-card);
-    border: 1px solid var(--borda);
-    color: var(--texto-fraco);
-    font-family: 'Cinzel', serif;
-    font-size: 0.78em;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    padding: 12px 22px;
-    border-radius: 3px 3px 0 0;
-    border-bottom: none;
-}
-
-.pagina-tab svg {
-    width: 18px;
-    height: 18px;
-    flex-shrink: 0;
-}
-
-.pagina-tab:hover {
-    background: var(--fundo-card);
-    color: var(--ouro-claro);
-    box-shadow: none;
-}
-
-.pagina-tab.ativa {
-    color: var(--ouro);
-    background: linear-gradient(180deg, rgba(201, 164, 73, 0.08), var(--fundo-card));
-    border-color: var(--ouro-escuro);
-    box-shadow: 0 -2px 10px rgba(201, 164, 73, 0.08);
-}
-
 .pagina-conteudo {
     border-top: 1px solid var(--borda);
     padding-top: 6px;
@@ -2217,14 +2464,6 @@ section,
     z-index: 10000;
 }
 
-#conta-flutuante {
-    z-index: 9000;
-}
-
-#botao-mochila-flutuante {
-    z-index: 9000;
-}
-
 #painel-mestre {
     position: relative;
     z-index: 2;
@@ -3231,7 +3470,7 @@ section,
     }
 
     header {
-        padding: 40px 14px 26px;
+        padding: 34px 14px 26px;
     }
 
     .brasao-trono {
@@ -3268,54 +3507,26 @@ section,
         margin-top: 4px;
     }
 
-    /* Ícones flutuantes um pouco menores para não competir com o cabeçalho */
-    #conta-flutuante {
-        top: 12px;
-        right: 12px;
+    /* Topbar mais compacta no mobile */
+    .topbar {
+        padding: 8px 12px;
+        gap: 10px;
+    }
+
+    .topbar-brasao {
+        width: 28px;
+        height: 28px;
     }
 
     #botao-conta {
-        width: 38px;
-        height: 38px;
+        width: 36px;
+        height: 36px;
     }
 
     #botao-mochila-flutuante {
-        top: 12px;
-        right: 60px;
-        width: 38px;
-        height: 38px;
+        width: 36px;
+        height: 36px;
         padding: 7px;
-    }
-
-    /* Navegação vira uma faixa horizontal deslizável, estilo app */
-    .paginas-nav {
-        flex-wrap: nowrap;
-        justify-content: flex-start;
-        overflow-x: auto;
-        overflow-y: hidden;
-        -webkit-overflow-scrolling: touch;
-        scroll-snap-type: x proximity;
-        gap: 8px;
-        margin: 24px -14px 0;
-        padding: 0 14px 4px;
-        scrollbar-width: none;
-    }
-
-    .paginas-nav::-webkit-scrollbar {
-        display: none;
-    }
-
-    .pagina-tab {
-        flex-shrink: 0;
-        scroll-snap-align: start;
-        padding: 10px 16px;
-        font-size: 0.72em;
-        letter-spacing: 1px;
-    }
-
-    .pagina-tab svg {
-        width: 16px;
-        height: 16px;
     }
 
     /* Painel de busca e filtros com menos respiro */
@@ -3715,7 +3926,7 @@ section,
     }
 
     header {
-        padding: 42px 10px 20px;
+        padding: 26px 10px 20px;
     }
 
     .brasao-trono {
