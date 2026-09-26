@@ -277,9 +277,12 @@
                     <!-- Cards de fichas da conta aparecerão aqui -->
                 </div>
             </section>
+        </section>
 
-            <!-- Formulário de criação/edição de ficha (modal) -->
-            <div id="formulario-ficha-overlay" style="display: none;">
+        <!-- Formulário de criação/edição de ficha (modal) — fora do .pagina-conteudo
+             de propósito, para não ficar preso na pilha de camadas (z-index) da página
+             e poder aparecer por cima de qualquer coisa, inclusive o painel do Mestre. -->
+        <div id="formulario-ficha-overlay" style="display: none;">
                 <div class="formulario-ficha-box">
                     <h3 id="formulario-ficha-titulo">Criar Novo Personagem</h3>
 
@@ -374,7 +377,6 @@
                     </div>
                 </div>
             </div>
-        </section>
 
         <!-- PÁGINA: NPCs (galeria pública) -->
         <section id="pagina-npcs" class="pagina-conteudo" style="display: none;">
@@ -395,9 +397,11 @@
                     <!-- Cards de NPC de todos os usuários aparecem aqui -->
                 </div>
             </section>
+        </section>
 
-            <!-- Formulário de criação/edição de NPC -->
-            <div id="formulario-npc-overlay" style="display:none;">
+        <!-- Formulário de criação/edição de NPC — mesmo motivo do de ficha acima:
+             fora do .pagina-conteudo para não ficar preso no z-index da página. -->
+        <div id="formulario-npc-overlay" style="display:none;">
                 <div class="formulario-ficha-box">
                     <h3 id="formulario-npc-titulo">Criar Novo NPC</h3>
 
@@ -464,7 +468,6 @@
                     </div>
                 </div>
             </div>
-        </section>
         <section id="pagina-mochila" class="pagina-conteudo" style="display: none;">
             <section class="inventario-container">
                 <h2>Minha Mochila</h2>
