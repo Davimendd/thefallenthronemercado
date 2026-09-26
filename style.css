@@ -2102,15 +2102,63 @@ button.carregando {
 .modal-ficha-inner.theme-dark .modal-section { border-color: #2a3050; }
 .modal-ficha-inner.theme-dark .attr-box { background: rgba(60,70,120,0.3); border-color: #3a4060; }
 
+/* Inverno (Neve/Stark) — visual gelado com melhor contraste de leitura */
 .modal-ficha-inner.theme-snow {
-    background: linear-gradient(180deg, #e8f0f8, #d0dce8);
-    border: 2px solid #7090b0;
-    color: #1a2a3a;
+    background:
+        radial-gradient(ellipse at 25% -10%, rgba(255, 255, 255, 0.9), transparent 55%),
+        linear-gradient(160deg, #eef5fb 0%, #dbe8f2 45%, #c2d7e8 100%);
+    border: 2px solid #6f97bd;
+    color: #14263c;
+    box-shadow: inset 0 0 50px rgba(255, 255, 255, 0.55), 0 0 26px rgba(120, 165, 210, 0.3);
 }
-.modal-ficha-inner.theme-snow h2 { color: #1a3a5a; }
-.modal-ficha-inner.theme-snow h4 { color: #2a5a7a; }
-.modal-ficha-inner.theme-snow .modal-section { border-color: #90aac0; }
-.modal-ficha-inner.theme-snow .attr-box { background: rgba(100,140,180,0.15); border-color: #7090b0; }
+
+/* Textura sutil de geada por cima do gradiente */
+.modal-ficha-inner.theme-snow::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.5;
+    mix-blend-mode: overlay;
+    background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Cfilter id="n"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23n)" opacity="0.35"/%3E%3C/svg%3E');
+}
+
+/* Floco de neve decorativo no canto, como marca d'água */
+.modal-ficha-inner.theme-snow::after {
+    content: '❄';
+    position: absolute;
+    top: -14px;
+    right: -10px;
+    font-size: 6em;
+    color: #ffffff;
+    opacity: 0.18;
+    pointer-events: none;
+    line-height: 1;
+}
+
+.modal-ficha-inner.theme-snow h2 {
+    color: #0f2c4a;
+    text-shadow: 0 0 12px rgba(255, 255, 255, 0.85), 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.modal-ficha-inner.theme-snow h4 { color: #1d4d6e; }
+.modal-ficha-inner.theme-snow .modal-ficha-titulo p { color: #234a68; opacity: 0.95; }
+.modal-ficha-inner.theme-snow .modal-sub { color: #2f5674 !important; opacity: 0.9 !important; }
+.modal-ficha-inner.theme-snow .modal-section { border-color: rgba(90, 130, 170, 0.4); }
+.modal-ficha-inner.theme-snow .modal-section-title { color: #1d4d6e; opacity: 0.9; }
+.modal-ficha-inner.theme-snow .modal-stat-box {
+    background: rgba(255, 255, 255, 0.55);
+    border-color: #8fb0cc;
+    color: #14263c;
+}
+.modal-ficha-inner.theme-snow .attr-box {
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid #8fb0cc;
+}
+.modal-ficha-inner.theme-snow .attr-box span { color: #234a68; opacity: 0.9; }
+.modal-ficha-inner.theme-snow .attr-box strong { color: #0f2c4a; }
+.modal-ficha-inner.theme-snow .modal-habilidade strong { color: #0f2c4a; }
+.modal-ficha-inner.theme-snow .modal-habilidade p { color: #234a68; opacity: 0.95; }
+.modal-ficha-inner.theme-snow .modal-habilidade em { color: #3a6482; opacity: 0.85; }
 
 .modal-ficha-inner.theme-fire {
     background: linear-gradient(180deg, #1a0800, #280e00);
