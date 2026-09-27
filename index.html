@@ -4,18 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Fallen Throne - Mercado Medieval</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
 <div id="bg-slideshow" aria-hidden="true">
-    <div class="bg-slide" style="background-image:url('bg1.jpg')"></div>
-    <div class="bg-slide" style="background-image:url('bg2.jpg')"></div>
-    <div class="bg-slide" style="background-image:url('bg3.jpg')"></div>
-    <div class="bg-slide" style="background-image:url('bg4.jpg')"></div>
-    <div class="bg-slide" style="background-image:url('bg5.jpg')"></div>
-    <div class="bg-slide" style="background-image:url('bg6.jpg')"></div>
-    <div class="bg-slide" style="background-image:url('bg7.jpg')"></div>
-    <div class="bg-slide" style="background-image:url('bg8.jpg')"></div>
+    <div class="bg-slide" style="background-image:url('assets/img/backgrounds/bg1.jpg')"></div>
+    <div class="bg-slide" style="background-image:url('assets/img/backgrounds/bg2.jpg')"></div>
+    <div class="bg-slide" style="background-image:url('assets/img/backgrounds/bg3.jpg')"></div>
+    <div class="bg-slide" style="background-image:url('assets/img/backgrounds/bg4.jpg')"></div>
+    <div class="bg-slide" style="background-image:url('assets/img/backgrounds/bg5.jpg')"></div>
+    <div class="bg-slide" style="background-image:url('assets/img/backgrounds/bg6.jpg')"></div>
+    <div class="bg-slide" style="background-image:url('assets/img/backgrounds/bg7.jpg')"></div>
+    <div class="bg-slide" style="background-image:url('assets/img/backgrounds/bg8.jpg')"></div>
 </div>
 
 
@@ -29,7 +29,7 @@
         </button>
 
         <button class="topbar-marca" onclick="mostrarPagina('vitrine')" title="Início">
-            <img src="throne.png" class="topbar-brasao" alt="The Fallen Throne">
+            <img src="assets/img/throne.png" class="topbar-brasao" alt="The Fallen Throne">
             <span class="topbar-nome">The <strong>Fallen Throne</strong> RPG</span>
         </button>
 
@@ -41,6 +41,7 @@
             <button class="topbar-link" data-pagina="npcs" onclick="mostrarPagina('npcs')">NPCs</button>
             <button class="topbar-link" data-pagina="photoplayers" onclick="mostrarPagina('photoplayers')">Photoplayers</button>
             <button class="topbar-link" data-pagina="guia" onclick="mostrarPagina('guia')">Guia</button>
+            <button class="topbar-link" data-pagina="casas" onclick="mostrarPagina('casas')">Casas</button>
         </div>
 
         <div class="topbar-acoes">
@@ -92,7 +93,7 @@
         </button>
 
         <div class="menu-mobile-marca">
-            <img src="throne.png" alt="The Fallen Throne">
+            <img src="assets/img/throne.png" alt="The Fallen Throne">
             <span>The <strong>Fallen Throne</strong> RPG</span>
         </div>
 
@@ -104,6 +105,7 @@
             <button data-pagina="npcs" onclick="mostrarPagina('npcs'); fecharMenuMobile();">👥 NPCs</button>
             <button data-pagina="photoplayers" onclick="mostrarPagina('photoplayers'); fecharMenuMobile();">🎭 Photoplayers</button>
             <button data-pagina="guia" onclick="mostrarPagina('guia'); fecharMenuMobile();">📖 Guia do Reino</button>
+            <button data-pagina="casas" onclick="mostrarPagina('casas'); fecharMenuMobile();">🏰 Casas do Reino</button>
         </nav>
 
         <div class="menu-mobile-rodape">
@@ -590,6 +592,90 @@
                 </article>
             </section>
         </section>
+
+        <!-- PÁGINA: CASAS DO REINO -->
+        <section id="pagina-casas" class="pagina-conteudo" style="display: none;">
+            <section class="fichas-container">
+                <div class="fichas-cabecalho">
+                    <h2>Casas do Reino</h2>
+                    <button class="btn-criar-ficha" id="btn-criar-casa" style="display:none;" onclick="abrirFormularioCasa()">+ Criar Casa</button>
+                </div>
+
+                <div id="lista-casas" class="grid-casas">
+                    <!-- Preenchido dinamicamente pelo JS -->
+                </div>
+            </section>
+        </section>
+    </div>
+
+    <!-- Modal de visualização completa de uma Casa -->
+    <div id="modal-casa-overlay" style="display:none;" onclick="fecharModalCasa(event)">
+        <div id="modal-casa-conteudo" class="modal-casa-box">
+            <!-- preenchido dinamicamente pelo JS -->
+        </div>
+    </div>
+
+    <!-- Formulário de criação/edição de Casa (só o Mestre) -->
+    <div id="formulario-casa-overlay" style="display:none;">
+        <div class="formulario-ficha-box">
+            <h3 id="formulario-casa-titulo">Criar Nova Casa</h3>
+
+            <div class="input-group">
+                <label>Nome da Casa</label>
+                <input type="text" id="casa-nome" placeholder="Ex: Stark">
+                <span class="dica-campo">Use o mesmo nome que aparece no seletor de Casa das fichas e NPCs, para os membros serem listados automaticamente.</span>
+            </div>
+
+            <div class="ficha-row">
+                <div class="input-group">
+                    <label>Lorde / Lady</label>
+                    <input type="text" id="casa-lorde" placeholder="Ex: Eddard Stark">
+                </div>
+                <div class="input-group">
+                    <label>Lema</label>
+                    <input type="text" id="casa-lema" placeholder="Ex: O Inverno Está Chegando">
+                </div>
+            </div>
+
+            <div class="ficha-row tripartite">
+                <div class="input-group">
+                    <label>Sede (Fortaleza)</label>
+                    <input type="text" id="casa-sede" placeholder="Ex: Winterfell">
+                </div>
+                <div class="input-group">
+                    <label>Território</label>
+                    <input type="text" id="casa-territorio" placeholder="Ex: O Norte">
+                </div>
+                <div class="input-group">
+                    <label>Lealdade (Reino)</label>
+                    <input type="text" id="casa-lealdade" placeholder="Ex: Trono de Ferro">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Tipo de Casa</label>
+                <select id="casa-tipo">
+                    <option value="real">👑 Casa Real</option>
+                    <option value="maior">⚜️ Casa Maior</option>
+                    <option value="menor">🏰 Casa Menor (Vassala)</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>Bandeira da Casa (link da imagem)</label>
+                <input type="text" id="casa-bandeira" placeholder="https://...">
+            </div>
+
+            <div class="input-group">
+                <label>História da Casa</label>
+                <textarea id="casa-historia" rows="5" placeholder="Conte a história, origem e feitos desta casa..."></textarea>
+            </div>
+
+            <div class="formulario-ficha-botoes">
+                <button class="btn-secondary" onclick="fecharFormularioCasa()">Cancelar</button>
+                <button class="btn-main" onclick="salvarCasa()">🏰 Salvar Casa</button>
+            </div>
+        </div>
     </div>
 
     <!-- Modal de visualização completa de uma ficha -->
@@ -609,6 +695,6 @@
       }
     }
 </script>
-<script type="module" src="script.js"></script>
+<script type="module" src="assets/js/script.js"></script>
 </body>
 </html>
