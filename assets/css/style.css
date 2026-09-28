@@ -1670,6 +1670,19 @@ button.carregando {
     overflow-y: auto;
 }
 
+/* Formulário de Casa (só o Mestre) — mesma caixa do de ficha, com overlay próprio */
+#formulario-casa-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    overflow-y: auto;
+}
+
 .formulario-ficha-box {
     background: linear-gradient(180deg, var(--fundo-card), var(--fundo));
     border: 1px solid var(--ouro-escuro);
@@ -4086,7 +4099,8 @@ section,
 
     /* Formulários (ficha/NPC) ocupam a tela com folga menor nas bordas */
     #formulario-ficha-overlay,
-    #formulario-npc-overlay {
+    #formulario-npc-overlay,
+    #formulario-casa-overlay {
         padding: 10px;
     }
 
