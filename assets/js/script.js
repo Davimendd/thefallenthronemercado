@@ -1281,6 +1281,7 @@ function atualizarClassesDisponiveis() {
 // Abre o formulário de criação de uma ficha nova (em branco)
 function abrirFormularioFicha(fichaIdParaEditar) {
     document.getElementById('formulario-ficha-overlay').style.display = 'flex';
+    atualizarSelectsDeCasa();
 
     if (fichaIdParaEditar) {
         const ficha = fichasDoUsuario.find(f => f.id === fichaIdParaEditar);
@@ -2394,12 +2395,58 @@ function monitorarCasas() {
                 _casasCache[docSnap.id] = docSnap.data();
             });
             renderizarListaCasas();
+            atualizarSelectsDeCasa();
         }, (erro) => {
             console.warn("Lista de Casas indisponível:", erro.message);
         });
     } catch (erroCasas) {
         console.error("Erro ao iniciar listener de Casas:", erroCasas);
     }
+}
+
+// Nomes já cobertos pelas opções fixas do HTML (não precisam de entrada
+// duplicada quando uma Casa cadastrada tiver esse mesmo nome).
+function _nomesEstaticosDoSelect(select) {
+    return new Set(
+        Array.from(select.querySelectorAll('option:not([data-dinamica])'))
+            .map(opt => normalizarNomeCasa(opt.value))
+    );
+}
+
+// Mantém os seletores de "Casa" (ficha) e "Lealdade" (NPC) sincronizados com
+// as Casas cadastradas: toda Casa nova (cujo nome não seja um dos padrões já
+// fixos no HTML) vira automaticamente uma opção selecionável, com o emoji
+// definido no cadastro da Casa na frente do nome.
+function atualizarSelectsDeCasa() {
+    const selects = [
+        document.getElementById('ficha-casa'),
+        document.getElementById('npc-alinhamento')
+    ].filter(Boolean);
+
+    selects.forEach(select => {
+        const valorAtual = select.value;
+        const nomesEstaticos = _nomesEstaticosDoSelect(select);
+
+        // Remove as opções dinâmicas antigas antes de reconstruir a lista
+        select.querySelectorAll('option[data-dinamica]').forEach(opt => opt.remove());
+
+        // Casas cadastradas que não são uma das opções padrão entram no fim da lista
+        Object.values(_casasCache)
+            .filter(casa => casa.nome && !nomesEstaticos.has(normalizarNomeCasa(casa.nome)))
+            .sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' }))
+            .forEach(casa => {
+                const opt = document.createElement('option');
+                opt.value = casa.nome;
+                opt.dataset.dinamica = '1';
+                opt.textContent = `${casa.emoji || '🏰'} ${casa.nome}`;
+                select.appendChild(opt);
+            });
+
+        // Preserva o valor que já estava selecionado, se ele ainda existir
+        if (valorAtual && Array.from(select.options).some(o => o.value === valorAtual)) {
+            select.value = valorAtual;
+        }
+    });
 }
 
 // Encontra todas as fichas e NPCs (de qualquer jogador) que pertencem a uma Casa,
@@ -2452,7 +2499,7 @@ function renderizarListaCasas() {
                     <span class="card-casa-tipo">${tipoInfo.emoji} ${tipoInfo.rotulo}</span>
                 </div>
                 <div class="card-casa-corpo">
-                    <h3>${casa.nome || 'Sem nome'}</h3>
+                    <h3>${casa.emoji ? casa.emoji + ' ' : ''}${casa.nome || 'Sem nome'}</h3>
                     ${casa.lema ? `<p class="card-casa-lema">"${casa.lema}"</p>` : ''}
                     <div class="card-casa-rodape">
                         <span>👤 ${casa.lorde || 'Sem lorde definido'}</span>
@@ -2509,7 +2556,7 @@ function abrirModalCasa(casaId) {
         </div>
         <div class="modal-casa-corpo">
             <span class="card-casa-tipo modal-casa-tipo">${tipoInfo.emoji} ${tipoInfo.rotulo}</span>
-            <h2>${casa.nome || 'Sem nome'}</h2>
+            <h2>${casa.emoji ? casa.emoji + ' ' : ''}${casa.nome || 'Sem nome'}</h2>
             ${casa.lema ? `<p class="modal-casa-lema">"${casa.lema}"</p>` : ''}
 
             <div class="modal-casa-info-grid">
@@ -2558,6 +2605,7 @@ function abrirFormularioCasa(casaId) {
         overlay.dataset.editandoId = casaId;
         document.getElementById('formulario-casa-titulo').innerText = 'Editar Casa';
         document.getElementById('casa-nome').value = casa.nome || '';
+        document.getElementById('casa-emoji').value = casa.emoji || '';
         document.getElementById('casa-lorde').value = casa.lorde || '';
         document.getElementById('casa-lema').value = casa.lema || '';
         document.getElementById('casa-sede').value = casa.sede || '';
@@ -2570,6 +2618,7 @@ function abrirFormularioCasa(casaId) {
         delete overlay.dataset.editandoId;
         document.getElementById('formulario-casa-titulo').innerText = 'Criar Nova Casa';
         document.getElementById('casa-nome').value = '';
+        document.getElementById('casa-emoji').value = '';
         document.getElementById('casa-lorde').value = '';
         document.getElementById('casa-lema').value = '';
         document.getElementById('casa-sede').value = '';
@@ -2593,6 +2642,7 @@ async function salvarCasa() {
 
     const dados = {
         nome,
+        emoji: document.getElementById('casa-emoji').value.trim(),
         lorde: document.getElementById('casa-lorde').value.trim(),
         lema: document.getElementById('casa-lema').value.trim(),
         sede: document.getElementById('casa-sede').value.trim(),
@@ -2975,6 +3025,7 @@ function monitorarNPCsGlobal() {
 // Abre formulário em branco ou preenchido para edição
 function abrirFormularioNPC(npcId) {
     popularSelectTiposNPC();
+    atualizarSelectsDeCasa();
     const overlay = document.getElementById('formulario-npc-overlay');
     overlay.style.display = 'flex';
 
@@ -3391,6 +3442,7 @@ function abrirFormularioNPCEdicao(donoUid, npcId) {
         if (!snap.exists()) return;
         const npc = snap.data();
         popularSelectTiposNPC();
+        atualizarSelectsDeCasa();
         const overlay = document.getElementById('formulario-npc-overlay');
         overlay.style.display = 'flex';
         overlay.dataset.editandoId = npcId;

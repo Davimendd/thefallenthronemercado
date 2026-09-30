@@ -609,21 +609,28 @@
     </div>
 
     <!-- Modal de visualização completa de uma Casa -->
-    <div id="modal-casa-overlay" style="display:none;" onclick="fecharModalCasa(event)">
+    <div id="modal-casa-overlay" style="display:none; position:fixed; inset:0; z-index:10500; background:rgba(0,0,0,0.78); align-items:flex-start; justify-content:center; padding:30px 16px; overflow-y:auto;" onclick="fecharModalCasa(event)">
         <div id="modal-casa-conteudo" class="modal-casa-box">
             <!-- preenchido dinamicamente pelo JS -->
         </div>
     </div>
 
     <!-- Formulário de criação/edição de Casa (só o Mestre) -->
-    <div id="formulario-casa-overlay" style="display:none;">
+    <div id="formulario-casa-overlay" style="display:none; position:fixed; inset:0; z-index:10000; background:rgba(0,0,0,0.7); align-items:center; justify-content:center; padding:20px; overflow-y:auto;">
         <div class="formulario-ficha-box">
             <h3 id="formulario-casa-titulo">Criar Nova Casa</h3>
 
-            <div class="input-group">
-                <label>Nome da Casa</label>
-                <input type="text" id="casa-nome" placeholder="Ex: Stark">
-                <span class="dica-campo">Use o mesmo nome que aparece no seletor de Casa das fichas e NPCs, para os membros serem listados automaticamente.</span>
+            <div class="ficha-row" style="grid-template-columns: 3fr 1fr;">
+                <div class="input-group">
+                    <label>Nome da Casa</label>
+                    <input type="text" id="casa-nome" placeholder="Ex: Stark">
+                    <span class="dica-campo">Se o nome bater com uma das opções padrão do seletor de Casa (Stark, Lannister, Targaryen, Baratheon, Tyrell, Arryn, Allaryon, Casa Menor), os personagens e NPCs dela são listados automaticamente. Se for uma casa nova, ela mesma é adicionada como opção no seletor.</span>
+                </div>
+                <div class="input-group">
+                    <label>Emoji</label>
+                    <input type="text" id="casa-emoji" placeholder="🏰" maxlength="4">
+                    <span class="dica-campo">Aparece na frente do nome no seletor de Casa (só necessário pra casas novas).</span>
+                </div>
             </div>
 
             <div class="ficha-row">
