@@ -1195,6 +1195,33 @@ async function onArquivoFotoFichaSelecionado(input) {
     }
 }
 
+// Chamado quando o usuário seleciona um arquivo no input de bandeira da CASA
+async function onArquivoBandeiraCasaSelecionado(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const preview = document.getElementById('preview-nome-bandeira-casa');
+    const previewImg = document.getElementById('preview-img-bandeira-casa');
+    if (preview) preview.innerText = 'Comprimindo...';
+
+    try {
+        const base64 = await comprimirImagem(file);
+
+        // Guarda no campo hidden para ser lido por salvarCasa()
+        document.getElementById('casa-bandeira').value = base64;
+
+        if (preview) preview.innerText = '✓ ' + file.name;
+        if (previewImg) {
+            previewImg.src = base64;
+            previewImg.style.display = 'block';
+        }
+    } catch (error) {
+        mostrarToast('Não foi possível processar a imagem.', 'erro', 'Erro');
+        if (preview) preview.innerText = 'Erro ao processar';
+        console.error(error);
+    }
+}
+
 function mostrarTrocaFoto() {
     alternarTrocaFotoUsuario();
     document.getElementById('menu-conta').style.display = 'flex';
@@ -2598,6 +2625,8 @@ function fecharModalCasa(event) {
 // Abre o formulário de criação/edição de Casa (só o Mestre)
 function abrirFormularioCasa(casaId) {
     const overlay = document.getElementById('formulario-casa-overlay');
+    const previewNome = document.getElementById('preview-nome-bandeira-casa');
+    const previewImg = document.getElementById('preview-img-bandeira-casa');
 
     if (casaId) {
         const casa = _casasCache[casaId];
@@ -2613,6 +2642,13 @@ function abrirFormularioCasa(casaId) {
         document.getElementById('casa-lealdade').value = casa.lealdade || '';
         document.getElementById('casa-tipo').value = casa.tipo || 'menor';
         document.getElementById('casa-bandeira').value = casa.bandeira || '';
+        if (casa.bandeira) {
+            if (previewImg) { previewImg.src = casa.bandeira; previewImg.style.display = 'block'; }
+            if (previewNome) previewNome.innerText = '✓ Bandeira atual';
+        } else {
+            if (previewImg) previewImg.style.display = 'none';
+            if (previewNome) previewNome.innerText = 'Nenhuma imagem selecionada';
+        }
         document.getElementById('casa-historia').value = casa.historia || '';
     } else {
         delete overlay.dataset.editandoId;
@@ -2626,6 +2662,8 @@ function abrirFormularioCasa(casaId) {
         document.getElementById('casa-lealdade').value = '';
         document.getElementById('casa-tipo').value = 'menor';
         document.getElementById('casa-bandeira').value = '';
+        if (previewImg) previewImg.style.display = 'none';
+        if (previewNome) previewNome.innerText = 'Nenhuma imagem selecionada';
         document.getElementById('casa-historia').value = '';
     }
 
@@ -2833,6 +2871,7 @@ window.salvarNomeUsuario = salvarNomeUsuario;
 window.alternarTrocaFotoUsuario = alternarTrocaFotoUsuario;
 window.salvarFotoUsuario = salvarFotoUsuario;
 window.onArquivoFotoFichaSelecionado = onArquivoFotoFichaSelecionado;
+window.onArquivoBandeiraCasaSelecionado = onArquivoBandeiraCasaSelecionado;
 window.alternarMenuConta = alternarMenuConta;
 window.mostrarPagina = mostrarPagina;
 window.toggleFiltro = toggleFiltro;

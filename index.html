@@ -669,8 +669,18 @@
             </div>
 
             <div class="input-group">
-                <label>Bandeira da Casa (link da imagem)</label>
-                <input type="text" id="casa-bandeira" placeholder="https://...">
+                <label>Bandeira da Casa</label>
+                <div class="file-input-ficha">
+                    <label for="input-arquivo-bandeira-casa" class="btn-file-label-ficha">
+                        📷 Escolher imagem
+                    </label>
+                    <input type="file" id="input-arquivo-bandeira-casa" accept="image/*"
+                           style="display:none" onchange="onArquivoBandeiraCasaSelecionado(this)">
+                    <span id="preview-nome-bandeira-casa" class="file-name-preview-mini">Nenhuma imagem selecionada</span>
+                </div>
+                <img id="preview-img-bandeira-casa" src="" alt="" style="display:none; width:100%; max-width:260px; height:100px; object-fit:cover; border-radius:4px; margin-top:8px; border:2px solid var(--ouro-escuro);">
+                <!-- Guarda o base64 resultante da compressão -->
+                <input type="hidden" id="casa-bandeira">
             </div>
 
             <div class="input-group">
