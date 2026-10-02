@@ -993,9 +993,10 @@ if (auth) {
                 document.getElementById('painel-mestre').style.display = 'block';
                 const caixaAdminPhotoplayer = document.getElementById('photoplayers-admin-add');
                 if (caixaAdminPhotoplayer) caixaAdminPhotoplayer.style.display = 'flex';
-                const btnCriarCasa = document.getElementById('btn-criar-casa');
-                if (btnCriarCasa) btnCriarCasa.style.display = 'inline-flex';
             }
+            // Qualquer jogador logado pode fundar uma Casa
+            const btnCriarCasa = document.getElementById('btn-criar-casa');
+            if (btnCriarCasa) btnCriarCasa.style.display = 'inline-flex';
             escutarDadosUsuario(user.uid);
             escutarNPCsDoUsuario(user.uid);
             monitorarNPCsGlobal();
@@ -2546,6 +2547,7 @@ function abrirModalCasa(casaId) {
     const tipoInfo = CASA_TIPO_INFO[casa.tipo] || CASA_TIPO_INFO.menor;
     const { personagens, npcs } = obterMembrosDaCasa(casa.nome);
     const souMestre = usuarioAtual && usuarioAtual.uid === ADMIN_UID;
+    const souDono = usuarioAtual && casa.donoUid === usuarioAtual.uid;
     const nomeEscapado = (casa.nome || '').replace(/'/g, "\\'");
 
     const listaPersonagens = personagens.length > 0
@@ -2569,10 +2571,10 @@ function abrirModalCasa(casaId) {
         }).join('')
         : '<p class="mochila-vazia">Nenhum NPC desta casa ainda.</p>';
 
-    const controlesMestre = souMestre ? `
+    const controlesMestre = (souMestre || souDono) ? `
         <div class="controles-admin" style="margin-top:16px;">
             <button class="btn-admin" onclick="fecharModalCasa(); abrirFormularioCasa('${casaId}')">✏️ Editar Casa</button>
-            <button class="btn-admin btn-vender" onclick="excluirCasa('${casaId}', '${nomeEscapado}')">🗑️ Excluir Casa</button>
+            ${souMestre ? `<button class="btn-admin btn-vender" onclick="excluirCasa('${casaId}', '${nomeEscapado}')">🗑️ Excluir Casa</button>` : ''}
         </div>
     ` : '';
 
@@ -2694,13 +2696,22 @@ async function salvarCasa() {
     const overlay = document.getElementById('formulario-casa-overlay');
     const editandoId = overlay.dataset.editandoId;
 
+    if (editandoId) {
+        const casaAtual = _casasCache[editandoId];
+        const souDono = casaAtual && casaAtual.donoUid === usuarioAtual.uid;
+        const souMestre = usuarioAtual && usuarioAtual.uid === ADMIN_UID;
+        if (!souMestre && !souDono) {
+            return mostrarToast('Só o Mestre ou quem fundou a casa pode editá-la.', 'erro', 'Sem permissão');
+        }
+    }
+
     try {
         if (editandoId) {
             await updateDoc(doc(db, "casas", editandoId), dados);
             mostrarToast(`Casa ${nome} atualizada.`, 'sucesso', 'Casa salva');
         } else {
             const novaRef = doc(collection(db, "casas"));
-            await setDoc(novaRef, dados);
+            await setDoc(novaRef, { ...dados, donoUid: usuarioAtual.uid });
             mostrarToast(`Casa ${nome} foi fundada.`, 'sucesso', 'Casa criada');
         }
         fecharFormularioCasa();
