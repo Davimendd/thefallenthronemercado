@@ -2822,11 +2822,8 @@ section,
     left: 0;
     width: 4px;
     height: 100%;
+    background: var(--cor-lealdade, var(--ouro-escuro));
 }
-
-.card-npc[data-alinhamento="aliado"]::before { background: #4a8f5c; }
-.card-npc[data-alinhamento="neutro"]::before  { background: var(--ouro-escuro); }
-.card-npc[data-alinhamento="inimigo"]::before { background: #7a2a22; }
 
 .card-npc:hover {
     transform: translateY(-3px);
@@ -3331,7 +3328,42 @@ section,
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 20px;
+}
+
+.casas-grupo {
+    margin-top: 32px;
+}
+
+.casas-grupo:first-child {
     margin-top: 20px;
+}
+
+.casas-grupo-titulo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--borda);
+    font-size: 1.15em;
+    letter-spacing: 1px;
+    color: var(--ouro-claro);
+}
+
+.casas-grupo-contador {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 11px;
+    background: rgba(201, 164, 73, 0.12);
+    border: 1px solid var(--ouro-escuro);
+    color: var(--texto-fraco);
+    font-family: 'Cinzel', serif;
+    font-size: 0.6em;
+    letter-spacing: 0.5px;
 }
 
 .card-casa {
@@ -3348,27 +3380,80 @@ section,
     border-color: var(--ouro-escuro);
 }
 
+/* Fundo diferenciado por tipo de Casa — reforça a hierarquia visualmente,
+   não só pelo selo de texto. Real: dourado + roxo régio. Maior: bronze.
+   Menor: pedra/cinza, mais discreta. */
+.card-casa.tipo-real {
+    background:
+        linear-gradient(150deg, rgba(130, 64, 160, 0.3), transparent 60%),
+        linear-gradient(330deg, rgba(201, 164, 73, 0.2), transparent 55%),
+        var(--fundo-card);
+    border-color: #7a4f96;
+}
+
+.card-casa.tipo-real:hover {
+    border-color: #a877c9;
+}
+
+.card-casa.tipo-maior {
+    background:
+        linear-gradient(150deg, rgba(184, 112, 50, 0.24), transparent 65%),
+        var(--fundo-card);
+    border-color: #a8703a;
+}
+
+.card-casa.tipo-maior:hover {
+    border-color: #cf9a5e;
+}
+
+.card-casa.tipo-menor {
+    background:
+        linear-gradient(150deg, rgba(130, 130, 140, 0.16), transparent 65%),
+        var(--fundo-card);
+    border-color: #6e6e78;
+}
+
+.card-casa.tipo-menor:hover {
+    border-color: #90909c;
+}
+
 .card-casa-bandeira {
     position: relative;
-    height: 110px;
+    height: 138px;
     background-size: cover;
     background-position: center;
     background-color: #17130d;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-bottom: 1px solid var(--borda);
+    /* Recorte em formato de estandarte: ponta entalhada no centro da base */
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 60% 100%, 50% 84%, 40% 100%, 0 100%);
+}
+
+/* Vinheta: escurece a base da bandeira pra garantir leitura do nome/lema
+   em cima de qualquer imagem, clara ou escura */
+.card-casa-bandeira::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(5, 4, 3, 0.92) 0%, rgba(5, 4, 3, 0.45) 42%, transparent 72%);
+    pointer-events: none;
 }
 
 .card-casa-sem-bandeira {
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
     font-size: 2.2em;
-    opacity: 0.35;
+    opacity: 0.3;
 }
 
 .card-casa-tipo {
     position: absolute;
     top: 8px;
     left: 8px;
+    z-index: 2;
     background: rgba(10, 9, 8, 0.75);
     backdrop-filter: blur(2px);
     color: var(--ouro-claro);
@@ -3381,33 +3466,148 @@ section,
     border: 1px solid var(--ouro-escuro);
 }
 
-.card-casa-corpo {
-    padding: 14px 16px 16px;
+/* Nome e lema sobrepostos na base da bandeira, acima da vinheta */
+.card-casa-bandeira-legenda {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 32px;
+    z-index: 2;
+    padding: 0 16px;
+    text-align: center;
 }
 
-.card-casa-corpo h3 {
+.card-casa-bandeira-legenda h3 {
     margin: 0;
-    font-size: 1.15em;
-    color: var(--ouro-claro);
+    font-size: 1.12em;
+    color: #fdf6e3;
     letter-spacing: 0.5px;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85);
 }
 
-.card-casa-lema {
-    margin: 6px 0 0;
+/* Lema em formato de citação: aspas decorativas + linha ornamental com
+   losango de cada lado (mesma linguagem visual dos ornamentos do site) */
+.lema-ornamentado {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 5px;
+}
+
+.lema-linha {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 64px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--ouro));
+}
+
+.lema-linha.direita {
+    background: linear-gradient(90deg, var(--ouro), transparent);
+}
+
+.lema-linha::after {
+    content: '';
+    position: absolute;
+    right: -3px;
+    top: 50%;
+    width: 5px;
+    height: 5px;
+    background: var(--ouro);
+    transform: translateY(-50%) rotate(45deg);
+}
+
+.lema-linha.direita::after {
+    right: auto;
+    left: -3px;
+}
+
+.lema-texto {
+    flex: 0 1 auto;
+    margin: 0;
     font-style: italic;
-    font-size: 0.88em;
-    color: var(--texto-fraco);
+    text-align: center;
+    font-size: 0.85em;
+    color: #e4dac0;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+}
+
+.lema-aspas {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: normal;
+    font-size: 1.9em;
+    line-height: 0;
+    vertical-align: -0.28em;
+    color: var(--ouro);
+    opacity: 0.9;
+}
+
+.lema-aspas:first-child { margin-right: 3px; }
+.lema-aspas:last-child { margin-left: 3px; }
+
+.card-casa-corpo {
+    padding: 12px 16px 16px;
 }
 
 .card-casa-rodape {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 10px;
     margin-top: 12px;
     padding-top: 10px;
     border-top: 1px solid var(--borda);
     font-size: 0.76em;
     color: var(--texto-fraco);
+}
+
+.card-casa-lorde {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* Pilha de avatares dos membros da Casa */
+.pilha-avatares {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.pilha-avatares img,
+.pilha-extra {
+    width: 28px;
+    height: 28px;
+    box-sizing: border-box;
+    border-radius: 50%;
+    border: 2px solid var(--fundo-card);
+    box-shadow: 0 0 0 1px rgba(201, 164, 73, 0.4);
+    object-fit: cover;
+    background: var(--fundo-card);
+}
+
+.pilha-avatares > :not(:first-child) {
+    margin-left: -10px;
+}
+
+.pilha-extra {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #3a2f17;
+    color: var(--ouro-claro);
+    font-family: 'Cinzel', serif;
+    font-size: 0.68em;
+    font-weight: 700;
+}
+
+.pilha-vazia {
+    flex-shrink: 0;
+    font-style: italic;
+    opacity: 0.8;
 }
 
 /* Modal de visualização de uma Casa */
@@ -3434,45 +3634,95 @@ section,
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
 }
 
+/* Mesmo fundo diferenciado por tipo, aplicado no modal de detalhes */
+.modal-casa-box.tipo-real {
+    background:
+        linear-gradient(165deg, rgba(130, 64, 160, 0.26), transparent 55%),
+        linear-gradient(345deg, rgba(201, 164, 73, 0.16), transparent 50%),
+        var(--fundo-card);
+    border-color: #8a5fae;
+}
+
+.modal-casa-box.tipo-maior {
+    background:
+        linear-gradient(165deg, rgba(184, 112, 50, 0.2), transparent 60%),
+        var(--fundo-card);
+    border-color: #a8703a;
+}
+
+.modal-casa-box.tipo-menor {
+    background:
+        linear-gradient(165deg, rgba(130, 130, 140, 0.14), transparent 60%),
+        var(--fundo-card);
+    border-color: #6e6e78;
+}
+
 .modal-casa-bandeira {
     position: relative;
-    height: 170px;
+    height: 210px;
     background-size: cover;
     background-position: center;
     background-color: #17130d;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-bottom: 1px solid var(--borda);
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 62% 100%, 50% 85%, 38% 100%, 0 100%);
+}
+
+.modal-casa-bandeira::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(5, 4, 3, 0.92) 0%, rgba(5, 4, 3, 0.4) 40%, transparent 68%);
+    pointer-events: none;
 }
 
 .modal-casa-bandeira .card-casa-sem-bandeira {
+    top: 26px;
     font-size: 3.5em;
 }
 
 .modal-casa-corpo {
-    padding: 26px 28px 28px;
+    padding: 22px 28px 28px;
     position: relative;
 }
 
 .modal-casa-tipo {
-    position: static;
-    display: inline-block;
-    margin-bottom: 10px;
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    z-index: 2;
 }
 
-.modal-casa-corpo h2 {
-    margin: 0 0 6px;
+.modal-casa-bandeira-legenda {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 44px;
+    z-index: 2;
+    padding: 0 26px;
+}
+
+.modal-casa-bandeira-legenda h2 {
+    margin: 0 0 4px;
     font-size: 1.7em;
-    color: var(--ouro-claro);
+    color: #fdf6e3;
     letter-spacing: 1px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
 }
 
-.modal-casa-lema {
-    font-style: italic;
-    color: var(--texto-fraco);
-    font-size: 1.05em;
-    margin: 0 0 20px;
+/* No modal há mais espaço: lema maior, linhas ornamentais mais longas */
+.modal-casa-bandeira-legenda .lema-ornamentado {
+    gap: 14px;
+    margin-top: 8px;
+}
+
+.modal-casa-bandeira-legenda .lema-linha {
+    max-width: 110px;
+}
+
+.modal-casa-bandeira-legenda .lema-texto {
+    font-size: 1.1em;
 }
 
 .modal-casa-info-grid {
@@ -3534,6 +3784,182 @@ section,
     border-radius: 50%;
     object-fit: cover;
     border: 1px solid var(--borda);
+}
+
+.membro-casa-emoji {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95em;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--borda);
+    flex-shrink: 0;
+}
+
+/* Árvore de vassalagem (organograma): a casa aberta no topo e, ligadas por
+   linhas com cotovelo, as casas que respondem a ela (em vários níveis) */
+.arvore-vassalas {
+    --arvore-linha: rgba(201, 164, 73, 0.55);
+    margin-top: 12px;
+}
+
+.arvore-no {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: fit-content;
+    max-width: 100%;
+    height: 34px;
+    box-sizing: border-box;
+    padding: 0 12px 0 4px;
+    border: 1px solid var(--borda);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--texto);
+    font-family: inherit;
+    font-size: 0.9em;
+    text-align: left;
+    text-transform: none;
+    letter-spacing: normal;
+    box-shadow: none;
+    cursor: pointer;
+}
+
+.arvore-no.tipo-real  { border-color: #7a4f96; }
+.arvore-no.tipo-maior { border-color: #a8703a; }
+.arvore-no.tipo-menor { border-color: #6e6e78; }
+
+.arvore-no img,
+.arvore-no .membro-casa-emoji {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.arvore-no-nome {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.arvore-no-tipo {
+    flex-shrink: 0;
+    font-family: 'Cinzel', serif;
+    font-size: 0.62em;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--texto-fraco);
+}
+
+.arvore-no:hover {
+    background: rgba(201, 164, 73, 0.1);
+    color: var(--ouro-claro);
+    box-shadow: none;
+}
+
+.arvore-no.raiz,
+.arvore-no.raiz:hover {
+    cursor: default;
+    background: rgba(201, 164, 73, 0.14);
+    color: var(--ouro-claro);
+    font-weight: 600;
+    box-shadow: 0 0 0 2px rgba(201, 164, 73, 0.22);
+}
+
+.arvore-filhos {
+    list-style: none;
+    margin: 0 0 0 18px;
+    padding: 0;
+}
+
+.arvore-filhos li {
+    position: relative;
+    padding: 5px 0 0 26px;
+}
+
+/* Cotovelo: sai do tronco e chega ao centro do nó (5px + metade dos 34px = 22px) */
+.arvore-filhos li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 24px;
+    height: 21px;
+    border-left: 2px solid var(--arvore-linha);
+    border-bottom: 2px solid var(--arvore-linha);
+    border-bottom-left-radius: 10px;
+}
+
+/* Tronco continua até o próximo irmão */
+.arvore-filhos li:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 20px;
+    bottom: 0;
+    border-left: 2px solid var(--arvore-linha);
+}
+
+.link-suserano {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--ouro-claro);
+    font-family: inherit;
+    font-size: 1.05em;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: normal;
+    box-shadow: none;
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    transition: text-decoration-color 0.2s;
+}
+
+.link-suserano:hover {
+    text-decoration-color: var(--ouro-claro);
+    background: none;
+    box-shadow: none;
+}
+
+.card-casa-suserania {
+    margin: 4px 0 0;
+    font-size: 0.78em;
+    color: var(--texto-fraco);
+}
+
+/* Chip de Casa clicável, usado nos modais de ficha e NPC pra linkar de
+   volta pra página da Casa correspondente (link de volta) */
+.chip-casa-membro {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--borda);
+    border-radius: 20px;
+    padding: 2px 12px;
+    font-family: inherit;
+    font-size: 1em;
+    font-weight: inherit;
+    text-transform: none;
+    letter-spacing: normal;
+    color: inherit;
+    box-shadow: none;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.chip-casa-membro:hover {
+    border-color: var(--ouro-escuro);
+    background: rgba(201, 164, 73, 0.08);
+    box-shadow: none;
 }
 
 /* =========================================
@@ -4188,6 +4614,10 @@ section,
 
 /* ---------- Celulares pequenos ---------- */
 @media (max-width: 480px) {
+    .arvore-no-tipo {
+        display: none;
+    }
+
     .container {
         padding: 10px;
     }

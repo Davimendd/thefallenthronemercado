@@ -2404,6 +2404,62 @@ async function removerPhotoplayerDeNPC(donoUid, npcId) {
 // Cache das casas cadastradas (coleção global "casas"), mantido em tempo real.
 let _casasCache = {};
 
+// Escapa texto digitado pelo usuário antes de inserir em innerHTML
+function escaparHtml(texto) {
+    return String(texto ?? '').replace(/[&<>"']/g, (c) => (
+        { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+    ));
+}
+
+// Lema da Casa em formato de citação: aspas decorativas grandes e uma linha
+// ornamental (com losango) de cada lado. Retorna '' se a casa não tem lema.
+function _htmlLemaCasa(lema) {
+    if (!lema) return '';
+    return `
+        <div class="lema-ornamentado">
+            <span class="lema-linha"></span>
+            <p class="lema-texto"><span class="lema-aspas">“</span>${escaparHtml(lema)}<span class="lema-aspas">”</span></p>
+            <span class="lema-linha direita"></span>
+        </div>
+    `;
+}
+
+// ---- Árvore de vassalagem (organograma) --------------------------------
+// Nó de uma casa na árvore. A raiz (casa aberta no modal) não é clicável.
+function _htmlNoArvoreCasa(id, c, raiz = false) {
+    const tInfo = CASA_TIPO_INFO[c.tipo] || CASA_TIPO_INFO.menor;
+    const miniatura = c.bandeira
+        ? `<img src="${escaparHtml(c.bandeira)}" alt="">`
+        : `<span class="membro-casa-emoji">${escaparHtml(c.emoji || tInfo.emoji)}</span>`;
+    const conteudo = `${miniatura}<span class="arvore-no-nome">${escaparHtml(c.nome || 'Sem nome')}</span><span class="arvore-no-tipo">${tInfo.rotulo}</span>`;
+    const classeTipo = `tipo-${c.tipo || 'menor'}`;
+    return raiz
+        ? `<div class="arvore-no raiz ${classeTipo}">${conteudo}</div>`
+        : `<button class="arvore-no ${classeTipo}" onclick="fecharModalCasa(); abrirModalCasa('${id}')">${conteudo}</button>`;
+}
+
+// Filhos de uma casa, em vários níveis (vassala da vassala). "visitados"
+// protege contra ciclos (A vassala de B e B vassala de A) e há um limite de
+// profundidade por segurança.
+function _htmlFilhosArvore(casaId, visitados, nivel) {
+    visitados.add(casaId);
+    if (nivel >= 6) return '';
+    const filhos = Object.entries(_casasCache)
+        .filter(([id, c]) => c.suseranoId === casaId && !visitados.has(id))
+        .sort((a, b) => (a[1].nome || '').localeCompare(b[1].nome || '', 'pt-BR', { sensitivity: 'base' }));
+    if (filhos.length === 0) return '';
+    return `<ul class="arvore-filhos">${filhos.map(([id, c]) =>
+        `<li>${_htmlNoArvoreCasa(id, c)}${_htmlFilhosArvore(id, visitados, nivel + 1)}</li>`
+    ).join('')}</ul>`;
+}
+
+function _htmlArvoreVassalas(casaId) {
+    const casa = _casasCache[casaId];
+    const filhos = casa ? _htmlFilhosArvore(casaId, new Set(), 0) : '';
+    if (!filhos) return '<p class="mochila-vazia">Nenhuma casa vassala ainda.</p>';
+    return `<div class="arvore-vassalas">${_htmlNoArvoreCasa(casaId, casa, true)}${filhos}</div>`;
+}
+
 const CASA_TIPO_INFO = {
     real:  { rotulo: 'Casa Real',  emoji: '👑' },
     maior: { rotulo: 'Casa Maior', emoji: '⚜️' },
@@ -2501,38 +2557,129 @@ function obterMembrosDaCasa(nomeCasa) {
     return { personagens, npcs };
 }
 
+// Encontra a Casa cadastrada cujo nome bate com o texto informado (campo
+// "casa" da ficha ou "alinhamento" do NPC). Usado para montar o link de
+// volta da ficha/NPC até a página da Casa.
+function encontrarCasaPorNome(nome) {
+    const alvo = normalizarNomeCasa(nome);
+    if (!alvo) return null;
+    const encontrada = Object.entries(_casasCache).find(([, casa]) => normalizarNomeCasa(casa.nome) === alvo);
+    return encontrada || null;
+}
+
+// Monta o chip de Casa clicável (ou texto simples, se a casa não estiver
+// cadastrada no sistema de Casas ainda) para usar nos modais de ficha/NPC.
+function _chipCasaDoMembro(nomeCasa, fecharFn) {
+    if (!nomeCasa) return '';
+    const encontrada = encontrarCasaPorNome(nomeCasa);
+    if (!encontrada) return nomeCasa;
+    const [casaId, casa] = encontrada;
+    return `<button class="chip-casa-membro" onclick="event.stopPropagation(); ${fecharFn}(); abrirModalCasa('${casaId}')">
+        🏰 ${casa.emoji ? casa.emoji + ' ' : ''}${casa.nome}
+    </button>`;
+}
+
+// Mesma ideia, mas para a "Lealdade" do NPC: usa a cor/emoji já definidos em
+// lealdadeCores e, quando a Casa correspondente já está cadastrada, vira um
+// chip clicável que leva até ela.
+function _linhaLealdadeNPC(npc, fecharFn) {
+    const lealdade = lealdadeCores[npc.alinhamento] || lealdadeCores["Sem Lealdade"];
+    const encontrada = encontrarCasaPorNome(npc.alinhamento);
+    if (encontrada) {
+        const [casaId, casa] = encontrada;
+        return `<button class="chip-casa-membro" style="color:${lealdade.cor}" onclick="event.stopPropagation(); ${fecharFn}(); abrirModalCasa('${casaId}')">
+            ${lealdade.emoji} ${casa.nome}
+        </button>`;
+    }
+    return `<span style="color:${lealdade.cor}">${lealdade.emoji} ${npc.alinhamento || 'Sem Lealdade'}</span>`;
+}
+
 // Constrói a grade de cards de Casas, ordenada alfabeticamente
+// Pilha de avatares sobrepostos (estilo Discord/Slack) com os primeiros
+// membros da Casa (personagens primeiro, depois NPCs) e um "+N" com o resto.
+function _htmlPilhaMembros(personagens, npcs) {
+    const todos = [
+        ...personagens.map(({ ficha }) => ({ nome: ficha.nome, foto: ficha.foto })),
+        ...npcs.map(({ npc }) => ({ nome: npc.nome, foto: npc.foto }))
+    ];
+    const total = todos.length;
+    if (total === 0) return '<span class="pilha-vazia">Sem membros</span>';
+
+    const MAX_VISIVEIS = 4;
+    const visiveis = todos.slice(0, MAX_VISIVEIS);
+    const resto = total - visiveis.length;
+    const avatares = visiveis.map(m =>
+        `<img src="${escaparHtml(m.foto || AVATAR_PADRAO)}" alt="${escaparHtml(m.nome || '')}" title="${escaparHtml(m.nome || '')}">`
+    ).join('');
+    const extra = resto > 0 ? `<span class="pilha-extra">+${resto}</span>` : '';
+    const rotulo = `${total} membro${total === 1 ? '' : 's'}`;
+    return `<div class="pilha-avatares" title="${rotulo}" aria-label="${rotulo}">${avatares}${extra}</div>`;
+}
+
+// Monta o HTML de um único card de Casa (usado dentro de cada grupo por tipo)
+function _templateCardCasa(id, casa) {
+    const tipoInfo = CASA_TIPO_INFO[casa.tipo] || CASA_TIPO_INFO.menor;
+    const { personagens, npcs } = obterMembrosDaCasa(casa.nome);
+    const suserano = casa.suseranoId ? _casasCache[casa.suseranoId] : null;
+    const totalVassalas = Object.values(_casasCache).filter(c => c.suseranoId === id).length;
+
+    return `
+        <div class="card-casa tipo-${casa.tipo || 'menor'}" onclick="abrirModalCasa('${id}')">
+            <div class="card-casa-bandeira" style="background-image:url('${casa.bandeira || ''}')">
+                ${!casa.bandeira ? '<span class="card-casa-sem-bandeira">🏰</span>' : ''}
+                <span class="card-casa-tipo">${tipoInfo.emoji} ${tipoInfo.rotulo}</span>
+                <div class="card-casa-bandeira-legenda">
+                    <h3>${casa.emoji ? casa.emoji + ' ' : ''}${casa.nome || 'Sem nome'}</h3>
+                    ${_htmlLemaCasa(casa.lema)}
+                </div>
+            </div>
+            <div class="card-casa-corpo">
+                ${suserano ? `<p class="card-casa-suserania">🔗 Vassala de ${suserano.emoji ? suserano.emoji + ' ' : ''}${suserano.nome}</p>` : ''}
+                ${totalVassalas > 0 ? `<p class="card-casa-suserania">🏳️ ${totalVassalas} casa${totalVassalas === 1 ? '' : 's'} vassala${totalVassalas === 1 ? '' : 's'}</p>` : ''}
+                <div class="card-casa-rodape">
+                    <span class="card-casa-lorde">👤 ${casa.lorde || 'Sem lorde definido'}</span>
+                    ${_htmlPilhaMembros(personagens, npcs)}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Ordem e rótulo de cada grupo na página de Casas
+const CASA_GRUPOS = [
+    { tipo: 'real', titulo: '👑 Casas Reais' },
+    { tipo: 'maior', titulo: '⚜️ Casas Maiores' },
+    { tipo: 'menor', titulo: '🏰 Casas Menores' }
+];
+
+// Constrói a página de Casas agrupada por tipo (Real / Maior / Menor),
+// cada grupo ordenado alfabeticamente — deixa a hierarquia do reino visível.
 function renderizarListaCasas() {
     const container = document.getElementById('lista-casas');
     if (!container) return;
 
-    const casas = Object.entries(_casasCache).sort((a, b) =>
-        (a[1].nome || '').localeCompare(b[1].nome || '', 'pt-BR', { sensitivity: 'base' })
-    );
+    const todas = Object.entries(_casasCache);
 
-    if (casas.length === 0) {
+    if (todas.length === 0) {
         container.innerHTML = '<p class="mochila-vazia">Nenhuma casa cadastrada ainda no reino.</p>';
         return;
     }
 
-    container.innerHTML = casas.map(([id, casa]) => {
-        const tipoInfo = CASA_TIPO_INFO[casa.tipo] || CASA_TIPO_INFO.menor;
-        const { personagens, npcs } = obterMembrosDaCasa(casa.nome);
-        const totalMembros = personagens.length + npcs.length;
+    container.innerHTML = CASA_GRUPOS.map(grupo => {
+        const casasDoGrupo = todas
+            .filter(([, casa]) => (casa.tipo || 'menor') === grupo.tipo)
+            .sort((a, b) => (a[1].nome || '').localeCompare(b[1].nome || '', 'pt-BR', { sensitivity: 'base' }));
+
+        if (casasDoGrupo.length === 0) return '';
 
         return `
-            <div class="card-casa" onclick="abrirModalCasa('${id}')">
-                <div class="card-casa-bandeira" style="background-image:url('${casa.bandeira || ''}')">
-                    ${!casa.bandeira ? '<span class="card-casa-sem-bandeira">🏰</span>' : ''}
-                    <span class="card-casa-tipo">${tipoInfo.emoji} ${tipoInfo.rotulo}</span>
-                </div>
-                <div class="card-casa-corpo">
-                    <h3>${casa.emoji ? casa.emoji + ' ' : ''}${casa.nome || 'Sem nome'}</h3>
-                    ${casa.lema ? `<p class="card-casa-lema">"${casa.lema}"</p>` : ''}
-                    <div class="card-casa-rodape">
-                        <span>👤 ${casa.lorde || 'Sem lorde definido'}</span>
-                        <span>${totalMembros} membro${totalMembros === 1 ? '' : 's'}</span>
-                    </div>
+            <div class="casas-grupo">
+                <h3 class="casas-grupo-titulo">
+                    ${grupo.titulo}
+                    <span class="casas-grupo-contador">${casasDoGrupo.length}</span>
+                </h3>
+                <div class="grid-casas">
+                    ${casasDoGrupo.map(([id, casa]) => _templateCardCasa(id, casa)).join('')}
                 </div>
             </div>
         `;
@@ -2549,6 +2696,10 @@ function abrirModalCasa(casaId) {
     const souMestre = usuarioAtual && usuarioAtual.uid === ADMIN_UID;
     const souDono = usuarioAtual && casa.donoUid === usuarioAtual.uid;
     const nomeEscapado = (casa.nome || '').replace(/'/g, "\\'");
+
+    // Suserania: a casa à qual esta responde, e as casas que respondem a ela
+    const suserano = casa.suseranoId ? _casasCache[casa.suseranoId] : null;
+    const arvoreVassalas = _htmlArvoreVassalas(casaId);
 
     const listaPersonagens = personagens.length > 0
         ? personagens.map(({ chave, ficha }) => `
@@ -2578,21 +2729,31 @@ function abrirModalCasa(casaId) {
         </div>
     ` : '';
 
-    document.getElementById('modal-casa-conteudo').innerHTML = `
+    const elModalCasa = document.getElementById('modal-casa-conteudo');
+    elModalCasa.className = `modal-casa-box tipo-${casa.tipo || 'menor'}`;
+    elModalCasa.innerHTML = `
         <button class="modal-fechar" onclick="fecharModalCasa()">✕</button>
         <div class="modal-casa-bandeira" style="background-image:url('${casa.bandeira || ''}')">
             ${!casa.bandeira ? '<span class="card-casa-sem-bandeira">🏰</span>' : ''}
+            <span class="card-casa-tipo modal-casa-tipo">${tipoInfo.emoji} ${tipoInfo.rotulo}</span>
+            <div class="card-casa-bandeira-legenda modal-casa-bandeira-legenda">
+                <h2>${casa.emoji ? casa.emoji + ' ' : ''}${casa.nome || 'Sem nome'}</h2>
+                ${_htmlLemaCasa(casa.lema)}
+            </div>
         </div>
         <div class="modal-casa-corpo">
-            <span class="card-casa-tipo modal-casa-tipo">${tipoInfo.emoji} ${tipoInfo.rotulo}</span>
-            <h2>${casa.emoji ? casa.emoji + ' ' : ''}${casa.nome || 'Sem nome'}</h2>
-            ${casa.lema ? `<p class="modal-casa-lema">"${casa.lema}"</p>` : ''}
-
             <div class="modal-casa-info-grid">
                 <div><span>Lorde / Lady</span><strong>${casa.lorde || '—'}</strong></div>
                 <div><span>Sede</span><strong>${casa.sede || '—'}</strong></div>
                 <div><span>Território</span><strong>${casa.territorio || '—'}</strong></div>
                 <div><span>Lealdade</span><strong>${casa.lealdade || '—'}</strong></div>
+                ${suserano ? `
+                    <div><span>Suserano</span><strong>
+                        <button class="link-suserano" onclick="fecharModalCasa(); abrirModalCasa('${casa.suseranoId}')">
+                            ${suserano.emoji ? suserano.emoji + ' ' : ''}${suserano.nome}
+                        </button>
+                    </strong></div>
+                ` : ''}
             </div>
 
             ${casa.historia ? `
@@ -2601,6 +2762,11 @@ function abrirModalCasa(casaId) {
                     <p style="white-space:pre-line;">${casa.historia}</p>
                 </div>
             ` : ''}
+
+            <div class="modal-section">
+                <p class="modal-section-title">Casas Vassalas</p>
+                ${arvoreVassalas}
+            </div>
 
             <div class="modal-section">
                 <p class="modal-section-title">Personagens da Casa</p>
@@ -2625,10 +2791,42 @@ function fecharModalCasa(event) {
 }
 
 // Abre o formulário de criação/edição de Casa (só o Mestre)
+// Preenche o seletor de Suserano com todas as casas cadastradas, exceto a
+// própria casa sendo editada (uma casa não pode ser suserana de si mesma).
+function popularSelectSuserano(excluirId) {
+    const select = document.getElementById('casa-suserano');
+    if (!select) return;
+
+    const valorAtual = select.value;
+    select.innerHTML = '<option value="">Nenhum (casa independente)</option>';
+
+    Object.entries(_casasCache)
+        .filter(([id]) => id !== excluirId)
+        .sort((a, b) => {
+            const ordemTipo = { real: 0, maior: 1, menor: 2 };
+            const difTipo = (ordemTipo[a[1].tipo] ?? 3) - (ordemTipo[b[1].tipo] ?? 3);
+            if (difTipo !== 0) return difTipo;
+            return (a[1].nome || '').localeCompare(b[1].nome || '', 'pt-BR', { sensitivity: 'base' });
+        })
+        .forEach(([id, casa]) => {
+            const tipoInfo = CASA_TIPO_INFO[casa.tipo] || CASA_TIPO_INFO.menor;
+            const opt = document.createElement('option');
+            opt.value = id;
+            opt.textContent = `${casa.emoji || tipoInfo.emoji} ${casa.nome} (${tipoInfo.rotulo})`;
+            select.appendChild(opt);
+        });
+
+    if (valorAtual && Array.from(select.options).some(o => o.value === valorAtual)) {
+        select.value = valorAtual;
+    }
+}
+
 function abrirFormularioCasa(casaId) {
     const overlay = document.getElementById('formulario-casa-overlay');
     const previewNome = document.getElementById('preview-nome-bandeira-casa');
     const previewImg = document.getElementById('preview-img-bandeira-casa');
+
+    popularSelectSuserano(casaId);
 
     if (casaId) {
         const casa = _casasCache[casaId];
@@ -2643,6 +2841,7 @@ function abrirFormularioCasa(casaId) {
         document.getElementById('casa-territorio').value = casa.territorio || '';
         document.getElementById('casa-lealdade').value = casa.lealdade || '';
         document.getElementById('casa-tipo').value = casa.tipo || 'menor';
+        document.getElementById('casa-suserano').value = casa.suseranoId || '';
         document.getElementById('casa-bandeira').value = casa.bandeira || '';
         if (casa.bandeira) {
             if (previewImg) { previewImg.src = casa.bandeira; previewImg.style.display = 'block'; }
@@ -2663,6 +2862,7 @@ function abrirFormularioCasa(casaId) {
         document.getElementById('casa-territorio').value = '';
         document.getElementById('casa-lealdade').value = '';
         document.getElementById('casa-tipo').value = 'menor';
+        document.getElementById('casa-suserano').value = '';
         document.getElementById('casa-bandeira').value = '';
         if (previewImg) previewImg.style.display = 'none';
         if (previewNome) previewNome.innerText = 'Nenhuma imagem selecionada';
@@ -2689,6 +2889,7 @@ async function salvarCasa() {
         territorio: document.getElementById('casa-territorio').value.trim(),
         lealdade: document.getElementById('casa-lealdade').value.trim(),
         tipo: document.getElementById('casa-tipo').value,
+        suseranoId: document.getElementById('casa-suserano').value,
         bandeira: document.getElementById('casa-bandeira').value.trim(),
         historia: document.getElementById('casa-historia').value.trim()
     };
@@ -2774,7 +2975,7 @@ function abrirModalFicha(fichaDataId) {
                 <img class="modal-avatar" src="${ficha.foto || AVATAR_PADRAO}" alt="${ficha.nome}">
                 <div class="modal-ficha-titulo">
                     <h2>${ficha.nome || 'Sem Nome'}</h2>
-                    <p>${ficha.classe || ''} · ${ficha.casa || ''}</p>
+                    <p>${ficha.classe || ''}${ficha.classe && ficha.casa ? ' · ' : ''}${_chipCasaDoMembro(ficha.casa, 'fecharModalFicha')}</p>
                     <p class="modal-sub">${ficha.origem || ''} · ${ficha.idade ? ficha.idade + ' anos' : ''} ${ficha.genero ? '· ' + ficha.genero : ''} ${ficha.altura ? '· ' + ficha.altura : ''}</p>
                 </div>
             </div>
@@ -3291,28 +3492,26 @@ function renderizarListaNPCs() {
         return;
     }
 
-    const corAlinhamento = { aliado: '#4a8f5c', neutro: '#c9a449', inimigo: '#a3372b' };
-    const emojiAlinhamento = { aliado: '🟢', neutro: '🟡', inimigo: '🔴' };
-
     container.innerHTML = '';
     npcsDoUsuario.forEach(npc => {
         const tipo = tiposNPC[npc.tipo] || {};
         const vidaAtual = npc.vidaAtual ?? npc.vidaMaxima;
         const pct = npc.vidaMaxima > 0 ? Math.round((vidaAtual / npc.vidaMaxima) * 100) : 0;
+        const lealdade = lealdadeCores[npc.alinhamento] || lealdadeCores["Sem Lealdade"];
 
         const itensHTML = (npc.inventario || []).length > 0
             ? npc.inventario.map(i => `<span class="item-tag ${i.raridade}">${i.nome}</span>`).join('')
             : '<span style="color:var(--texto-fraco);font-size:0.8em;font-style:italic;">Kit vazio</span>';
 
         container.innerHTML += `
-            <div class="card-npc" data-alinhamento="${npc.alinhamento || 'neutro'}">
+            <div class="card-npc" style="--cor-lealdade:${lealdade.cor}">
                 <div class="card-npc-header">
                     <img class="avatar-npc" src="${npc.foto || AVATAR_PADRAO}" alt="${npc.nome}">
                     <div class="card-npc-info">
                         <strong>${npc.nome}</strong>
                         <span class="card-npc-tipo">${tipo.emoji || ''} ${npc.tipo || ''}</span>
-                        <span class="card-npc-alinhamento" style="color:${corAlinhamento[npc.alinhamento] || '#c9a449'}">
-                            ${emojiAlinhamento[npc.alinhamento] || '🟡'} ${npc.alinhamento ? npc.alinhamento.charAt(0).toUpperCase() + npc.alinhamento.slice(1) : 'Neutro'}
+                        <span class="card-npc-alinhamento" style="color:${lealdade.cor}">
+                            ${lealdade.emoji} ${npc.alinhamento || 'Sem Lealdade'}
                         </span>
                     </div>
                 </div>
@@ -3360,8 +3559,7 @@ function abrirModalNPC(npcId) {
     const tipo = tiposNPC[npc.tipo] || {};
     const vidaAtual = npc.vidaAtual ?? npc.vidaMaxima;
     const pct = npc.vidaMaxima > 0 ? Math.round((vidaAtual / npc.vidaMaxima) * 100) : 0;
-    const corAlinhamento = { aliado: '#4a8f5c', neutro: '#c9a449', inimigo: '#a3372b' };
-    const emojiAlinhamento = { aliado: '🟢', neutro: '🟡', inimigo: '🔴' };
+    const lealdade = lealdadeCores[npc.alinhamento] || lealdadeCores["Sem Lealdade"];
 
     const itensHTML = (npc.inventario || []).map(item => {
         const mecanica = item.mecanica || {};
@@ -3395,9 +3593,7 @@ function abrirModalNPC(npcId) {
                 <div class="modal-ficha-titulo">
                     <h2>${npc.nome}</h2>
                     <p>${tipo.emoji || ''} ${npc.tipo || ''}</p>
-                    <p style="color:${corAlinhamento[npc.alinhamento] || '#c9a449'}">
-                        ${emojiAlinhamento[npc.alinhamento] || '🟡'} ${npc.alinhamento ? npc.alinhamento.charAt(0).toUpperCase() + npc.alinhamento.slice(1) : 'Neutro'}
-                    </p>
+                    <p>${_linhaLealdadeNPC(npc, 'fecharModalFicha')}</p>
                     <p class="modal-sub">${tipo.descricao || ''}</p>
                 </div>
             </div>
@@ -3555,7 +3751,7 @@ function abrirModalNPCGlobal(donoUid, npcId) {
                     <div class="modal-ficha-titulo">
                         <h2>${npc.nome||'Sem Nome'}</h2>
                         <p>${tipo.emoji||''} ${npc.tipo||''}</p>
-                        <p style="color:${lealdade.cor}">${lealdade.emoji} ${npc.alinhamento||'Sem Lealdade'}</p>
+                        <p>${_linhaLealdadeNPC(npc, 'fecharModalFicha')}</p>
                         <p class="modal-sub">${tipo.descricao||''}</p>
                     </div>
                 </div>

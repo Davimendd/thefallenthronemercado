@@ -601,7 +601,7 @@
                     <button class="btn-criar-ficha" id="btn-criar-casa" style="display:none;" onclick="abrirFormularioCasa()">+ Criar Casa</button>
                 </div>
 
-                <div id="lista-casas" class="grid-casas">
+                <div id="lista-casas">
                     <!-- Preenchido dinamicamente pelo JS -->
                 </div>
             </section>
@@ -666,6 +666,14 @@
                     <option value="maior">⚜️ Casa Maior</option>
                     <option value="menor">🏰 Casa Menor (Vassala)</option>
                 </select>
+            </div>
+
+            <div class="input-group">
+                <label>Suserano (Casa à qual esta é vassala)</label>
+                <select id="casa-suserano">
+                    <option value="">Nenhum (casa independente)</option>
+                </select>
+                <span class="dica-campo">Se esta casa responde a uma Casa Maior ou Real, selecione aqui. Ela vai aparecer automaticamente como "vassala" no modal da casa suserana.</span>
             </div>
 
             <div class="input-group">
