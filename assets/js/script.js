@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "firebase/auth";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, collectionGroup, getDocs } from "firebase/firestore";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, collectionGroup, getDocs, query, where } from "firebase/firestore";
 
 // Abaixo daqui, verifique se NÃO existe nenhuma linha como:
 // const getAuth = ... ou outro import { getAuth } ...
@@ -135,7 +135,7 @@ function atualizarBadgeFiltrosAtivos() {
 }
 
 function mostrarPagina(nomePagina) {
-    const paginas = ['vitrine', 'fichas', 'mochila', 'mural', 'npcs', 'photoplayers', 'guia', 'casas'];
+    const paginas = ['vitrine', 'fichas', 'mochila', 'mural', 'npcs', 'photoplayers', 'guia', 'casas', 'biblioteca'];
 
     paginas.forEach(p => {
         document.getElementById('pagina-' + p).style.display = (p === nomePagina) ? 'block' : 'none';
@@ -152,6 +152,9 @@ function mostrarPagina(nomePagina) {
     if (nomePagina === 'casas') {
         renderizarListaCasas();
     }
+    if (nomePagina === 'biblioteca') {
+        renderizarBiblioteca();
+    }
 
     // Mostra/oculta o painel de busca e os filtros corretos para cada aba
     const painelBusca = document.getElementById('painel-busca');
@@ -160,7 +163,7 @@ function mostrarPagina(nomePagina) {
     const filtrosMural = document.getElementById('filtros-mural');
 
     // Oculta o painel de busca nas abas que não precisam de busca
-    painelBusca.style.display = (nomePagina === 'fichas' || nomePagina === 'npcs' || nomePagina === 'photoplayers' || nomePagina === 'guia' || nomePagina === 'casas') ? 'none' : 'block';
+    painelBusca.style.display = (nomePagina === 'fichas' || nomePagina === 'npcs' || nomePagina === 'photoplayers' || nomePagina === 'guia' || nomePagina === 'casas' || nomePagina === 'biblioteca') ? 'none' : 'block';
 
     if (filtrosVitrine) filtrosVitrine.style.display = (nomePagina === 'vitrine') ? 'flex' : 'none';
     if (filtrosMochila) filtrosMochila.style.display = (nomePagina === 'mochila') ? 'flex' : 'none';
@@ -997,6 +1000,9 @@ if (auth) {
             // Qualquer jogador logado pode fundar uma Casa
             const btnCriarCasa = document.getElementById('btn-criar-casa');
             if (btnCriarCasa) btnCriarCasa.style.display = 'inline-flex';
+            const btnEscreverLivro = document.getElementById('btn-escrever-livro');
+            if (btnEscreverLivro) btnEscreverLivro.style.display = 'inline-flex';
+            iniciarMonitoramentoLivros(user);
             escutarDadosUsuario(user.uid);
             escutarNPCsDoUsuario(user.uid);
             monitorarNPCsGlobal();
@@ -1004,6 +1010,7 @@ if (auth) {
             esconderTelaDeLogin();
         } else {
             usuarioAtual = null;
+            pararMonitoramentoLivros();
             mostrarTelaDeLogin();
         }
     });
@@ -2937,6 +2944,527 @@ async function excluirCasa(casaId, nome) {
     }
 }
 
+// =========================================
+// BIBLIOTECA DO REINO
+// =========================================
+// Coleção global "livros". Todo jogador escreve; o livro nasce "pendente" e só
+// vira "publicado" quando o Mestre aprova. Livros pendentes só são lidos pelo
+// autor e pelo Mestre (isso é garantido nas regras do Firestore).
+const LIVRO_CATEGORIAS = {
+    historia:    { rotulo: 'História',               emoji: '📜', cor: '#8a5a2a', escura: '#33200d' },
+    eventos:     { rotulo: 'Eventos do RPG',         emoji: '⚔️', cor: '#8a2f2a', escura: '#2f0f0d' },
+    criaturas:   { rotulo: 'Criaturas',              emoji: '🐉', cor: '#2f6a4a', escura: '#0f2a1c' },
+    crencas:     { rotulo: 'Crenças e Religiões',    emoji: '🕯️', cor: '#6a4a8a', escura: '#241633' },
+    geografia:   { rotulo: 'Geografia',              emoji: '🗺️', cor: '#2f5f8a', escura: '#0f2236' },
+    personagens: { rotulo: 'Personagens Históricos', emoji: '👑', cor: '#8a7a2a', escura: '#322c0d' },
+    outros:      { rotulo: 'Outros',                 emoji: '📚', cor: '#5a5a62', escura: '#1c1c20' }
+};
+const LIVRO_LIMITE_TEXTO = 30000;
+
+let _livrosCache = {};      // todos os livros que este usuário pode ver
+let _livrosFontes = {};     // um mapa por listener, mesclados em _livrosCache
+let _livrosUnsubs = [];
+let _bibliotecaFiltro = { texto: '', categoria: 'todas', meus: false };
+let _livroEditandoId = null;
+
+function pararMonitoramentoLivros() {
+    _livrosUnsubs.forEach(cancelar => { try { cancelar(); } catch (e) { /* ignora */ } });
+    _livrosUnsubs = [];
+    _livrosFontes = {};
+    _livrosCache = {};
+}
+
+function _reconstruirCacheLivros() {
+    const mesclado = {};
+    Object.values(_livrosFontes).forEach(mapa => Object.assign(mesclado, mapa));
+    _livrosCache = mesclado;
+    if (_paginaAtivaBusca === 'biblioteca') renderizarBiblioteca();
+}
+
+// O Mestre escuta a coleção inteira. Os demais escutam só o que as regras
+// permitem ler: livros publicados + os próprios livros (inclusive pendentes).
+function iniciarMonitoramentoLivros(user) {
+    pararMonitoramentoLivros();
+    const registrar = (chave, consulta) => {
+        const cancelar = onSnapshot(consulta, (snap) => {
+            const mapa = {};
+            snap.forEach(d => { mapa[d.id] = d.data(); });
+            _livrosFontes[chave] = mapa;
+            _reconstruirCacheLivros();
+        }, (erro) => {
+            console.warn('Biblioteca indisponível:', erro.message);
+        });
+        _livrosUnsubs.push(cancelar);
+    };
+
+    const colecao = collection(db, 'livros');
+    if (user.uid === ADMIN_UID) {
+        registrar('todos', colecao);
+    } else {
+        registrar('publicados', query(colecao, where('status', '==', 'publicado')));
+        registrar('meus', query(colecao, where('autorUid', '==', user.uid)));
+    }
+}
+
+function _semAcentos(texto) {
+    return String(texto ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
+// Só aceita imagens em data URL ou http(s) — nunca outros esquemas
+function _urlImagemSegura(url) {
+    return (typeof url === 'string' && /^(data:image\/(png|jpe?g|webp|gif);base64,|https?:\/\/)/i.test(url)) ? url : '';
+}
+
+function _livroCombinaBusca(l, termo) {
+    const cat = LIVRO_CATEGORIAS[l.categoria] || LIVRO_CATEGORIAS.outros;
+    const texto = [l.titulo, l.resumo, (l.tags || []).join(' '), l.autorNome, l.epoca, cat.rotulo, l.conteudo]
+        .map(_semAcentos).join(' ');
+    return texto.includes(termo);
+}
+
+// Converte o texto simples do livro em HTML seguro. Tudo é escapado primeiro;
+// só depois entram as poucas marcações permitidas:
+//   # Capítulo   ## Subtítulo   > citação   - item   ---   **negrito**   *itálico*
+function renderizarTextoLivro(texto) {
+    const linhas = escaparHtml(texto || '').replace(/\r\n?/g, '\n').split('\n');
+    const fmt = (t) => t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>');
+    let html = '';
+    let paragrafo = [], lista = [], citacao = [];
+
+    const fecharBlocos = () => {
+        if (paragrafo.length) { html += `<p>${paragrafo.map(fmt).join('<br>')}</p>`; paragrafo = []; }
+        if (lista.length) { html += `<ul>${lista.map(i => `<li>${fmt(i)}</li>`).join('')}</ul>`; lista = []; }
+        if (citacao.length) { html += `<blockquote>${citacao.map(fmt).join('<br>')}</blockquote>`; citacao = []; }
+    };
+
+    for (const linha of linhas) {
+        const t = linha.trim();
+        let m;
+        if (!t) { fecharBlocos(); continue; }
+        if (/^---+$/.test(t)) { fecharBlocos(); html += '<div class="livro-divisor"><span></span></div>'; continue; }
+        if ((m = t.match(/^##\s+(.+)$/))) { fecharBlocos(); html += `<h3>${fmt(m[1])}</h3>`; continue; }
+        if ((m = t.match(/^#\s+(.+)$/))) { fecharBlocos(); html += `<h2>${fmt(m[1])}</h2>`; continue; }
+        if ((m = t.match(/^&gt;\s?(.*)$/))) {
+            if (paragrafo.length || lista.length) fecharBlocos();
+            citacao.push(m[1]); continue;
+        }
+        if ((m = t.match(/^[-•]\s+(.+)$/))) {
+            if (paragrafo.length || citacao.length) fecharBlocos();
+            lista.push(m[1]); continue;
+        }
+        if (lista.length || citacao.length) fecharBlocos();
+        paragrafo.push(t);
+    }
+    fecharBlocos();
+    return html;
+}
+
+// Capa de um livro: imagem enviada pelo autor ou uma capa gerada (couro na cor
+// da categoria, moldura, emoji e título).
+function _htmlCapaLivro(id, l) {
+    const cat = LIVRO_CATEGORIAS[l.categoria] || LIVRO_CATEGORIAS.outros;
+    const imagem = _urlImagemSegura(l.capa);
+    const pendente = l.status === 'pendente';
+    return `
+        <button class="livro-capa ${imagem ? 'com-imagem' : ''} ${pendente ? 'pendente' : ''}"
+                style="--cor-cat:${cat.cor}; --cor-cat-escura:${cat.escura};"
+                onclick="abrirLivro('${id}')" title="${escaparHtml(l.titulo || '')}">
+            ${imagem ? `<img class="livro-capa-img" src="${escaparHtml(imagem)}" alt="">` : ''}
+            <span class="livro-lombada"></span>
+            <span class="livro-capa-miolo">
+                <span class="livro-capa-emoji">${cat.emoji}</span>
+                <span class="livro-capa-titulo">${escaparHtml(l.titulo || 'Sem título')}</span>
+                <span class="livro-capa-autor">por ${escaparHtml(l.autorNome || 'Anônimo')}</span>
+            </span>
+            ${l.canone ? '<span class="livro-selo-canone">✦ Cânone</span>' : ''}
+            ${pendente ? '<span class="livro-selo-pendente">⏳ Pendente</span>' : ''}
+        </button>
+    `;
+}
+
+function renderizarChipsBiblioteca() {
+    const el = document.getElementById('biblioteca-chips');
+    if (!el) return;
+    const f = _bibliotecaFiltro;
+    const chip = (ativo, acao, texto) =>
+        `<button class="filtro-tag ${ativo ? 'ativo' : ''}" onclick="${acao}">${texto}</button>`;
+    el.innerHTML =
+        chip(f.categoria === 'todas', "definirCategoriaBiblioteca('todas')", 'Todas') +
+        Object.entries(LIVRO_CATEGORIAS)
+            .map(([k, c]) => chip(f.categoria === k, `definirCategoriaBiblioteca('${k}')`, `${c.emoji} ${c.rotulo}`))
+            .join('') +
+        chip(f.meus, 'alternarMeusLivros()', '📖 Meus livros');
+}
+
+function renderizarBiblioteca() {
+    const el = document.getElementById('lista-biblioteca');
+    if (!el) return;
+    renderizarChipsBiblioteca();
+
+    const f = _bibliotecaFiltro;
+    const uid = usuarioAtual ? usuarioAtual.uid : null;
+    const souMestre = uid === ADMIN_UID;
+    const termo = _semAcentos(f.texto.trim());
+    const porTitulo = (a, b) => (a[1].titulo || '').localeCompare(b[1].titulo || '', 'pt-BR', { sensitivity: 'base' });
+
+    const todos = Object.entries(_livrosCache);
+    if (todos.length === 0) {
+        el.innerHTML = '<p class="mochila-vazia">A biblioteca ainda está vazia. Seja o primeiro a escrever um livro!</p>';
+        return;
+    }
+
+    let livros = todos;
+    if (f.meus) livros = livros.filter(([, l]) => l.autorUid === uid);
+    if (f.categoria !== 'todas') livros = livros.filter(([, l]) => l.categoria === f.categoria);
+    if (termo) livros = livros.filter(([, l]) => _livroCombinaBusca(l, termo));
+    livros.sort(porTitulo);
+
+    const filtrando = Boolean(termo) || f.categoria !== 'todas' || f.meus;
+    if (filtrando) {
+        el.innerHTML = livros.length === 0
+            ? '<p class="mochila-vazia">Nenhum livro encontrado com esses filtros.</p>'
+            : `<p class="biblioteca-contagem">${livros.length} livro${livros.length === 1 ? '' : 's'} encontrado${livros.length === 1 ? '' : 's'}</p>
+               <div class="biblioteca-grade">${livros.map(([id, l]) => _htmlCapaLivro(id, l)).join('')}</div>`;
+        return;
+    }
+
+    const estante = (titulo, subtitulo, lista, classe = '') => `
+        <div class="estante ${classe}">
+            <h3 class="estante-titulo">${titulo}${subtitulo ? ` <small>${subtitulo}</small>` : ''}</h3>
+            <div class="estante-fileira">${lista.map(([id, l]) => _htmlCapaLivro(id, l)).join('')}</div>
+            <div class="estante-tabua"></div>
+        </div>`;
+
+    let html = '';
+    const pendentes = livros.filter(([, l]) => l.status === 'pendente');
+    if (pendentes.length > 0) {
+        html += estante('⏳ Aguardando aprovação',
+            souMestre ? `${pendentes.length} para revisar` : 'só você e o Mestre veem estes livros',
+            pendentes, 'estante-pendentes');
+    }
+    Object.entries(LIVRO_CATEGORIAS).forEach(([chave, cat]) => {
+        const daCategoria = livros.filter(([, l]) => l.status === 'publicado' && l.categoria === chave);
+        if (daCategoria.length > 0) {
+            html += estante(`${cat.emoji} ${cat.rotulo}`, `${daCategoria.length}`, daCategoria);
+        }
+    });
+    el.innerHTML = html || '<p class="mochila-vazia">Ainda não há livros publicados.</p>';
+}
+
+function filtrarBiblioteca() {
+    _bibliotecaFiltro.texto = document.getElementById('busca-biblioteca').value;
+    renderizarBiblioteca();
+}
+
+function definirCategoriaBiblioteca(chave) {
+    _bibliotecaFiltro.categoria = chave;
+    renderizarBiblioteca();
+}
+
+function alternarMeusLivros() {
+    _bibliotecaFiltro.meus = !_bibliotecaFiltro.meus;
+    renderizarBiblioteca();
+}
+
+// ---- Leitura -----------------------------------------------------------
+function abrirLivro(id) {
+    const l = _livrosCache[id];
+    if (!l) return;
+
+    const cat = LIVRO_CATEGORIAS[l.categoria] || LIVRO_CATEGORIAS.outros;
+    const souMestre = usuarioAtual && usuarioAtual.uid === ADMIN_UID;
+    const souAutor = usuarioAtual && l.autorUid === usuarioAtual.uid;
+    const pendente = l.status === 'pendente';
+    const data = l.atualizadoEm ? new Date(l.atualizadoEm).toLocaleDateString('pt-BR') : '';
+    const tags = (l.tags || []).map(t => `<span class="livro-tag">${escaparHtml(t)}</span>`).join('');
+
+    const controles = [];
+    if (souMestre && pendente) controles.push(`<button class="btn-admin btn-aprovar" onclick="aprovarLivro('${id}')">✅ Aprovar e publicar</button>`);
+    if (souMestre && !pendente) controles.push(`<button class="btn-admin" onclick="alternarCanoneLivro('${id}')">${l.canone ? 'Remover Cânone' : '✦ Marcar como Cânone'}</button>`);
+    if (souMestre || souAutor) controles.push(`<button class="btn-admin" onclick="fecharModalLivro(); abrirFormularioLivro('${id}')">✏️ Editar</button>`);
+    if (souMestre || souAutor) controles.push(`<button class="btn-admin btn-vender" onclick="excluirLivro('${id}')">🗑️ Excluir</button>`);
+
+    const el = document.getElementById('modal-livro-conteudo');
+    el.className = 'modal-livro-box';
+    el.style.cssText = `--cor-cat:${cat.cor}; --cor-cat-escura:${cat.escura};`;
+    el.innerHTML = `
+        <button class="modal-fechar" onclick="fecharModalLivro()">✕</button>
+        <header class="livro-cabecalho">
+            <span class="livro-cat-selo">${cat.emoji} ${cat.rotulo}</span>
+            <h2>${escaparHtml(l.titulo || 'Sem título')}</h2>
+            <div class="lema-ornamentado"><span class="lema-linha"></span><span class="livro-orn-emoji">${cat.emoji}</span><span class="lema-linha direita"></span></div>
+            ${l.resumo ? `<p class="livro-resumo">${escaparHtml(l.resumo)}</p>` : ''}
+        </header>
+        <div class="livro-corpo">
+            ${pendente ? '<p class="livro-aviso-pendente">⏳ Este livro aguarda a aprovação do Mestre. Por enquanto, só o autor e o Mestre podem vê-lo.</p>' : ''}
+            <aside class="livro-infobox">
+                <dl>
+                    <dt>Categoria</dt><dd>${cat.emoji} ${cat.rotulo}</dd>
+                    ${l.epoca ? `<dt>Época</dt><dd>${escaparHtml(l.epoca)}</dd>` : ''}
+                    <dt>Autor</dt><dd>${escaparHtml(l.autorNome || 'Anônimo')}</dd>
+                    ${data ? `<dt>Atualizado em</dt><dd>${data}</dd>` : ''}
+                    <dt>Status</dt><dd>${l.canone ? '<span class="livro-status canone">✦ Cânone</span>' : '<span class="livro-status relato">✎ Relato de jogador</span>'}</dd>
+                </dl>
+                ${tags ? `<div class="livro-tags">${tags}</div>` : ''}
+            </aside>
+            <div class="livro-texto">${renderizarTextoLivro(l.conteudo)}</div>
+            ${controles.length ? `<div class="controles-admin livro-controles">${controles.join('')}</div>` : ''}
+        </div>
+    `;
+    document.getElementById('modal-livro-overlay').style.display = 'flex';
+}
+
+function fecharModalLivro(event) {
+    if (event && event.target.id !== 'modal-livro-overlay') return;
+    document.getElementById('modal-livro-overlay').style.display = 'none';
+}
+
+// ---- Editor ------------------------------------------------------------
+async function abrirFormularioLivro(id) {
+    const souMestre = usuarioAtual && usuarioAtual.uid === ADMIN_UID;
+    let livro = null;
+
+    if (id) {
+        livro = _livrosCache[id];
+        if (!livro) return;
+        const souAutor = usuarioAtual && livro.autorUid === usuarioAtual.uid;
+        if (!souMestre && !souAutor) {
+            return mostrarToast('Só o autor ou o Mestre podem editar este livro.', 'erro', 'Sem permissão');
+        }
+        if (!souMestre && livro.status === 'publicado') {
+            const ok = await mostrarConfirmacao(
+                'Editar um livro já publicado o <strong>devolve para a aprovação do Mestre</strong>: ele sai da biblioteca até ser aprovado de novo. Continuar?'
+            );
+            if (!ok) return;
+        }
+    }
+
+    _livroEditandoId = id || null;
+    const selCat = document.getElementById('livro-categoria');
+    selCat.innerHTML = Object.entries(LIVRO_CATEGORIAS)
+        .map(([k, c]) => `<option value="${k}">${c.emoji} ${c.rotulo}</option>`).join('');
+
+    const campos = livro || {};
+    document.getElementById('formulario-livro-titulo').innerText = id ? 'Editar Livro' : 'Escrever Livro';
+    document.getElementById('livro-titulo').value = campos.titulo || '';
+    selCat.value = campos.categoria || 'historia';
+    document.getElementById('livro-epoca').value = campos.epoca || '';
+    document.getElementById('livro-resumo').value = campos.resumo || '';
+    document.getElementById('livro-tags').value = (campos.tags || []).join(', ');
+    document.getElementById('livro-conteudo').value = campos.conteudo || '';
+    document.getElementById('livro-capa').value = campos.capa || '';
+
+    const prevImg = document.getElementById('preview-img-capa-livro');
+    const prevNome = document.getElementById('preview-nome-capa-livro');
+    const capaSegura = _urlImagemSegura(campos.capa);
+    if (capaSegura) {
+        prevImg.src = capaSegura; prevImg.style.display = 'block'; prevNome.innerText = '✓ Capa atual';
+    } else {
+        prevImg.style.display = 'none'; prevNome.innerText = 'Sem capa: uma capa será criada automaticamente';
+    }
+
+    document.getElementById('livro-canone-grupo').style.display = souMestre ? 'block' : 'none';
+    document.getElementById('livro-canone').checked = Boolean(campos.canone);
+    document.getElementById('livro-aviso-aprovacao').style.display = souMestre ? 'none' : 'block';
+    document.getElementById('btn-salvar-livro').innerText = souMestre ? '📚 Salvar livro' : '📚 Enviar para aprovação';
+
+    const area = document.getElementById('livro-conteudo');
+    area.oninput = atualizarContadorLivro;
+    atualizarContadorLivro();
+    alternarAbaLivro('escrever');
+
+    document.getElementById('formulario-livro-overlay').style.display = 'flex';
+}
+
+function fecharFormularioLivro() {
+    document.getElementById('formulario-livro-overlay').style.display = 'none';
+}
+
+function atualizarContadorLivro() {
+    const n = document.getElementById('livro-conteudo').value.length;
+    const el = document.getElementById('livro-contador');
+    el.innerText = `${n} / ${LIVRO_LIMITE_TEXTO} caracteres`;
+    el.style.color = n > LIVRO_LIMITE_TEXTO ? '#d97f7f' : '';
+}
+
+function alternarAbaLivro(aba) {
+    const previa = aba === 'previa';
+    document.getElementById('aba-livro-escrever').classList.toggle('ativo', !previa);
+    document.getElementById('aba-livro-previa').classList.toggle('ativo', previa);
+    document.getElementById('livro-editor-area').style.display = previa ? 'none' : 'block';
+    const area = document.getElementById('livro-previa-area');
+    area.style.display = previa ? 'block' : 'none';
+    if (previa) {
+        area.innerHTML = renderizarTextoLivro(document.getElementById('livro-conteudo').value)
+            || '<p class="mochila-vazia">Nada para mostrar ainda.</p>';
+    }
+}
+
+// Botões da barra de formatação: inserem as marcações no texto
+function formatarLivro(tipo) {
+    const ta = document.getElementById('livro-conteudo');
+    const ini = ta.selectionStart, fim = ta.selectionEnd;
+    const valor = ta.value;
+    const sel = valor.slice(ini, fim);
+    let novo = valor, selIni = ini, selFim = fim;
+
+    const envolver = (marca, exemplo) => {
+        const miolo = sel || exemplo;
+        novo = valor.slice(0, ini) + marca + miolo + marca + valor.slice(fim);
+        selIni = ini + marca.length; selFim = selIni + miolo.length;
+    };
+    const prefixarLinhas = (prefixo, exemplo) => {
+        const inicioLinha = valor.lastIndexOf('\n', ini - 1) + 1;
+        const idxFim = valor.indexOf('\n', fim);
+        const fimLinha = idxFim === -1 ? valor.length : idxFim;
+        const bloco = valor.slice(inicioLinha, fimLinha) || exemplo;
+        const comPrefixo = bloco.split('\n').map(l => prefixo + l).join('\n');
+        novo = valor.slice(0, inicioLinha) + comPrefixo + valor.slice(fimLinha);
+        selIni = inicioLinha + prefixo.length; selFim = inicioLinha + comPrefixo.length;
+    };
+
+    if (tipo === 'negrito') envolver('**', 'texto em negrito');
+    else if (tipo === 'italico') envolver('*', 'texto em itálico');
+    else if (tipo === 'h1') prefixarLinhas('# ', 'Título do capítulo');
+    else if (tipo === 'h2') prefixarLinhas('## ', 'Subtítulo');
+    else if (tipo === 'citacao') prefixarLinhas('> ', 'Citação');
+    else if (tipo === 'lista') prefixarLinhas('- ', 'Item da lista');
+    else if (tipo === 'divisor') {
+        const ins = '\n\n---\n\n';
+        novo = valor.slice(0, ini) + ins + valor.slice(fim);
+        selIni = selFim = ini + ins.length;
+    }
+
+    ta.value = novo;
+    ta.focus();
+    ta.setSelectionRange(selIni, selFim);
+    atualizarContadorLivro();
+}
+
+async function onArquivoCapaLivroSelecionado(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const nome = document.getElementById('preview-nome-capa-livro');
+    const img = document.getElementById('preview-img-capa-livro');
+    nome.innerText = 'Comprimindo...';
+    try {
+        const base64 = await comprimirImagem(file);
+        document.getElementById('livro-capa').value = base64;
+        nome.innerText = '✓ ' + file.name;
+        img.src = base64; img.style.display = 'block';
+    } catch (erro) {
+        mostrarToast('Não foi possível processar a imagem.', 'erro', 'Erro');
+        nome.innerText = 'Erro ao processar';
+        console.error(erro);
+    }
+}
+
+async function salvarLivro() {
+    const souMestre = usuarioAtual && usuarioAtual.uid === ADMIN_UID;
+    const titulo = document.getElementById('livro-titulo').value.trim();
+    const conteudo = document.getElementById('livro-conteudo').value.trim();
+
+    if (!titulo) return mostrarToast('Dê um título ao livro.', 'erro', 'Título obrigatório');
+    if (!conteudo) return mostrarToast('O livro precisa ter algum texto.', 'erro', 'Texto obrigatório');
+    if (conteudo.length > LIVRO_LIMITE_TEXTO) {
+        return mostrarToast(`O texto passa de ${LIVRO_LIMITE_TEXTO} caracteres. Divida em dois livros.`, 'erro', 'Texto muito longo');
+    }
+
+    const tags = document.getElementById('livro-tags').value
+        .split(',').map(t => t.trim().slice(0, 24)).filter(Boolean).slice(0, 8);
+
+    const dados = {
+        titulo,
+        categoria: document.getElementById('livro-categoria').value,
+        epoca: document.getElementById('livro-epoca').value.trim(),
+        resumo: document.getElementById('livro-resumo').value.trim(),
+        tags,
+        conteudo,
+        capa: document.getElementById('livro-capa').value,
+        atualizadoEm: Date.now()
+    };
+
+    const botao = document.getElementById('btn-salvar-livro');
+    botao.disabled = true;
+    try {
+        if (_livroEditandoId) {
+            const atual = _livrosCache[_livroEditandoId];
+            const souAutor = atual && usuarioAtual && atual.autorUid === usuarioAtual.uid;
+            if (!souMestre && !souAutor) {
+                return mostrarToast('Só o autor ou o Mestre podem editar este livro.', 'erro', 'Sem permissão');
+            }
+            if (souMestre) {
+                dados.canone = document.getElementById('livro-canone').checked;   // status não muda
+            } else {
+                dados.status = 'pendente';   // editar devolve para a aprovação
+                dados.canone = false;
+            }
+            await updateDoc(doc(db, 'livros', _livroEditandoId), dados);
+            mostrarToast(souMestre ? 'Livro atualizado.' : 'Livro atualizado e enviado para nova aprovação.', 'sucesso', 'Livro salvo');
+        } else {
+            const novaRef = doc(collection(db, 'livros'));
+            await setDoc(novaRef, {
+                ...dados,
+                autorUid: usuarioAtual.uid,
+                autorNome: nomeUsuarioAtual || 'Jogador',
+                criadoEm: Date.now(),
+                status: souMestre ? 'publicado' : 'pendente',
+                canone: souMestre ? document.getElementById('livro-canone').checked : false
+            });
+            mostrarToast(souMestre ? 'Livro publicado na biblioteca.'
+                : 'Livro enviado! Ele aparece na biblioteca assim que o Mestre aprovar.', 'sucesso', 'Livro criado');
+        }
+        fecharFormularioLivro();
+    } catch (erro) {
+        mostrarToast('Não foi possível salvar o livro.', 'erro', 'Erro');
+        console.error(erro);
+    } finally {
+        botao.disabled = false;
+    }
+}
+
+// ---- Moderação -----------------------------------------------------------
+async function aprovarLivro(id) {
+    try {
+        await updateDoc(doc(db, 'livros', id), { status: 'publicado' });
+        fecharModalLivro();
+        mostrarToast('Livro aprovado e publicado na biblioteca.', 'sucesso', 'Livro aprovado');
+    } catch (erro) {
+        mostrarToast('Não foi possível aprovar o livro.', 'erro', 'Erro');
+        console.error(erro);
+    }
+}
+
+async function alternarCanoneLivro(id) {
+    const l = _livrosCache[id];
+    if (!l) return;
+    try {
+        await updateDoc(doc(db, 'livros', id), { canone: !l.canone });
+        fecharModalLivro();
+        mostrarToast(l.canone ? 'O livro deixou de ser Cânone.' : 'O livro agora é Cânone.', 'sucesso', 'Cânone');
+    } catch (erro) {
+        mostrarToast('Não foi possível alterar o cânone.', 'erro', 'Erro');
+        console.error(erro);
+    }
+}
+
+async function excluirLivro(id) {
+    const l = _livrosCache[id];
+    if (!l) return;
+    const ok = await mostrarConfirmacao(
+        `Excluir permanentemente o livro <strong>${escaparHtml(l.titulo || 'sem título')}</strong>? Essa ação não pode ser desfeita.`
+    );
+    if (!ok) return;
+    try {
+        await deleteDoc(doc(db, 'livros', id));
+        fecharModalLivro();
+        mostrarToast('Livro excluído.', 'sucesso', 'Livro excluído');
+    } catch (erro) {
+        mostrarToast('Não foi possível excluir o livro.', 'erro', 'Erro');
+        console.error(erro);
+    }
+}
+
 // Cache local das fichas exibidas no mural, para o modal acessar sem nova query
 let _fichasMuralCache = {};
 
@@ -3119,6 +3647,20 @@ window.adicionarPhotoplayerAdmin = adicionarPhotoplayerAdmin;
 window.removerPhotoplayerAdmin = removerPhotoplayerAdmin;
 window.removerPhotoplayerDeFicha = removerPhotoplayerDeFicha;
 window.removerPhotoplayerDeNPC = removerPhotoplayerDeNPC;
+window.abrirLivro = abrirLivro;
+window.fecharModalLivro = fecharModalLivro;
+window.abrirFormularioLivro = abrirFormularioLivro;
+window.fecharFormularioLivro = fecharFormularioLivro;
+window.salvarLivro = salvarLivro;
+window.excluirLivro = excluirLivro;
+window.aprovarLivro = aprovarLivro;
+window.alternarCanoneLivro = alternarCanoneLivro;
+window.filtrarBiblioteca = filtrarBiblioteca;
+window.definirCategoriaBiblioteca = definirCategoriaBiblioteca;
+window.alternarMeusLivros = alternarMeusLivros;
+window.formatarLivro = formatarLivro;
+window.alternarAbaLivro = alternarAbaLivro;
+window.onArquivoCapaLivroSelecionado = onArquivoCapaLivroSelecionado;
 window.abrirModalCasa = abrirModalCasa;
 window.fecharModalCasa = fecharModalCasa;
 window.abrirFormularioCasa = abrirFormularioCasa;

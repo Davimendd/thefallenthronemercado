@@ -12,6 +12,7 @@ JavaScript puro, com Firebase (Auth + Firestore) como backend.
 - **Mercado e Mochila** — compra, venda e equipamento de itens.
 - **Exploradores** — mural público com as fichas aprovadas de todos os jogadores.
 - **Photoplayers** — registro de aparências/atores usados nos personagens, com checagem de duplicidade.
+- **Biblioteca do Reino** — livros escritos pelos jogadores (história, criaturas, crenças, geografia...) organizados em estantes, com busca, leitura em formato de enciclopédia e aprovação do Mestre antes de publicar.
 - **Guia do Reino** — regras e ambientação do RPG.
 - Painel exclusivo do Mestre para moderação (moedas, inventário, aprovação e exclusão de fichas/casas).
 

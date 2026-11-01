@@ -144,8 +144,8 @@ h1, h2, h3 {
     z-index: 2000;
     display: flex;
     align-items: center;
-    gap: 24px;
-    padding: 16px 34px;
+    gap: 16px;
+    padding: 16px 24px;
     background: linear-gradient(180deg, #40311a, #241a0e 75%, #1a1109);
     border-bottom: 2px solid var(--ouro);
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.55), 0 1px 0 rgba(201, 164, 73, 0.4);
@@ -231,14 +231,14 @@ h1, h2, h3 {
 
 .topbar-link {
     flex-shrink: 0;
-    padding: 11px 18px;
+    padding: 11px 12px;
     background: none;
     border: 1px solid transparent;
     border-radius: 4px;
     color: #d8cbb0;
     font-family: 'Cinzel', serif;
-    font-size: 0.85em;
-    letter-spacing: 1.2px;
+    font-size: 0.8em;
+    letter-spacing: 1px;
     box-shadow: none;
     transition: color 0.2s, background 0.2s, border-color 0.2s, box-shadow 0.2s;
 }
@@ -582,8 +582,17 @@ body.menu-mobile-travado {
     box-shadow: none;
 }
 
-/* Esconde a topbar de links e mostra o hamburguer abaixo de ~920px */
-@media (max-width: 920px) {
+/* Telas médias: o menu precisa de espaço, então o nome da marca e o nome do
+   personagem saem (ficam o brasão, o avatar e as moedas) */
+@media (max-width: 1500px) {
+    .topbar-nome,
+    .topbar-saldo-nome {
+        display: none;
+    }
+}
+
+/* Abaixo de ~1260px os links não cabem mais: entra o menu hambúrguer */
+@media (max-width: 1260px) {
     .topbar-links {
         display: none;
     }
@@ -3963,6 +3972,513 @@ section,
 }
 
 /* =========================================
+   21.7 BIBLIOTECA DO REINO
+   ========================================= */
+
+.biblioteca-barra {
+    margin-bottom: 8px;
+}
+
+.biblioteca-busca {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 11px 16px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--borda);
+    border-radius: 3px;
+    color: var(--texto);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.05em;
+}
+
+.biblioteca-busca:focus {
+    outline: none;
+    border-color: var(--ouro-escuro);
+    box-shadow: 0 0 12px rgba(201, 164, 73, 0.12);
+}
+
+.biblioteca-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
+}
+
+.biblioteca-contagem {
+    margin: 18px 0 14px;
+    font-size: 0.85em;
+    color: var(--texto-fraco);
+    font-style: italic;
+}
+
+/* Estantes: uma fileira de livros sobre uma tábua de madeira */
+.estante {
+    margin-top: 30px;
+}
+
+.estante-titulo {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin: 0 0 10px;
+    padding: 0;
+    border: none;
+    font-size: 1.1em;
+    letter-spacing: 1px;
+    color: var(--ouro-claro);
+}
+
+.estante-titulo small {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.7em;
+    letter-spacing: 0.5px;
+    color: var(--texto-fraco);
+    font-style: italic;
+}
+
+.estante-fileira {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    padding: 14px 16px 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+    background: radial-gradient(ellipse at 50% 100%, rgba(201, 164, 73, 0.07), transparent 70%);
+}
+
+.estante-tabua {
+    height: 14px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, #6b4a22, #3d2a12 60%, #241808);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 220, 160, 0.25);
+}
+
+.estante-pendentes .estante-tabua {
+    background: linear-gradient(180deg, #5a4a1c, #35290e 60%, #211806);
+}
+
+.biblioteca-grade {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 26px 16px;
+    justify-items: center;
+    padding-top: 6px;
+}
+
+/* Capa de livro */
+.livro-capa {
+    position: relative;
+    flex: 0 0 auto;
+    display: block;
+    width: 136px;
+    aspect-ratio: 2 / 3;
+    padding: 0;
+    border: none;
+    border-radius: 3px 7px 7px 3px;
+    overflow: hidden;
+    cursor: pointer;
+    scroll-snap-align: start;
+    background: linear-gradient(160deg, var(--cor-cat), var(--cor-cat-escura));
+    box-shadow: 0 8px 14px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.09);
+    color: #f3e7c8;
+    font-family: 'Cinzel', serif;
+    text-align: center;
+    text-transform: none;
+    letter-spacing: normal;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.livro-capa:hover {
+    background: linear-gradient(160deg, var(--cor-cat), var(--cor-cat-escura));
+    color: #f3e7c8;
+    transform: translateY(-8px) rotate(-1deg);
+    box-shadow: 0 16px 22px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+
+.livro-capa.pendente {
+    outline: 2px dashed #8a6a2a;
+    outline-offset: -3px;
+}
+
+.livro-capa-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.livro-lombada {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 12px;
+    z-index: 2;
+    background: linear-gradient(90deg, rgba(0, 0, 0, 0.6), rgba(255, 255, 255, 0.07) 55%, rgba(0, 0, 0, 0.28));
+}
+
+.livro-capa-miolo {
+    position: absolute;
+    inset: 11px 10px 12px 21px;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    padding: 8px 6px;
+    border: 1px solid rgba(232, 213, 160, 0.45);
+    border-radius: 2px;
+}
+
+.livro-capa-emoji {
+    font-size: 1.9em;
+    line-height: 1;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5));
+}
+
+.livro-capa-titulo {
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: 0.8em;
+    font-weight: 700;
+    line-height: 1.25;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+    word-break: break-word;
+}
+
+.livro-capa-autor {
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.72em;
+    font-style: italic;
+    opacity: 0.85;
+}
+
+/* Capa com imagem: o título vai pra base, sobre uma vinheta escura */
+.livro-capa.com-imagem .livro-capa-miolo {
+    inset: auto 0 0 12px;
+    justify-content: flex-end;
+    gap: 3px;
+    padding: 36px 8px 10px;
+    border: none;
+    background: linear-gradient(to top, rgba(5, 4, 3, 0.94), rgba(5, 4, 3, 0.5) 60%, transparent);
+}
+
+.livro-capa.com-imagem .livro-capa-emoji {
+    display: none;
+}
+
+.livro-selo-canone {
+    position: absolute;
+    top: 9px;
+    right: 0;
+    z-index: 3;
+    padding: 3px 7px 3px 12px;
+    background: var(--ouro);
+    color: #1a1305;
+    font-size: 0.5em;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    clip-path: polygon(8px 0, 100% 0, 100% 100%, 8px 100%, 0 50%);
+}
+
+.livro-selo-pendente {
+    position: absolute;
+    top: 9px;
+    left: 18px;
+    z-index: 3;
+    padding: 2px 7px;
+    background: #3a2a10;
+    border: 1px solid #8a6a2a;
+    border-radius: 8px;
+    color: #e0b060;
+    font-size: 0.5em;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+/* Tela de leitura */
+.modal-livro-box {
+    position: relative;
+    width: 100%;
+    max-width: 780px;
+    overflow: hidden;
+    background: linear-gradient(165deg, var(--cor-cat-escura, #1c1812), #14110d 55%);
+    border: 1px solid var(--cor-cat, var(--ouro-escuro));
+    border-radius: 4px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+.livro-cabecalho {
+    padding: 38px 40px 22px;
+    text-align: center;
+    border-bottom: 1px solid var(--borda);
+    background: radial-gradient(ellipse at top, rgba(255, 255, 255, 0.08), transparent 70%);
+}
+
+.livro-cat-selo {
+    display: inline-block;
+    padding: 3px 12px;
+    border: 1px solid var(--cor-cat);
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    font-family: 'Cinzel', serif;
+    font-size: 0.62em;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--ouro-claro);
+}
+
+.livro-cabecalho h2 {
+    margin: 14px 0 6px;
+    font-size: 2em;
+    line-height: 1.2;
+    letter-spacing: 1px;
+    color: #fdf6e3;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+}
+
+.livro-orn-emoji {
+    font-size: 1.1em;
+    opacity: 0.9;
+}
+
+.livro-resumo {
+    margin: 14px auto 0;
+    max-width: 560px;
+    font-style: italic;
+    font-size: 1.08em;
+    color: #d8cdb0;
+}
+
+.livro-corpo {
+    padding: 26px 40px 34px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.14em;
+    line-height: 1.8;
+}
+
+.livro-corpo::after {
+    content: '';
+    display: block;
+    clear: both;
+}
+
+.livro-aviso-pendente {
+    margin: 0 0 18px;
+    padding: 10px 14px;
+    background: rgba(138, 106, 42, 0.16);
+    border: 1px dashed #8a6a2a;
+    border-radius: 4px;
+    font-size: 0.85em;
+    line-height: 1.5;
+    color: #e0b060;
+}
+
+.livro-infobox {
+    float: right;
+    width: 210px;
+    margin: 4px 0 16px 24px;
+    padding: 14px 16px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--borda);
+    border-radius: 4px;
+    font-size: 0.8em;
+    line-height: 1.4;
+}
+
+.livro-infobox dl {
+    margin: 0;
+}
+
+.livro-infobox dt {
+    margin-top: 10px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.74em;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--texto-fraco);
+}
+
+.livro-infobox dt:first-child {
+    margin-top: 0;
+}
+
+.livro-infobox dd {
+    margin: 2px 0 0;
+    color: var(--texto);
+    font-weight: 600;
+}
+
+.livro-status.canone { color: var(--ouro); }
+.livro-status.relato { color: var(--texto-fraco); font-weight: 400; }
+
+.livro-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--borda);
+}
+
+.livro-tag {
+    padding: 1px 9px;
+    border: 1px solid var(--borda);
+    border-radius: 10px;
+    font-size: 0.85em;
+    color: var(--texto-fraco);
+}
+
+/* Texto do livro (também usado na prévia do editor) */
+.livro-texto p {
+    margin: 0 0 1.1em;
+    text-align: justify;
+    hyphens: auto;
+}
+
+.livro-texto > p:first-of-type::first-letter {
+    float: left;
+    padding: 6px 10px 0 0;
+    font-family: 'Cinzel Decorative', 'Cinzel', serif;
+    font-size: 3.3em;
+    line-height: 0.8;
+    color: var(--ouro);
+}
+
+.livro-texto h2 {
+    margin: 1.7em 0 0.7em;
+    font-size: 1.3em;
+    text-align: center;
+    letter-spacing: 1.5px;
+    color: var(--ouro-claro);
+}
+
+.livro-texto h3 {
+    margin: 1.4em 0 0.5em;
+    font-size: 1.05em;
+    letter-spacing: 1px;
+    color: var(--ouro-claro);
+}
+
+.livro-texto blockquote {
+    display: flow-root;
+    margin: 1.2em 0;
+    padding: 10px 18px;
+    border-left: 3px solid var(--ouro);
+    background: rgba(201, 164, 73, 0.07);
+    border-radius: 0 4px 4px 0;
+    font-style: italic;
+    color: #e4dac0;
+}
+
+.livro-texto ul {
+    margin: 0 0 1.1em;
+    padding-left: 1.4em;
+}
+
+.livro-texto li {
+    margin-bottom: 0.3em;
+}
+
+.livro-divisor {
+    display: flex;
+    justify-content: center;
+    margin: 1.8em 0;
+}
+
+.livro-divisor span {
+    position: relative;
+    width: 45%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--ouro), transparent);
+}
+
+.livro-divisor span::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 7px;
+    height: 7px;
+    background: var(--ouro);
+    transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.livro-controles {
+    clear: both;
+    margin-top: 26px;
+    padding-top: 16px;
+    border-top: 1px solid var(--borda);
+}
+
+/* Editor */
+.formulario-livro-box {
+    max-width: 780px;
+}
+
+.livro-abas {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.livro-abas button,
+.livro-toolbar button {
+    padding: 5px 12px;
+    font-size: 0.7em;
+    letter-spacing: 0.8px;
+    border-color: var(--borda);
+    color: var(--texto-fraco);
+    box-shadow: none;
+}
+
+.livro-abas button.ativo {
+    border-color: var(--ouro);
+    color: var(--ouro-claro);
+    background: rgba(201, 164, 73, 0.1);
+}
+
+.livro-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 8px;
+}
+
+.livro-toolbar button {
+    text-transform: none;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.9em;
+}
+
+#livro-conteudo {
+    min-height: 280px;
+    line-height: 1.6;
+}
+
+.livro-previa {
+    min-height: 280px;
+    padding: 18px 22px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--borda);
+    border-radius: 3px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.08em;
+    line-height: 1.75;
+}
+
+/* =========================================
    22. GUIA DO REINO
    ========================================= */
 
@@ -4713,5 +5229,44 @@ section,
     #lista-comunidade.grid-comunidade,
     .grid-mercado {
         grid-template-columns: 1fr;
+    }
+}
+
+/* ---------- Biblioteca no celular ---------- */
+@media (max-width: 768px) {
+    .livro-cabecalho {
+        padding: 34px 20px 18px;
+    }
+
+    .livro-cabecalho h2 {
+        font-size: 1.5em;
+    }
+
+    .livro-corpo {
+        padding: 20px 20px 26px;
+        font-size: 1.06em;
+    }
+
+    .livro-infobox {
+        float: none;
+        width: auto;
+        margin: 0 0 18px;
+    }
+
+    .livro-texto p {
+        text-align: left;
+    }
+
+    .estante-fileira {
+        gap: 12px;
+        padding: 12px 8px 0;
+    }
+
+    .livro-capa {
+        width: 118px;
+    }
+
+    .biblioteca-grade {
+        grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
     }
 }

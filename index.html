@@ -40,6 +40,7 @@
             <button class="topbar-link" data-pagina="mural" onclick="mostrarPagina('mural')">Exploradores</button>
             <button class="topbar-link" data-pagina="npcs" onclick="mostrarPagina('npcs')">NPCs</button>
             <button class="topbar-link" data-pagina="casas" onclick="mostrarPagina('casas')">Casas</button>
+            <button class="topbar-link" data-pagina="biblioteca" onclick="mostrarPagina('biblioteca')">Biblioteca</button>
             <button class="topbar-link" data-pagina="photoplayers" onclick="mostrarPagina('photoplayers')">Photoplayers</button>
             <button class="topbar-link" data-pagina="guia" onclick="mostrarPagina('guia')">Guia</button>
         </div>
@@ -104,6 +105,7 @@
             <button data-pagina="mural" onclick="mostrarPagina('mural'); fecharMenuMobile();">🗺️ Exploradores</button>
             <button data-pagina="npcs" onclick="mostrarPagina('npcs'); fecharMenuMobile();">👥 NPCs</button>
             <button data-pagina="casas" onclick="mostrarPagina('casas'); fecharMenuMobile();">🏰 Casas do Reino</button>
+            <button data-pagina="biblioteca" onclick="mostrarPagina('biblioteca'); fecharMenuMobile();">📚 Biblioteca</button>
             <button data-pagina="photoplayers" onclick="mostrarPagina('photoplayers'); fecharMenuMobile();">🎭 Photoplayers</button>
             <button data-pagina="guia" onclick="mostrarPagina('guia'); fecharMenuMobile();">📖 Guia do Reino</button>
         </nav>
@@ -593,6 +595,24 @@
             </section>
         </section>
 
+        <!-- PÁGINA: BIBLIOTECA DO REINO -->
+        <section id="pagina-biblioteca" class="pagina-conteudo" style="display: none;">
+            <section class="fichas-container">
+                <div class="fichas-cabecalho">
+                    <h2>📚 Biblioteca do Reino</h2>
+                    <button class="btn-criar-ficha" id="btn-escrever-livro" style="display:none;" onclick="abrirFormularioLivro()">✍️ Escrever livro</button>
+                </div>
+
+                <div class="biblioteca-barra">
+                    <input type="text" id="busca-biblioteca" class="biblioteca-busca"
+                           placeholder="Buscar por título, texto, tag ou autor..." oninput="filtrarBiblioteca()" autocomplete="off">
+                    <div id="biblioteca-chips" class="biblioteca-chips"></div>
+                </div>
+
+                <div id="lista-biblioteca"></div>
+            </section>
+        </section>
+
         <!-- PÁGINA: CASAS DO REINO -->
         <section id="pagina-casas" class="pagina-conteudo" style="display: none;">
             <section class="fichas-container">
@@ -606,6 +626,93 @@
                 </div>
             </section>
         </section>
+    </div>
+
+    <!-- Modal de leitura de um livro da Biblioteca -->
+    <div id="modal-livro-overlay" style="display:none; position:fixed; inset:0; z-index:10500; background:rgba(0,0,0,0.78); align-items:flex-start; justify-content:center; padding:30px 16px; overflow-y:auto;" onclick="fecharModalLivro(event)">
+        <div id="modal-livro-conteudo" class="modal-livro-box">
+            <!-- preenchido dinamicamente pelo JS -->
+        </div>
+    </div>
+
+    <!-- Editor de livro (todo jogador escreve; o Mestre aprova antes de publicar) -->
+    <div id="formulario-livro-overlay" style="display:none; position:fixed; inset:0; z-index:10000; background:rgba(0,0,0,0.7); align-items:center; justify-content:center; padding:20px; overflow-y:auto;">
+        <div class="formulario-ficha-box formulario-livro-box">
+            <h3 id="formulario-livro-titulo">Escrever Livro</h3>
+
+            <div class="input-group">
+                <label>Título</label>
+                <input type="text" id="livro-titulo" maxlength="120" placeholder="Ex: A Queda de Valíria">
+            </div>
+
+            <div class="ficha-row" style="grid-template-columns: 1fr 1fr;">
+                <div class="input-group">
+                    <label>Categoria</label>
+                    <select id="livro-categoria"></select>
+                </div>
+                <div class="input-group">
+                    <label>Época (opcional)</label>
+                    <input type="text" id="livro-epoca" maxlength="60" placeholder="Ex: Ano 12 após a Conquista">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Resumo</label>
+                <input type="text" id="livro-resumo" maxlength="200" placeholder="Uma ou duas frases sobre o que o livro conta">
+            </div>
+
+            <div class="input-group">
+                <label>Tags</label>
+                <input type="text" id="livro-tags" placeholder="Ex: Dorne, guerra, Targaryen">
+                <span class="dica-campo">Separe por vírgula (até 8 tags). Ajudam na busca.</span>
+            </div>
+
+            <div class="input-group">
+                <label>Capa (opcional)</label>
+                <div class="file-input-ficha">
+                    <label for="input-arquivo-capa-livro" class="btn-file-label-ficha">📷 Escolher imagem</label>
+                    <input type="file" id="input-arquivo-capa-livro" accept="image/*" style="display:none" onchange="onArquivoCapaLivroSelecionado(this)">
+                    <span id="preview-nome-capa-livro" class="file-name-preview-mini">Sem capa: uma capa será criada automaticamente</span>
+                </div>
+                <img id="preview-img-capa-livro" src="" alt="" style="display:none; width:90px; aspect-ratio:2/3; object-fit:cover; border-radius:3px; margin-top:8px; border:2px solid var(--ouro-escuro);">
+                <input type="hidden" id="livro-capa">
+            </div>
+
+            <div class="input-group">
+                <label>Texto do livro</label>
+                <div class="livro-abas">
+                    <button type="button" id="aba-livro-escrever" class="ativo" onclick="alternarAbaLivro('escrever')">✍️ Escrever</button>
+                    <button type="button" id="aba-livro-previa" onclick="alternarAbaLivro('previa')">👁️ Prévia</button>
+                </div>
+                <div id="livro-editor-area">
+                    <div class="livro-toolbar">
+                        <button type="button" onclick="formatarLivro('h1')" title="Título de capítulo">Capítulo</button>
+                        <button type="button" onclick="formatarLivro('h2')" title="Subtítulo">Subtítulo</button>
+                        <button type="button" onclick="formatarLivro('negrito')" title="Negrito"><b>N</b></button>
+                        <button type="button" onclick="formatarLivro('italico')" title="Itálico"><i>I</i></button>
+                        <button type="button" onclick="formatarLivro('citacao')" title="Citação">❝ Citação</button>
+                        <button type="button" onclick="formatarLivro('lista')" title="Lista">• Lista</button>
+                        <button type="button" onclick="formatarLivro('divisor')" title="Divisor ornamental">❖ Divisor</button>
+                    </div>
+                    <textarea id="livro-conteudo" rows="14" maxlength="30000" placeholder="Escreva aqui. Use os botões acima para dar forma ao texto."></textarea>
+                    <span class="dica-campo" id="livro-contador">0 / 30000 caracteres</span>
+                </div>
+                <div id="livro-previa-area" class="livro-texto livro-previa" style="display:none;"></div>
+            </div>
+
+            <div class="input-group" id="livro-canone-grupo" style="display:none;">
+                <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                    <input type="checkbox" id="livro-canone" style="width:auto;"> ✦ Marcar como Cânone (história oficial do RPG)
+                </label>
+            </div>
+
+            <p class="dica-campo" id="livro-aviso-aprovacao">Seu livro será enviado para a aprovação do Mestre e só aparece na biblioteca depois de aprovado. Até lá, só você e o Mestre podem vê-lo.</p>
+
+            <div class="formulario-ficha-botoes">
+                <button class="btn-secondary" onclick="fecharFormularioLivro()">Cancelar</button>
+                <button class="btn-main" id="btn-salvar-livro" onclick="salvarLivro()">📚 Enviar para aprovação</button>
+            </div>
+        </div>
     </div>
 
     <!-- Modal de visualização completa de uma Casa -->
