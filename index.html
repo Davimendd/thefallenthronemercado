@@ -606,6 +606,7 @@
                 <div class="biblioteca-barra">
                     <input type="text" id="busca-biblioteca" class="biblioteca-busca"
                            placeholder="Buscar por título, texto, tag ou autor..." oninput="filtrarBiblioteca()" autocomplete="off">
+                    <div id="biblioteca-visao" class="biblioteca-chips biblioteca-visao"></div>
                     <div id="biblioteca-chips" class="biblioteca-chips"></div>
                 </div>
 
@@ -656,6 +657,20 @@
                 </div>
             </div>
 
+            <div id="livro-campos-modelo" class="livro-campos-modelo" style="display:none;"></div>
+
+            <div class="ficha-row" style="grid-template-columns: 1fr 1fr;">
+                <div class="input-group">
+                    <label>Ano na Linha do Tempo (opcional)</label>
+                    <input type="number" id="livro-ano" step="1" min="-100000" max="100000" placeholder="Ex: 12 (ou -300)">
+                </div>
+                <div class="input-group">
+                    <label>Ano final (opcional)</label>
+                    <input type="number" id="livro-ano-fim" step="1" min="-100000" max="100000" placeholder="Ex: 14">
+                </div>
+            </div>
+            <span class="dica-campo livro-dica-anos">Preencha o ano para o livro aparecer na Linha do Tempo. Número negativo = antes da Conquista (ex.: -300). O ano final serve para períodos, como guerras e reinados.</span>
+
             <div class="input-group">
                 <label>Resumo</label>
                 <input type="text" id="livro-resumo" maxlength="200" placeholder="Uma ou duas frases sobre o que o livro conta">
@@ -693,9 +708,12 @@
                         <button type="button" onclick="formatarLivro('citacao')" title="Citação">❝ Citação</button>
                         <button type="button" onclick="formatarLivro('lista')" title="Lista">• Lista</button>
                         <button type="button" onclick="formatarLivro('divisor')" title="Divisor ornamental">❖ Divisor</button>
+                        <button type="button" onclick="formatarLivro('link')" title="Link para Casa, personagem, NPC ou livro: [[Nome]]">🔗 Link</button>
                     </div>
                     <textarea id="livro-conteudo" rows="14" maxlength="30000" placeholder="Escreva aqui. Use os botões acima para dar forma ao texto."></textarea>
+                    <div id="livro-sugestoes" class="livro-sugestoes" style="display:none;"></div>
                     <span class="dica-campo" id="livro-contador">0 / 30000 caracteres</span>
+                    <span class="dica-campo">Digite <strong>[[</strong> para linkar uma Casa, personagem, NPC ou outro livro (ex.: [[Stark]] ou [[Stark|a Casa do Norte]]). Títulos com # ou ## geram o índice do livro.</span>
                 </div>
                 <div id="livro-previa-area" class="livro-texto livro-previa" style="display:none;"></div>
             </div>

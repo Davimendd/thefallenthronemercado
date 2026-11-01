@@ -13,6 +13,11 @@ JavaScript puro, com Firebase (Auth + Firestore) como backend.
 - **Exploradores** — mural público com as fichas aprovadas de todos os jogadores.
 - **Photoplayers** — registro de aparências/atores usados nos personagens, com checagem de duplicidade.
 - **Biblioteca do Reino** — livros escritos pelos jogadores (história, criaturas, crenças, geografia...) organizados em estantes, com busca, leitura em formato de enciclopédia e aprovação do Mestre antes de publicar.
+  - **Links automáticos** — `[[Stark]]` vira link para a Casa, personagem, NPC ou livro com esse nome (`[[Stark|a Casa do Norte]]` muda o texto; `[[npc:Stark]]` força o tipo). O editor sugere nomes ao digitar `[[`.
+  - **Modelos por categoria** — cada categoria tem sua ficha (habitat de criatura, data de evento, etc.), mostrada na caixa lateral do livro.
+  - **Capítulos com índice lateral** — títulos `#` e `##` geram o índice, que acompanha a leitura.
+  - **Linha do tempo** — livros com "Ano" preenchido aparecem em ordem cronológica (siglas AC/DC editáveis em `LINHA_TEMPO_ERAS`).
+  - **Favoritos e comentários** — favoritos privados por jogador; comentários em livros publicados.
 - **Guia do Reino** — regras e ambientação do RPG.
 - Painel exclusivo do Mestre para moderação (moedas, inventário, aprovação e exclusão de fichas/casas).
 

@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "firebase/auth";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, collectionGroup, getDocs, query, where } from "firebase/firestore";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, collectionGroup, getDocs, query, where, orderBy, limit } from "firebase/firestore";
 
 // Abaixo daqui, verifique se NÃO existe nenhuma linha como:
 // const getAuth = ... ou outro import { getAuth } ...
@@ -2950,6 +2950,13 @@ async function excluirCasa(casaId, nome) {
 // Coleção global "livros". Todo jogador escreve; o livro nasce "pendente" e só
 // vira "publicado" quando o Mestre aprova. Livros pendentes só são lidos pelo
 // autor e pelo Mestre (isso é garantido nas regras do Firestore).
+//
+// Recursos de leitura/escrita:
+//   • Links automáticos  [[Stark]]  → Casa, personagem, NPC ou outro livro
+//   • Modelos de campos por categoria (habitat de criatura, data de evento...)
+//   • Índice lateral gerado a partir dos capítulos (# e ##)
+//   • Linha do tempo (livros com "ano" preenchido)
+//   • Favoritos (por jogador) e comentários (em livros publicados)
 const LIVRO_CATEGORIAS = {
     historia:    { rotulo: 'História',               emoji: '📜', cor: '#8a5a2a', escura: '#33200d' },
     eventos:     { rotulo: 'Eventos do RPG',         emoji: '⚔️', cor: '#8a2f2a', escura: '#2f0f0d' },
@@ -2960,18 +2967,80 @@ const LIVRO_CATEGORIAS = {
     outros:      { rotulo: 'Outros',                 emoji: '📚', cor: '#5a5a62', escura: '#1c1c20' }
 };
 const LIVRO_LIMITE_TEXTO = 30000;
+const LIVRO_CAMPO_MAX = 200;          // tamanho máximo de cada campo do modelo
+const LIVRO_COMENTARIO_MAX = 500;     // tamanho máximo de um comentário
+
+// Modelos de campos por categoria. Cada campo vira um input no editor e uma
+// linha na ficha (infobox) do livro. Os valores aceitam [[links]].
+// tipo: omitido = texto livre | 'select' = lista fixa de opções.
+const LIVRO_MODELOS = {
+    historia: [
+        { chave: 'local',         rotulo: 'Local',          dica: 'Ex: Porto Real' },
+        { chave: 'envolvidos',    rotulo: 'Envolvidos',     dica: 'Ex: [[Stark]], [[Lannister]]' },
+        { chave: 'consequencias', rotulo: 'Consequências',  dica: 'O que mudou depois disso' }
+    ],
+    eventos: [
+        { chave: 'data',          rotulo: 'Data do evento', dica: 'Ex: 3º dia da colheita, Ano 12' },
+        { chave: 'local',         rotulo: 'Local',          dica: 'Ex: Winterfell' },
+        { chave: 'participantes', rotulo: 'Participantes',  dica: 'Ex: [[Stark]], Ser Rodrik' },
+        { chave: 'desfecho',      rotulo: 'Desfecho',       dica: 'Como terminou' }
+    ],
+    criaturas: [
+        { chave: 'habitat', rotulo: 'Habitat', dica: 'Ex: Florestas ao norte da Muralha' },
+        { chave: 'porte',   rotulo: 'Porte',   tipo: 'select', opcoes: ['Minúsculo', 'Pequeno', 'Médio', 'Grande', 'Colossal'] },
+        { chave: 'dieta',   rotulo: 'Dieta',   dica: 'Ex: Carnívoro' },
+        { chave: 'perigo',  rotulo: 'Perigo',  tipo: 'select', opcoes: ['Inofensivo', 'Baixo', 'Moderado', 'Alto', 'Mortal'] }
+    ],
+    crencas: [
+        { chave: 'divindades', rotulo: 'Divindades',      dica: 'Ex: O Deus Afogado' },
+        { chave: 'simbolo',    rotulo: 'Símbolo',         dica: 'Ex: Uma árvore de rosto entalhado' },
+        { chave: 'seguidores', rotulo: 'Onde é seguida',  dica: 'Regiões, casas ou povos' },
+        { chave: 'rituais',    rotulo: 'Rituais',         dica: 'Cerimônias principais' }
+    ],
+    geografia: [
+        { chave: 'regiao',     rotulo: 'Região / Reino', dica: 'Ex: O Norte' },
+        { chave: 'clima',      rotulo: 'Clima',          dica: 'Ex: Frio e úmido' },
+        { chave: 'populacao',  rotulo: 'População',      dica: 'Ex: Cerca de 3 mil habitantes' },
+        { chave: 'governante', rotulo: 'Governante',     dica: 'Ex: [[Stark]]' }
+    ],
+    personagens: [
+        { chave: 'nascimento', rotulo: 'Nascimento', dica: 'Ex: Ano 240, Dorne' },
+        { chave: 'morte',      rotulo: 'Morte',      dica: 'Ex: Ano 298, Porto Real' },
+        { chave: 'casa',       rotulo: 'Casa',       dica: 'Ex: [[Stark]]' },
+        { chave: 'titulo',     rotulo: 'Título',     dica: 'Ex: Senhor de Winterfell' }
+    ],
+    outros: []
+};
+
+// Linha do tempo: "ano" positivo = depois da Conquista, negativo = antes.
+// Troque as siglas/rótulos aqui se o calendário do seu RPG for outro.
+const LINHA_TEMPO_ERAS = {
+    antes:  { sigla: 'AC', rotulo: 'Antes da Conquista',  emoji: '🌑' },
+    depois: { sigla: 'DC', rotulo: 'Depois da Conquista', emoji: '☀️' }
+};
+const LINHA_TEMPO_LIMITE_ANO = 100000;
+
+const LINK_ROTULOS = { casa: 'Casa', personagem: 'Personagem', npc: 'NPC', livro: 'Livro' };
 
 let _livrosCache = {};      // todos os livros que este usuário pode ver
 let _livrosFontes = {};     // um mapa por listener, mesclados em _livrosCache
 let _livrosUnsubs = [];
-let _bibliotecaFiltro = { texto: '', categoria: 'todas', meus: false };
+let _favoritosLivros = new Set();   // ids dos livros favoritados por este usuário
+let _bibliotecaFiltro = { texto: '', categoria: 'todas', meus: false, favoritos: false, visao: 'estantes' };
 let _livroEditandoId = null;
+let _livroAbertoId = null;          // livro aberto na tela de leitura
+let _livroHistorico = [];           // pilha de "voltar" ao navegar por [[links]] entre livros
+let _comentariosUnsub = null;
+let _comentariosCache = [];
+let _livroCamposRascunho = {};      // valores dos campos do modelo enquanto o autor troca de categoria
 
 function pararMonitoramentoLivros() {
     _livrosUnsubs.forEach(cancelar => { try { cancelar(); } catch (e) { /* ignora */ } });
     _livrosUnsubs = [];
     _livrosFontes = {};
     _livrosCache = {};
+    _favoritosLivros = new Set();
+    _pararComentariosLivro();
 }
 
 function _reconstruirCacheLivros() {
@@ -3004,6 +3073,18 @@ function iniciarMonitoramentoLivros(user) {
         registrar('publicados', query(colecao, where('status', '==', 'publicado')));
         registrar('meus', query(colecao, where('autorUid', '==', user.uid)));
     }
+
+    // Favoritos: subcoleção privada deste jogador (usuarios/{uid}/livrosFavoritos)
+    const cancelarFavoritos = onSnapshot(collection(db, 'usuarios', user.uid, 'livrosFavoritos'), (snap) => {
+        const ids = new Set();
+        snap.forEach(d => ids.add(d.id));
+        _favoritosLivros = ids;
+        if (_paginaAtivaBusca === 'biblioteca') renderizarBiblioteca();
+        _atualizarBotaoFavoritoLivro();
+    }, (erro) => {
+        console.warn('Favoritos indisponíveis:', erro.message);
+    });
+    _livrosUnsubs.push(cancelarFavoritos);
 }
 
 function _semAcentos(texto) {
@@ -3017,24 +3098,173 @@ function _urlImagemSegura(url) {
 
 function _livroCombinaBusca(l, termo) {
     const cat = LIVRO_CATEGORIAS[l.categoria] || LIVRO_CATEGORIAS.outros;
-    const texto = [l.titulo, l.resumo, (l.tags || []).join(' '), l.autorNome, l.epoca, cat.rotulo, l.conteudo]
+    const camposModelo = Object.values(l.campos || {}).filter(v => typeof v === 'string').join(' ');
+    const texto = [l.titulo, l.resumo, (l.tags || []).join(' '), l.autorNome, l.epoca, cat.rotulo, camposModelo, l.conteudo]
         .map(_semAcentos).join(' ');
     return texto.includes(termo);
 }
 
-// Converte o texto simples do livro em HTML seguro. Tudo é escapado primeiro;
-// só depois entram as poucas marcações permitidas:
-//   # Capítulo   ## Subtítulo   > citação   - item   ---   **negrito**   *itálico*
-function renderizarTextoLivro(texto) {
+// ---- Links automáticos [[Nome]] -------------------------------------------
+// Dentro do texto (e dos campos do modelo), [[Stark]] vira um link para a Casa,
+// o personagem, o NPC ou o livro com esse nome (sem diferenciar maiúsculas nem
+// acentos). Variações:
+//   [[Stark|a Casa do Norte]]   texto exibido diferente do nome procurado
+//   [[npc:Jon]]                 força o tipo (casa:, personagem:, npc:, livro:)
+// Nome que não existe vira um link "quebrado" (cinza e tracejado), para o
+// autor perceber o erro de digitação na prévia.
+function _desescaparHtml(t) {
+    return String(t).replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+}
+
+function _normalizarNomeLink(t) {
+    return _semAcentos(t).replace(/\s+/g, ' ').trim();
+}
+
+function _resolverLinkLivro(nomeBruto) {
+    let alvo = String(nomeBruto || '').trim();
+    let tipo = null;
+    const pref = alvo.match(/^(casa|personagem|npc|livro)\s*:\s*(.+)$/i);
+    if (pref) { tipo = pref[1].toLowerCase(); alvo = pref[2]; }
+    const n = _normalizarNomeLink(alvo);
+    if (!n) return null;
+
+    const souMestre = Boolean(usuarioAtual && usuarioAtual.uid === ADMIN_UID);
+    const semCasa = (s) => s.replace(/^casa /, '');
+    const buscadores = {
+        casa: () => {
+            for (const [id, c] of Object.entries(_casasCache)) {
+                const cn = _normalizarNomeLink(c && c.nome);
+                if (cn && (cn === n || semCasa(cn) === semCasa(n))) return { tipo: 'casa', id, nome: c.nome };
+            }
+            return null;
+        },
+        personagem: () => {
+            for (const [chave, f] of Object.entries(_fichasMuralCache)) {
+                // Fichas pendentes só o Mestre vê no mural; o link não pode furar isso
+                if (!f || (f.statusAprovacao === 'pendente' && !souMestre)) continue;
+                if (_normalizarNomeLink(f.nome) === n) return { tipo: 'personagem', id: chave, nome: f.nome };
+            }
+            return null;
+        },
+        npc: () => {
+            for (const [chave, npc] of Object.entries(_npcsGlobalCache)) {
+                if (npc && _normalizarNomeLink(npc.nome) === n) return { tipo: 'npc', id: chave, nome: npc.nome };
+            }
+            return null;
+        },
+        livro: () => {
+            for (const [id, l] of Object.entries(_livrosCache)) {
+                if (l && _normalizarNomeLink(l.titulo) === n) return { tipo: 'livro', id, nome: l.titulo };
+            }
+            return null;
+        }
+    };
+
+    const ordem = tipo ? [tipo] : ['casa', 'personagem', 'npc', 'livro'];
+    for (const t of ordem) {
+        const achado = buscadores[t]();
+        if (achado) return achado;
+    }
+    return null;
+}
+
+// Recebe HTML JÁ ESCAPADO e troca os [[...]] por links. O nome do alvo vem dos
+// caches (escapado de novo ao entrar no atributo), nunca do texto digitado.
+function _aplicarLinksLivro(htmlEscapado) {
+    const semTags = (s) => s.replace(/<[^>]+>/g, '');
+    return htmlEscapado.replace(/\[\[([^\[\]\n]{1,120}?)\]\]/g, (_, miolo) => {
+        const barra = miolo.indexOf('|');
+        const nomeHtml = semTags(barra === -1 ? miolo : miolo.slice(0, barra));
+        let rotulo = semTags(barra === -1 ? miolo : miolo.slice(barra + 1)).trim();
+        if (barra === -1) rotulo = rotulo.replace(/^(casa|personagem|npc|livro)\s*:\s*/i, '');
+        if (!rotulo) rotulo = nomeHtml;
+
+        const alvo = _resolverLinkLivro(_desescaparHtml(nomeHtml));
+        if (!alvo) {
+            return `<span class="livro-link quebrado" title="Nenhuma Casa, personagem, NPC ou livro com esse nome">${rotulo}</span>`;
+        }
+        const dica = escaparHtml(`${LINK_ROTULOS[alvo.tipo]}: ${alvo.nome || ''}`);
+        return `<a href="#" class="livro-link ${alvo.tipo}" data-tipo="${alvo.tipo}" data-id="${escaparHtml(alvo.id)}" title="${dica}">${rotulo}</a>`;
+    });
+}
+
+function _htmlValorCampoLivro(valor) {
+    return _aplicarLinksLivro(escaparHtml(valor));
+}
+
+// Abre o destino de um link. Fichas e NPCs usam o mesmo modal da ficha (que fica
+// abaixo do modal do livro), então ele sobe de camada enquanto estiver aberto;
+// o livro continua aberto por baixo e reaparece quando o modal fecha.
+function abrirAlvoLinkLivro(tipo, id) {
+    if (tipo === 'casa') {
+        abrirModalCasa(id);
+    } else if (tipo === 'personagem') {
+        abrirModalFicha(id);
+        document.getElementById('modal-ficha-overlay').style.zIndex = '10600';
+    } else if (tipo === 'npc') {
+        const sep = id.indexOf('__');
+        if (sep === -1) return;
+        document.getElementById('modal-ficha-overlay').style.zIndex = '10600';
+        abrirModalNPCGlobal(id.slice(0, sep), id.slice(sep + 2));
+    } else if (tipo === 'livro') {
+        abrirLivro(id, 'link');
+    }
+}
+
+// Cliques em links [[...]] e no índice lateral (um só ouvinte para a página toda,
+// pois o conteúdo do livro é recriado a cada abertura).
+document.addEventListener('click', (e) => {
+    if (!e.target || !e.target.closest) return;
+
+    const itemIndice = e.target.closest('.livro-indice a[data-alvo]');
+    if (itemIndice) {
+        e.preventDefault();
+        const detalhes = itemIndice.closest('details');
+        if (detalhes && window.matchMedia && window.matchMedia('(max-width: 899px)').matches) detalhes.open = false;
+        const alvo = document.getElementById(itemIndice.dataset.alvo);
+        if (alvo) alvo.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+    }
+
+    const link = e.target.closest('a.livro-link[data-tipo]');
+    if (link) {
+        e.preventDefault();
+        abrirAlvoLinkLivro(link.dataset.tipo, link.dataset.id);
+    }
+});
+
+// ---- Texto do livro ---------------------------------------------------------
+function _textoPuroLinha(t) {
+    return t
+        .replace(/\*\*(.+?)\*\*/g, '$1')
+        .replace(/\*(.+?)\*/g, '$1')
+        .replace(/\[\[([^\[\]|]*)\|([^\[\]]*)\]\]/g, '$2')
+        .replace(/\[\[([^\[\]]*)\]\]/g, (_, nome) => nome.replace(/^(casa|personagem|npc|livro)\s*:\s*/i, ''));
+}
+
+// Converte o texto simples do livro em HTML seguro e monta o índice de capítulos.
+// Tudo é escapado primeiro; só depois entram as poucas marcações permitidas:
+//   # Capítulo   ## Subtítulo   > citação   - item   ---   **negrito**   *itálico*   [[link]]
+// "prefixo" evita ids repetidos quando leitura e prévia existem ao mesmo tempo.
+function _processarTextoLivro(texto, prefixo = 'lv') {
     const linhas = escaparHtml(texto || '').replace(/\r\n?/g, '\n').split('\n');
-    const fmt = (t) => t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>');
+    const fmt = (t) => _aplicarLinksLivro(
+        t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>')
+    );
     let html = '';
     let paragrafo = [], lista = [], citacao = [];
+    const indice = [];
+    let contadorTitulos = 0;
 
     const fecharBlocos = () => {
         if (paragrafo.length) { html += `<p>${paragrafo.map(fmt).join('<br>')}</p>`; paragrafo = []; }
         if (lista.length) { html += `<ul>${lista.map(i => `<li>${fmt(i)}</li>`).join('')}</ul>`; lista = []; }
         if (citacao.length) { html += `<blockquote>${citacao.map(fmt).join('<br>')}</blockquote>`; citacao = []; }
+    };
+    const titulo = (nivel, tag, conteudo) => {
+        const id = `${prefixo}-s${++contadorTitulos}`;
+        indice.push({ nivel, id, texto: _textoPuroLinha(conteudo) });
+        html += `<${tag} id="${id}">${fmt(conteudo)}</${tag}>`;
     };
 
     for (const linha of linhas) {
@@ -3042,8 +3272,8 @@ function renderizarTextoLivro(texto) {
         let m;
         if (!t) { fecharBlocos(); continue; }
         if (/^---+$/.test(t)) { fecharBlocos(); html += '<div class="livro-divisor"><span></span></div>'; continue; }
-        if ((m = t.match(/^##\s+(.+)$/))) { fecharBlocos(); html += `<h3>${fmt(m[1])}</h3>`; continue; }
-        if ((m = t.match(/^#\s+(.+)$/))) { fecharBlocos(); html += `<h2>${fmt(m[1])}</h2>`; continue; }
+        if ((m = t.match(/^##\s+(.+)$/))) { fecharBlocos(); titulo(2, 'h3', m[1]); continue; }
+        if ((m = t.match(/^#\s+(.+)$/))) { fecharBlocos(); titulo(1, 'h2', m[1]); continue; }
         if ((m = t.match(/^&gt;\s?(.*)$/))) {
             if (paragrafo.length || lista.length) fecharBlocos();
             citacao.push(m[1]); continue;
@@ -3056,15 +3286,55 @@ function renderizarTextoLivro(texto) {
         paragrafo.push(t);
     }
     fecharBlocos();
-    return html;
+    return { html, indice };
 }
 
+function renderizarTextoLivro(texto, prefixo) {
+    return _processarTextoLivro(texto, prefixo).html;
+}
+
+// ---- Índice lateral ---------------------------------------------------------
+// Só aparece quando o livro tem pelo menos dois títulos (# ou ##). No desktop
+// fica fixo ao lado do texto; no celular vira um bloco recolhível no topo.
+function _htmlIndiceLivro(indice) {
+    if (indice.length < 2) return '';
+    const aberto = (window.matchMedia && window.matchMedia('(min-width: 900px)').matches) ? 'open' : '';
+    return `
+        <details class="livro-indice" ${aberto}>
+            <summary>📑 Índice</summary>
+            <ol>${indice.map(i => `<li class="nivel-${i.nivel}"><a href="#${i.id}" data-alvo="${i.id}">${i.texto}</a></li>`).join('')}</ol>
+        </details>`;
+}
+
+// Destaca no índice o título que está passando pela tela.
+function _ativarIndiceLivro() {
+    const overlay = document.getElementById('modal-livro-overlay');
+    overlay.onscroll = null;
+    const links = Array.from(document.querySelectorAll('#modal-livro-conteudo .livro-indice a[data-alvo]'));
+    if (!links.length) return;
+    const alvos = links.map(a => document.getElementById(a.dataset.alvo));
+    let agendado = false;
+
+    const atualizar = () => {
+        agendado = false;
+        let ativo = -1;
+        alvos.forEach((h, i) => { if (h && h.getBoundingClientRect().top <= 140) ativo = i; });
+        links.forEach((a, i) => a.classList.toggle('ativo', i === ativo));
+    };
+    overlay.onscroll = () => {
+        if (!agendado) { agendado = true; requestAnimationFrame(atualizar); }
+    };
+    atualizar();
+}
+
+// ---- Capa e estantes --------------------------------------------------------
 // Capa de um livro: imagem enviada pelo autor ou uma capa gerada (couro na cor
 // da categoria, moldura, emoji e título).
 function _htmlCapaLivro(id, l) {
     const cat = LIVRO_CATEGORIAS[l.categoria] || LIVRO_CATEGORIAS.outros;
     const imagem = _urlImagemSegura(l.capa);
     const pendente = l.status === 'pendente';
+    const favorito = _favoritosLivros.has(id);
     return `
         <button class="livro-capa ${imagem ? 'com-imagem' : ''} ${pendente ? 'pendente' : ''}"
                 style="--cor-cat:${cat.cor}; --cor-cat-escura:${cat.escura};"
@@ -3078,22 +3348,32 @@ function _htmlCapaLivro(id, l) {
             </span>
             ${l.canone ? '<span class="livro-selo-canone">✦ Cânone</span>' : ''}
             ${pendente ? '<span class="livro-selo-pendente">⏳ Pendente</span>' : ''}
+            ${favorito ? '<span class="livro-selo-favorito" title="Nos seus favoritos">★</span>' : ''}
         </button>
     `;
 }
 
 function renderizarChipsBiblioteca() {
-    const el = document.getElementById('biblioteca-chips');
-    if (!el) return;
     const f = _bibliotecaFiltro;
     const chip = (ativo, acao, texto) =>
         `<button class="filtro-tag ${ativo ? 'ativo' : ''}" onclick="${acao}">${texto}</button>`;
+
+    const visao = document.getElementById('biblioteca-visao');
+    if (visao) {
+        visao.innerHTML =
+            chip(f.visao === 'estantes', "definirVisaoBiblioteca('estantes')", '📚 Estantes') +
+            chip(f.visao === 'linha', "definirVisaoBiblioteca('linha')", '⏳ Linha do tempo');
+    }
+
+    const el = document.getElementById('biblioteca-chips');
+    if (!el) return;
     el.innerHTML =
         chip(f.categoria === 'todas', "definirCategoriaBiblioteca('todas')", 'Todas') +
         Object.entries(LIVRO_CATEGORIAS)
             .map(([k, c]) => chip(f.categoria === k, `definirCategoriaBiblioteca('${k}')`, `${c.emoji} ${c.rotulo}`))
             .join('') +
-        chip(f.meus, 'alternarMeusLivros()', '📖 Meus livros');
+        chip(f.meus, 'alternarMeusLivros()', '📖 Meus livros') +
+        chip(f.favoritos, 'alternarFavoritosBiblioteca()', '★ Favoritos');
 }
 
 function renderizarBiblioteca() {
@@ -3115,11 +3395,17 @@ function renderizarBiblioteca() {
 
     let livros = todos;
     if (f.meus) livros = livros.filter(([, l]) => l.autorUid === uid);
+    if (f.favoritos) livros = livros.filter(([id]) => _favoritosLivros.has(id));
     if (f.categoria !== 'todas') livros = livros.filter(([, l]) => l.categoria === f.categoria);
     if (termo) livros = livros.filter(([, l]) => _livroCombinaBusca(l, termo));
     livros.sort(porTitulo);
 
-    const filtrando = Boolean(termo) || f.categoria !== 'todas' || f.meus;
+    if (f.visao === 'linha') {
+        el.innerHTML = _htmlLinhaDoTempo(livros);
+        return;
+    }
+
+    const filtrando = Boolean(termo) || f.categoria !== 'todas' || f.meus || f.favoritos;
     if (filtrando) {
         el.innerHTML = livros.length === 0
             ? '<p class="mochila-vazia">Nenhum livro encontrado com esses filtros.</p>'
@@ -3166,10 +3452,207 @@ function alternarMeusLivros() {
     renderizarBiblioteca();
 }
 
+function alternarFavoritosBiblioteca() {
+    _bibliotecaFiltro.favoritos = !_bibliotecaFiltro.favoritos;
+    renderizarBiblioteca();
+}
+
+function definirVisaoBiblioteca(visao) {
+    _bibliotecaFiltro.visao = visao === 'linha' ? 'linha' : 'estantes';
+    renderizarBiblioteca();
+}
+
+// ---- Linha do tempo -----------------------------------------------------------
+// Mostra os livros publicados que têm "ano" preenchido, em ordem cronológica,
+// respeitando a busca e os filtros ativos.
+function _formatarAnoLivro(ano, comSigla = true) {
+    const era = ano < 0 ? LINHA_TEMPO_ERAS.antes : LINHA_TEMPO_ERAS.depois;
+    return `${Math.abs(ano)}${comSigla ? ' ' + era.sigla : ''}`;
+}
+
+function _periodoLivro(l) {
+    if (!Number.isFinite(l.ano)) return '';
+    if (!Number.isFinite(l.anoFim) || l.anoFim === l.ano) return _formatarAnoLivro(l.ano);
+    const mesmaEra = (l.ano < 0) === (l.anoFim < 0);
+    return `${_formatarAnoLivro(l.ano, !mesmaEra)} – ${_formatarAnoLivro(l.anoFim)}`;
+}
+
+function _htmlLinhaDoTempo(livros) {
+    const publicados = livros.filter(([, l]) => l.status === 'publicado');
+    const comAno = publicados
+        .filter(([, l]) => Number.isFinite(l.ano))
+        .sort((a, b) =>
+            (a[1].ano - b[1].ano) ||
+            ((a[1].anoFim ?? a[1].ano) - (b[1].anoFim ?? b[1].ano)) ||
+            (a[1].titulo || '').localeCompare(b[1].titulo || '', 'pt-BR', { sensitivity: 'base' }));
+    const semAno = publicados.length - comAno.length;
+
+    if (comAno.length === 0) {
+        return `<p class="mochila-vazia">Nenhum livro com ano definido${publicados.length ? ' nestes filtros' : ''}.
+            Ao escrever ou editar um livro, preencha o campo <strong>Ano na Linha do Tempo</strong> para ele aparecer aqui.</p>`;
+    }
+
+    let eraAtual = null;
+    let lado = 0;
+    const itens = comAno.map(([id, l]) => {
+        const era = l.ano < 0 ? 'antes' : 'depois';
+        let marco = '';
+        if (era !== eraAtual) {
+            eraAtual = era;
+            marco = `<div class="linha-tempo-era">${LINHA_TEMPO_ERAS[era].emoji} ${LINHA_TEMPO_ERAS[era].rotulo}</div>`;
+        }
+        const cat = LIVRO_CATEGORIAS[l.categoria] || LIVRO_CATEGORIAS.outros;
+        const classeLado = (lado++ % 2 === 0) ? 'esquerda' : 'direita';
+        return `${marco}
+            <div class="linha-tempo-item ${classeLado}" style="--cor-cat:${cat.cor};">
+                <span class="linha-tempo-ponto" aria-hidden="true">${cat.emoji}</span>
+                <button type="button" class="linha-tempo-cartao" onclick="abrirLivro('${id}')">
+                    <span class="linha-tempo-ano">${escaparHtml(_periodoLivro(l))}</span>
+                    <strong class="linha-tempo-titulo">${escaparHtml(l.titulo || 'Sem título')}</strong>
+                    ${l.resumo ? `<span class="linha-tempo-resumo">${escaparHtml(l.resumo)}</span>` : ''}
+                    <span class="linha-tempo-cat">${cat.emoji} ${cat.rotulo}${l.canone ? ' · ✦ Cânone' : ''}</span>
+                </button>
+            </div>`;
+    }).join('');
+
+    const aviso = semAno > 0
+        ? `<p class="biblioteca-contagem linha-tempo-aviso">${semAno} livro${semAno === 1 ? '' : 's'} sem ano não aparece${semAno === 1 ? '' : 'm'} na linha do tempo.</p>`
+        : '';
+    return `<div class="linha-tempo">${itens}</div>${aviso}`;
+}
+
+// ---- Favoritos -----------------------------------------------------------------
+async function alternarFavoritoLivro(id) {
+    if (!usuarioAtual) return;
+    const ref = doc(db, 'usuarios', usuarioAtual.uid, 'livrosFavoritos', id);
+    try {
+        if (_favoritosLivros.has(id)) await deleteDoc(ref);
+        else await setDoc(ref, { criadoEm: Date.now() });
+    } catch (erro) {
+        mostrarToast('Não foi possível atualizar seus favoritos.', 'erro', 'Erro');
+        console.error(erro);
+    }
+}
+
+function _atualizarBotaoFavoritoLivro() {
+    const botao = document.getElementById('livro-btn-favorito');
+    if (!botao || !_livroAbertoId) return;
+    const fav = _favoritosLivros.has(_livroAbertoId);
+    botao.classList.toggle('ativo', fav);
+    botao.textContent = fav ? '★ Favorito' : '☆ Favoritar';
+}
+
+// ---- Comentários -----------------------------------------------------------------
+// Subcoleção livros/{id}/comentarios. Só livros publicados têm comentários.
+function _pararComentariosLivro() {
+    if (_comentariosUnsub) { try { _comentariosUnsub(); } catch (e) { /* ignora */ } }
+    _comentariosUnsub = null;
+    _comentariosCache = [];
+}
+
+function _iniciarComentariosLivro(id) {
+    _pararComentariosLivro();
+    const consulta = query(collection(db, 'livros', id, 'comentarios'), orderBy('criadoEm', 'desc'), limit(100));
+    _comentariosUnsub = onSnapshot(consulta, (snap) => {
+        if (_livroAbertoId !== id) return;
+        const lista = [];
+        snap.forEach(d => lista.push({ id: d.id, ...d.data() }));
+        _comentariosCache = lista.reverse();      // mais antigos primeiro
+        _renderizarComentariosLivro();
+    }, (erro) => {
+        console.warn('Comentários indisponíveis:', erro.message);
+        const el = document.getElementById('livro-comentarios-lista');
+        if (el) el.innerHTML = '<p class="livro-comentarios-vazio">Não foi possível carregar os comentários.</p>';
+    });
+}
+
+function _renderizarComentariosLivro() {
+    const lista = document.getElementById('livro-comentarios-lista');
+    if (!lista) return;
+    const livro = _livrosCache[_livroAbertoId] || {};
+    const uid = usuarioAtual ? usuarioAtual.uid : null;
+    const souMestre = uid === ADMIN_UID;
+    const souAutorDoLivro = uid && livro.autorUid === uid;
+
+    const contagem = document.getElementById('livro-comentarios-contagem');
+    if (contagem) contagem.textContent = _comentariosCache.length ? `(${_comentariosCache.length})` : '';
+
+    if (_comentariosCache.length === 0) {
+        lista.innerHTML = '<p class="livro-comentarios-vazio">Nenhum comentário ainda. Seja o primeiro a comentar!</p>';
+        return;
+    }
+    const limite = _comentariosCache.length >= 100
+        ? '<p class="livro-comentarios-vazio">Mostrando os 100 comentários mais recentes.</p>' : '';
+    lista.innerHTML = limite + _comentariosCache.map(c => {
+        const quando = c.criadoEm ? new Date(c.criadoEm).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '';
+        const podeExcluir = souMestre || souAutorDoLivro || (uid && c.autorUid === uid);
+        return `
+            <article class="livro-comentario">
+                <header>
+                    <strong>${escaparHtml(c.autorNome || 'Jogador')}</strong>
+                    <time>${escaparHtml(quando)}</time>
+                    ${podeExcluir ? `<button type="button" class="livro-comentario-excluir" title="Excluir comentário" onclick="excluirComentarioLivro('${escaparHtml(c.id)}')">🗑️</button>` : ''}
+                </header>
+                <p>${escaparHtml(c.texto || '')}</p>
+            </article>`;
+    }).join('');
+}
+
+async function enviarComentarioLivro() {
+    const livroId = _livroAbertoId;
+    const livro = livroId ? _livrosCache[livroId] : null;
+    if (!usuarioAtual || !livro) return;
+    if (livro.status !== 'publicado') {
+        return mostrarToast('Só dá para comentar em livros publicados.', 'erro', 'Livro pendente');
+    }
+    const campo = document.getElementById('livro-comentario-texto');
+    const texto = campo.value.trim();
+    if (!texto) return mostrarToast('Escreva algo antes de comentar.', 'erro', 'Comentário vazio');
+    if (texto.length > LIVRO_COMENTARIO_MAX) {
+        return mostrarToast(`O comentário passa de ${LIVRO_COMENTARIO_MAX} caracteres.`, 'erro', 'Comentário muito longo');
+    }
+
+    const botao = document.getElementById('btn-enviar-comentario');
+    botao.disabled = true;
+    try {
+        await setDoc(doc(collection(db, 'livros', livroId, 'comentarios')), {
+            autorUid: usuarioAtual.uid,
+            autorNome: (nomeUsuarioAtual || 'Jogador').slice(0, 60),
+            texto,
+            criadoEm: Date.now()
+        });
+        campo.value = '';
+    } catch (erro) {
+        mostrarToast('Não foi possível enviar o comentário.', 'erro', 'Erro');
+        console.error(erro);
+    } finally {
+        botao.disabled = false;
+    }
+}
+
+async function excluirComentarioLivro(comentarioId) {
+    const livroId = _livroAbertoId;
+    if (!livroId) return;
+    const ok = await mostrarConfirmacao('Excluir este comentário? Essa ação não pode ser desfeita.');
+    if (!ok) return;
+    try {
+        await deleteDoc(doc(db, 'livros', livroId, 'comentarios', comentarioId));
+    } catch (erro) {
+        mostrarToast('Não foi possível excluir o comentário.', 'erro', 'Erro');
+        console.error(erro);
+    }
+}
+
 // ---- Leitura -----------------------------------------------------------
-function abrirLivro(id) {
+// modo: 'novo' (padrão, zera o "voltar") | 'link' (veio de um [[link]], empilha o
+// livro atual) | 'voltar' (não mexe na pilha)
+function abrirLivro(id, modo = 'novo') {
     const l = _livrosCache[id];
     if (!l) return;
+
+    if (modo === 'novo') _livroHistorico = [];
+    else if (modo === 'link' && _livroAbertoId && _livroAbertoId !== id) _livroHistorico.push(_livroAbertoId);
+    _livroAbertoId = id;
 
     const cat = LIVRO_CATEGORIAS[l.categoria] || LIVRO_CATEGORIAS.outros;
     const souMestre = usuarioAtual && usuarioAtual.uid === ADMIN_UID;
@@ -3177,6 +3660,8 @@ function abrirLivro(id) {
     const pendente = l.status === 'pendente';
     const data = l.atualizadoEm ? new Date(l.atualizadoEm).toLocaleDateString('pt-BR') : '';
     const tags = (l.tags || []).map(t => `<span class="livro-tag">${escaparHtml(t)}</span>`).join('');
+    const periodo = _periodoLivro(l);
+    const camposModelo = _htmlCamposModeloLivro(l);
 
     const controles = [];
     if (souMestre && pendente) controles.push(`<button class="btn-admin btn-aprovar" onclick="aprovarLivro('${id}')">✅ Aprovar e publicar</button>`);
@@ -3184,12 +3669,35 @@ function abrirLivro(id) {
     if (souMestre || souAutor) controles.push(`<button class="btn-admin" onclick="fecharModalLivro(); abrirFormularioLivro('${id}')">✏️ Editar</button>`);
     if (souMestre || souAutor) controles.push(`<button class="btn-admin btn-vender" onclick="excluirLivro('${id}')">🗑️ Excluir</button>`);
 
+    const { html: textoHtml, indice } = _processarTextoLivro(l.conteudo, 'lv');
+    const indiceHtml = _htmlIndiceLivro(indice);
+
+    const anterior = _livroHistorico.length ? _livrosCache[_livroHistorico[_livroHistorico.length - 1]] : null;
+    const barraVoltar = anterior
+        ? `<div class="livro-voltar-barra"><button type="button" onclick="voltarLivro()">← Voltar a «${escaparHtml(anterior.titulo || 'livro anterior')}»</button></div>`
+        : '';
+    const botaoFavorito = !pendente
+        ? `<button type="button" id="livro-btn-favorito" class="livro-btn-favorito ${_favoritosLivros.has(id) ? 'ativo' : ''}" onclick="alternarFavoritoLivro('${id}')">${_favoritosLivros.has(id) ? '★ Favorito' : '☆ Favoritar'}</button>`
+        : '';
+
+    const comentarios = pendente ? '' : `
+        <section class="livro-comentarios">
+            <h3>💬 Comentários <small id="livro-comentarios-contagem"></small></h3>
+            <div id="livro-comentarios-lista"><p class="livro-comentarios-vazio">Carregando comentários...</p></div>
+            <div class="livro-comentario-form">
+                <textarea id="livro-comentario-texto" rows="3" maxlength="${LIVRO_COMENTARIO_MAX}" placeholder="Deixe um comentário sobre este livro..."></textarea>
+                <button type="button" class="btn-main" id="btn-enviar-comentario" onclick="enviarComentarioLivro()">Comentar</button>
+            </div>
+        </section>`;
+
     const el = document.getElementById('modal-livro-conteudo');
-    el.className = 'modal-livro-box';
+    el.className = 'modal-livro-box' + (indiceHtml ? ' com-indice' : '');
     el.style.cssText = `--cor-cat:${cat.cor}; --cor-cat-escura:${cat.escura};`;
     el.innerHTML = `
         <button class="modal-fechar" onclick="fecharModalLivro()">✕</button>
+        ${barraVoltar}
         <header class="livro-cabecalho">
+            ${botaoFavorito}
             <span class="livro-cat-selo">${cat.emoji} ${cat.rotulo}</span>
             <h2>${escaparHtml(l.titulo || 'Sem título')}</h2>
             <div class="lema-ornamentado"><span class="lema-linha"></span><span class="livro-orn-emoji">${cat.emoji}</span><span class="lema-linha direita"></span></div>
@@ -3197,26 +3705,60 @@ function abrirLivro(id) {
         </header>
         <div class="livro-corpo">
             ${pendente ? '<p class="livro-aviso-pendente">⏳ Este livro aguarda a aprovação do Mestre. Por enquanto, só o autor e o Mestre podem vê-lo.</p>' : ''}
-            <aside class="livro-infobox">
-                <dl>
-                    <dt>Categoria</dt><dd>${cat.emoji} ${cat.rotulo}</dd>
-                    ${l.epoca ? `<dt>Época</dt><dd>${escaparHtml(l.epoca)}</dd>` : ''}
-                    <dt>Autor</dt><dd>${escaparHtml(l.autorNome || 'Anônimo')}</dd>
-                    ${data ? `<dt>Atualizado em</dt><dd>${data}</dd>` : ''}
-                    <dt>Status</dt><dd>${l.canone ? '<span class="livro-status canone">✦ Cânone</span>' : '<span class="livro-status relato">✎ Relato de jogador</span>'}</dd>
-                </dl>
-                ${tags ? `<div class="livro-tags">${tags}</div>` : ''}
-            </aside>
-            <div class="livro-texto">${renderizarTextoLivro(l.conteudo)}</div>
+            <div class="livro-layout ${indiceHtml ? 'com-indice' : ''}">
+                ${indiceHtml}
+                <div class="livro-principal">
+                    <aside class="livro-infobox">
+                        <dl>
+                            <dt>Categoria</dt><dd>${cat.emoji} ${cat.rotulo}</dd>
+                            ${l.epoca ? `<dt>Época</dt><dd>${escaparHtml(l.epoca)}</dd>` : ''}
+                            ${periodo ? `<dt>Linha do tempo</dt><dd>${escaparHtml(periodo)}</dd>` : ''}
+                            ${camposModelo}
+                            <dt>Autor</dt><dd>${escaparHtml(l.autorNome || 'Anônimo')}</dd>
+                            ${data ? `<dt>Atualizado em</dt><dd>${data}</dd>` : ''}
+                            <dt>Status</dt><dd>${l.canone ? '<span class="livro-status canone">✦ Cânone</span>' : '<span class="livro-status relato">✎ Relato de jogador</span>'}</dd>
+                        </dl>
+                        ${tags ? `<div class="livro-tags">${tags}</div>` : ''}
+                    </aside>
+                    <div class="livro-texto">${textoHtml}</div>
+                </div>
+            </div>
             ${controles.length ? `<div class="controles-admin livro-controles">${controles.join('')}</div>` : ''}
+            ${comentarios}
         </div>
     `;
-    document.getElementById('modal-livro-overlay').style.display = 'flex';
+
+    const overlay = document.getElementById('modal-livro-overlay');
+    overlay.style.display = 'flex';
+    overlay.scrollTop = 0;
+    _ativarIndiceLivro();
+    if (pendente) _pararComentariosLivro();
+    else _iniciarComentariosLivro(id);
+}
+
+function voltarLivro() {
+    const anterior = _livroHistorico.pop();
+    if (anterior && _livrosCache[anterior]) abrirLivro(anterior, 'voltar');
 }
 
 function fecharModalLivro(event) {
     if (event && event.target.id !== 'modal-livro-overlay') return;
-    document.getElementById('modal-livro-overlay').style.display = 'none';
+    const overlay = document.getElementById('modal-livro-overlay');
+    overlay.style.display = 'none';
+    overlay.onscroll = null;
+    _livroAbertoId = null;
+    _livroHistorico = [];
+    _pararComentariosLivro();
+}
+
+// Linhas do modelo da categoria (infobox da tela de leitura)
+function _htmlCamposModeloLivro(l) {
+    const modelo = LIVRO_MODELOS[l.categoria] || [];
+    const valores = l.campos || {};
+    return modelo
+        .filter(c => typeof valores[c.chave] === 'string' && valores[c.chave].trim())
+        .map(c => `<dt>${escaparHtml(c.rotulo)}</dt><dd>${_htmlValorCampoLivro(valores[c.chave])}</dd>`)
+        .join('');
 }
 
 // ---- Editor ------------------------------------------------------------
@@ -3249,10 +3791,18 @@ async function abrirFormularioLivro(id) {
     document.getElementById('livro-titulo').value = campos.titulo || '';
     selCat.value = campos.categoria || 'historia';
     document.getElementById('livro-epoca').value = campos.epoca || '';
+    document.getElementById('livro-ano').value = Number.isFinite(campos.ano) ? campos.ano : '';
+    document.getElementById('livro-ano-fim').value = Number.isFinite(campos.anoFim) ? campos.anoFim : '';
     document.getElementById('livro-resumo').value = campos.resumo || '';
     document.getElementById('livro-tags').value = (campos.tags || []).join(', ');
     document.getElementById('livro-conteudo').value = campos.conteudo || '';
     document.getElementById('livro-capa').value = campos.capa || '';
+
+    // Campos do modelo da categoria (o rascunho guarda o que já foi digitado)
+    _livroCamposRascunho = { ...(campos.campos || {}) };
+    document.getElementById('livro-campos-modelo').innerHTML = '';
+    selCat.onchange = renderizarCamposModeloLivro;
+    renderizarCamposModeloLivro();
 
     const prevImg = document.getElementById('preview-img-capa-livro');
     const prevNome = document.getElementById('preview-nome-capa-livro');
@@ -3269,7 +3819,18 @@ async function abrirFormularioLivro(id) {
     document.getElementById('btn-salvar-livro').innerText = souMestre ? '📚 Salvar livro' : '📚 Enviar para aprovação';
 
     const area = document.getElementById('livro-conteudo');
-    area.oninput = atualizarContadorLivro;
+    area.oninput = () => { atualizarContadorLivro(); _atualizarSugestoesLivro(); };
+    area.onclick = _atualizarSugestoesLivro;
+    area.onkeydown = _teclaSugestoesLivro;
+    area.onblur = () => setTimeout(_fecharSugestoesLivro, 200);
+    const caixaSugestoes = document.getElementById('livro-sugestoes');
+    caixaSugestoes.onmousedown = (e) => {
+        const botao = e.target.closest('.livro-sugestao');
+        if (!botao) return;
+        e.preventDefault();      // não tira o foco do texto
+        _inserirSugestaoLivro(Number(botao.dataset.idx));
+    };
+    _fecharSugestoesLivro();
     atualizarContadorLivro();
     alternarAbaLivro('escrever');
 
@@ -3277,7 +3838,44 @@ async function abrirFormularioLivro(id) {
 }
 
 function fecharFormularioLivro() {
+    _fecharSugestoesLivro();
     document.getElementById('formulario-livro-overlay').style.display = 'none';
+}
+
+// Desenha os inputs do modelo da categoria escolhida. Valores já digitados são
+// mantidos ao trocar de categoria (campos com a mesma chave, como "local",
+// aproveitam o que foi escrito).
+function _coletarCamposModeloLivro() {
+    document.querySelectorAll('#livro-campos-modelo [data-campo]').forEach(el => {
+        _livroCamposRascunho[el.dataset.campo] = el.value;
+    });
+}
+
+function renderizarCamposModeloLivro() {
+    const area = document.getElementById('livro-campos-modelo');
+    if (!area) return;
+    _coletarCamposModeloLivro();
+
+    const chaveCat = document.getElementById('livro-categoria').value;
+    const cat = LIVRO_CATEGORIAS[chaveCat] || LIVRO_CATEGORIAS.outros;
+    const modelo = LIVRO_MODELOS[chaveCat] || [];
+    if (modelo.length === 0) { area.innerHTML = ''; area.style.display = 'none'; return; }
+
+    const campoHtml = (c) => {
+        const valor = _livroCamposRascunho[c.chave] || '';
+        if (c.tipo === 'select') {
+            const opcoes = c.opcoes.map(o => `<option value="${escaparHtml(o)}" ${o === valor ? 'selected' : ''}>${escaparHtml(o)}</option>`).join('');
+            return `<div class="input-group"><label>${escaparHtml(c.rotulo)}</label>
+                <select data-campo="${c.chave}"><option value="">—</option>${opcoes}</select></div>`;
+        }
+        return `<div class="input-group"><label>${escaparHtml(c.rotulo)}</label>
+            <input type="text" data-campo="${c.chave}" maxlength="${LIVRO_CAMPO_MAX}" value="${escaparHtml(valor)}" placeholder="${escaparHtml(c.dica || '')}"></div>`;
+    };
+    area.style.display = 'block';
+    area.innerHTML = `
+        <div class="livro-modelo-titulo">${cat.emoji} Ficha de ${cat.rotulo}</div>
+        <div class="livro-modelo-grade">${modelo.map(campoHtml).join('')}</div>
+        <span class="dica-campo">Todos opcionais. Aceitam links, como [[Stark]].</span>`;
 }
 
 function atualizarContadorLivro() {
@@ -3295,9 +3893,106 @@ function alternarAbaLivro(aba) {
     const area = document.getElementById('livro-previa-area');
     area.style.display = previa ? 'block' : 'none';
     if (previa) {
-        area.innerHTML = renderizarTextoLivro(document.getElementById('livro-conteudo').value)
+        _fecharSugestoesLivro();
+        area.innerHTML = renderizarTextoLivro(document.getElementById('livro-conteudo').value, 'lvp')
             || '<p class="mochila-vazia">Nada para mostrar ainda.</p>';
     }
+}
+
+// ---- Sugestões de [[links]] no editor --------------------------------------
+// Ao digitar "[[" aparece uma lista com Casas, personagens, NPCs e livros que
+// combinam com o que foi digitado.
+let _sugestoesLivro = [];
+let _sugestaoAtiva = 0;
+let _sugestaoInicio = 0;
+
+function _nomesLinkaveis() {
+    const souMestre = Boolean(usuarioAtual && usuarioAtual.uid === ADMIN_UID);
+    const lista = [];
+    const vistos = new Set();
+    const adicionar = (tipo, nome) => {
+        if (!nome || typeof nome !== 'string') return;
+        const chave = `${tipo}|${_normalizarNomeLink(nome)}`;
+        if (vistos.has(chave)) return;
+        vistos.add(chave);
+        lista.push({ tipo, nome });
+    };
+    Object.values(_casasCache).forEach(c => adicionar('casa', c && c.nome));
+    Object.values(_fichasMuralCache).forEach(f => {
+        if (f && (f.statusAprovacao !== 'pendente' || souMestre)) adicionar('personagem', f.nome);
+    });
+    Object.values(_npcsGlobalCache).forEach(n => adicionar('npc', n && n.nome));
+    Object.entries(_livrosCache).forEach(([id, l]) => { if (id !== _livroEditandoId) adicionar('livro', l.titulo); });
+    return lista;
+}
+
+function _fecharSugestoesLivro() {
+    const box = document.getElementById('livro-sugestoes');
+    if (box) { box.style.display = 'none'; box.innerHTML = ''; }
+    _sugestoesLivro = [];
+}
+
+function _atualizarSugestoesLivro() {
+    const ta = document.getElementById('livro-conteudo');
+    const box = document.getElementById('livro-sugestoes');
+    if (!ta || !box) return;
+
+    const antes = ta.value.slice(0, ta.selectionStart);
+    const m = antes.match(/\[\[([^\[\]\n|]*)$/);
+    if (!m) return _fecharSugestoesLivro();
+
+    const termo = _normalizarNomeLink(m[1].replace(/^(casa|personagem|npc|livro)\s*:\s*/i, ''));
+    const lista = _nomesLinkaveis()
+        .filter(i => !termo || _normalizarNomeLink(i.nome).includes(termo))
+        .sort((a, b) => {
+            const ap = _normalizarNomeLink(a.nome).startsWith(termo) ? 0 : 1;
+            const bp = _normalizarNomeLink(b.nome).startsWith(termo) ? 0 : 1;
+            return (ap - bp) || a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' });
+        })
+        .slice(0, 8);
+    if (lista.length === 0) return _fecharSugestoesLivro();
+
+    _sugestoesLivro = lista;
+    _sugestaoAtiva = 0;
+    _sugestaoInicio = antes.length - m[0].length;      // posição do "[["
+    box.innerHTML = lista.map((i, idx) =>
+        `<button type="button" class="livro-sugestao ${idx === 0 ? 'ativa' : ''}" data-idx="${idx}">
+            <span class="livro-sugestao-tipo">${LINK_ROTULOS[i.tipo]}</span>${escaparHtml(i.nome)}
+        </button>`).join('');
+    box.style.display = 'block';
+}
+
+function _marcarSugestaoAtiva() {
+    document.querySelectorAll('#livro-sugestoes .livro-sugestao').forEach((b, i) => b.classList.toggle('ativa', i === _sugestaoAtiva));
+}
+
+function _teclaSugestoesLivro(e) {
+    if (_sugestoesLivro.length === 0) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); _sugestaoAtiva = (_sugestaoAtiva + 1) % _sugestoesLivro.length; _marcarSugestaoAtiva(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); _sugestaoAtiva = (_sugestaoAtiva - 1 + _sugestoesLivro.length) % _sugestoesLivro.length; _marcarSugestaoAtiva(); }
+    else if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); _inserirSugestaoLivro(_sugestaoAtiva); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); _fecharSugestoesLivro(); }
+}
+
+function _inserirSugestaoLivro(idx) {
+    const item = _sugestoesLivro[idx];
+    if (!item) return;
+    const ta = document.getElementById('livro-conteudo');
+    const valor = ta.value;
+    const cursor = ta.selectionStart;
+
+    // Se o mesmo nome existe em mais de um tipo (ex.: uma Casa e um NPC "Stark"), usa o prefixo
+    const alvoNorm = _normalizarNomeLink(item.nome);
+    const ambiguo = _nomesLinkaveis().filter(i => _normalizarNomeLink(i.nome) === alvoNorm).length > 1;
+    const inserido = `[[${ambiguo ? item.tipo + ':' : ''}${item.nome}]]`;
+
+    const depois = valor.slice(cursor);
+    ta.value = valor.slice(0, _sugestaoInicio) + inserido + (depois.startsWith(']]') ? depois.slice(2) : depois);
+    const pos = _sugestaoInicio + inserido.length;
+    ta.focus();
+    ta.setSelectionRange(pos, pos);
+    _fecharSugestoesLivro();
+    atualizarContadorLivro();
 }
 
 // Botões da barra de formatação: inserem as marcações no texto
@@ -3333,12 +4028,17 @@ function formatarLivro(tipo) {
         const ins = '\n\n---\n\n';
         novo = valor.slice(0, ini) + ins + valor.slice(fim);
         selIni = selFim = ini + ins.length;
+    } else if (tipo === 'link') {
+        // Texto selecionado vira o nome do link; sem seleção, o cursor fica dentro dos colchetes
+        novo = valor.slice(0, ini) + '[[' + sel + ']]' + valor.slice(fim);
+        selIni = ini + 2; selFim = selIni + sel.length;
     }
 
     ta.value = novo;
     ta.focus();
     ta.setSelectionRange(selIni, selFim);
     atualizarContadorLivro();
+    if (tipo === 'link') _atualizarSugestoesLivro();
 }
 
 async function onArquivoCapaLivroSelecionado(input) {
@@ -3359,6 +4059,15 @@ async function onArquivoCapaLivroSelecionado(input) {
     }
 }
 
+// Lê um campo de ano: vazio vira null; fora do intervalo ou não inteiro é inválido (undefined)
+function _lerAnoLivro(idCampo) {
+    const bruto = document.getElementById(idCampo).value.trim();
+    if (bruto === '') return null;
+    const n = Number(bruto);
+    if (!Number.isInteger(n) || Math.abs(n) > LINHA_TEMPO_LIMITE_ANO) return undefined;
+    return n;
+}
+
 async function salvarLivro() {
     const souMestre = usuarioAtual && usuarioAtual.uid === ADMIN_UID;
     const titulo = document.getElementById('livro-titulo').value.trim();
@@ -3370,13 +4079,38 @@ async function salvarLivro() {
         return mostrarToast(`O texto passa de ${LIVRO_LIMITE_TEXTO} caracteres. Divida em dois livros.`, 'erro', 'Texto muito longo');
     }
 
+    const ano = _lerAnoLivro('livro-ano');
+    const anoFim = _lerAnoLivro('livro-ano-fim');
+    if (ano === undefined || anoFim === undefined) {
+        return mostrarToast(`Use números inteiros entre -${LINHA_TEMPO_LIMITE_ANO} e ${LINHA_TEMPO_LIMITE_ANO} nos anos.`, 'erro', 'Ano inválido');
+    }
+    if (anoFim !== null && ano === null) {
+        return mostrarToast('Informe também o ano inicial.', 'erro', 'Ano inicial faltando');
+    }
+    if (anoFim !== null && anoFim < ano) {
+        return mostrarToast('O ano final não pode ser anterior ao inicial.', 'erro', 'Período inválido');
+    }
+
     const tags = document.getElementById('livro-tags').value
         .split(',').map(t => t.trim().slice(0, 24)).filter(Boolean).slice(0, 8);
 
+    // Só entram os campos do modelo da categoria escolhida (e só os preenchidos)
+    const categoria = document.getElementById('livro-categoria').value;
+    _coletarCamposModeloLivro();
+    const camposModelo = {};
+    (LIVRO_MODELOS[categoria] || []).forEach(c => {
+        let v = String(_livroCamposRascunho[c.chave] || '').trim().slice(0, LIVRO_CAMPO_MAX);
+        if (c.tipo === 'select' && !c.opcoes.includes(v)) v = '';
+        if (v) camposModelo[c.chave] = v;
+    });
+
     const dados = {
         titulo,
-        categoria: document.getElementById('livro-categoria').value,
+        categoria,
         epoca: document.getElementById('livro-epoca').value.trim(),
+        ano,
+        anoFim,
+        campos: camposModelo,
         resumo: document.getElementById('livro-resumo').value.trim(),
         tags,
         conteudo,
@@ -3456,6 +4190,13 @@ async function excluirLivro(id) {
     );
     if (!ok) return;
     try {
+        // Os comentários são uma subcoleção e não somem sozinhos com o livro
+        try {
+            const comentarios = await getDocs(collection(db, 'livros', id, 'comentarios'));
+            await Promise.all(comentarios.docs.map(d => deleteDoc(d.ref)));
+        } catch (erroComentarios) {
+            console.warn('Não foi possível limpar os comentários do livro:', erroComentarios.message);
+        }
         await deleteDoc(doc(db, 'livros', id));
         fecharModalLivro();
         mostrarToast('Livro excluído.', 'sucesso', 'Livro excluído');
@@ -3584,6 +4325,7 @@ function fecharModalFicha(event) {
     if (event && event.target !== document.getElementById('modal-ficha-overlay') && event.type !== 'click') return;
     if (event && event.target.closest('.modal-ficha-box') && event.target !== document.getElementById('modal-ficha-overlay')) return;
     document.getElementById('modal-ficha-overlay').style.display = 'none';
+    document.getElementById('modal-ficha-overlay').style.zIndex = '';   // volta à camada normal (foi elevada por um [[link]] da Biblioteca)
     document.body.style.overflow = '';
 }
 
@@ -3661,6 +4403,13 @@ window.alternarMeusLivros = alternarMeusLivros;
 window.formatarLivro = formatarLivro;
 window.alternarAbaLivro = alternarAbaLivro;
 window.onArquivoCapaLivroSelecionado = onArquivoCapaLivroSelecionado;
+window.voltarLivro = voltarLivro;
+window.alternarFavoritoLivro = alternarFavoritoLivro;
+window.alternarFavoritosBiblioteca = alternarFavoritosBiblioteca;
+window.definirVisaoBiblioteca = definirVisaoBiblioteca;
+window.enviarComentarioLivro = enviarComentarioLivro;
+window.excluirComentarioLivro = excluirComentarioLivro;
+window.renderizarCamposModeloLivro = renderizarCamposModeloLivro;
 window.abrirModalCasa = abrirModalCasa;
 window.fecharModalCasa = fecharModalCasa;
 window.abrirFormularioCasa = abrirFormularioCasa;

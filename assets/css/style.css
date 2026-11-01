@@ -4213,6 +4213,7 @@ section,
     width: 100%;
     max-width: 780px;
     overflow: hidden;
+    overflow: clip;   /* clip não vira área de rolagem: o índice lateral (sticky) precisa disso */
     background: linear-gradient(165deg, var(--cor-cat-escura, #1c1812), #14110d 55%);
     border: 1px solid var(--cor-cat, var(--ouro-escuro));
     border-radius: 4px;
@@ -4477,6 +4478,508 @@ section,
     font-size: 1.08em;
     line-height: 1.75;
 }
+
+/* ----- Biblioteca: links [[Nome]], índice, linha do tempo, favoritos, comentários ----- */
+
+/* Links automáticos dentro do texto */
+.livro-link {
+    color: var(--ouro-claro);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--ouro-escuro);
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+}
+
+.livro-link:hover {
+    color: #fff3cf;
+    border-bottom-style: solid;
+}
+
+.livro-link::before {
+    margin-right: 3px;
+    font-size: 0.8em;
+}
+
+.livro-link.casa::before { content: '🏰'; }
+.livro-link.personagem::before { content: '👤'; }
+.livro-link.npc::before { content: '🎭'; }
+.livro-link.livro::before { content: '📖'; }
+
+.livro-link.quebrado {
+    color: var(--texto-fraco);
+    border-bottom: 1px dashed #8a4a4a;
+    cursor: help;
+}
+
+.livro-link.quebrado::before {
+    content: '⚠';
+    color: #b06a6a;
+}
+
+/* Voltar (ao navegar de livro em livro por links) */
+.livro-voltar-barra {
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--borda);
+    background: rgba(0, 0, 0, 0.35);
+}
+
+.livro-voltar-barra button {
+    padding: 2px 4px;
+    background: none;
+    border: none;
+    font-family: 'Cinzel', serif;
+    font-size: 0.72em;
+    letter-spacing: 0.5px;
+    color: var(--ouro-claro);
+    cursor: pointer;
+}
+
+.livro-voltar-barra button:hover {
+    color: #fff3cf;
+    text-decoration: underline;
+}
+
+/* Cabeçalho da leitura: favoritar */
+.livro-cabecalho {
+    position: relative;
+}
+
+.livro-btn-favorito {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    padding: 5px 12px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--borda);
+    border-radius: 14px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.68em;
+    letter-spacing: 0.5px;
+    color: var(--texto-fraco);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.livro-btn-favorito:hover {
+    border-color: var(--ouro-escuro);
+    color: var(--ouro-claro);
+}
+
+.livro-btn-favorito.ativo {
+    background: rgba(201, 164, 73, 0.18);
+    border-color: var(--ouro);
+    color: var(--ouro-claro);
+}
+
+.livro-selo-favorito {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    z-index: 3;
+    font-size: 1.1em;
+    line-height: 1;
+    color: var(--ouro);
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+
+/* Visão: estantes / linha do tempo */
+.biblioteca-visao {
+    margin-top: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--borda);
+}
+
+.biblioteca-visao + .biblioteca-chips {
+    margin-top: 10px;
+}
+
+/* Índice lateral */
+.livro-layout.com-indice {
+    display: grid;
+    grid-template-columns: 210px minmax(0, 1fr);
+    gap: 0 34px;
+    align-items: start;
+}
+
+.modal-livro-box.com-indice {
+    max-width: 1060px;
+}
+
+.livro-principal {
+    min-width: 0;
+}
+
+.livro-principal::after {
+    content: '';
+    display: block;
+    clear: both;
+}
+
+.livro-indice {
+    position: sticky;
+    top: 16px;
+    max-height: calc(100vh - 60px);
+    overflow-y: auto;
+    padding: 12px 12px 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--borda);
+    border-radius: 4px;
+    scrollbar-width: thin;
+}
+
+.livro-indice summary {
+    list-style: none;
+    cursor: pointer;
+    font-family: 'Cinzel', serif;
+    font-size: 0.72em;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--ouro-claro);
+}
+
+.livro-indice summary::-webkit-details-marker {
+    display: none;
+}
+
+.livro-indice ol {
+    list-style: none;
+    margin: 10px 0 0;
+    padding: 0;
+}
+
+.livro-indice li a {
+    display: block;
+    padding: 4px 8px;
+    border-left: 2px solid transparent;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.82em;
+    line-height: 1.3;
+    color: #cfc4a6;
+    text-decoration: none;
+}
+
+.livro-indice li.nivel-2 a {
+    padding-left: 20px;
+    font-size: 0.76em;
+    color: var(--texto-fraco);
+}
+
+.livro-indice li a:hover {
+    color: var(--ouro-claro);
+}
+
+.livro-indice li a.ativo {
+    border-left-color: var(--ouro);
+    background: rgba(201, 164, 73, 0.08);
+    color: var(--ouro-claro);
+}
+
+.livro-texto h2,
+.livro-texto h3 {
+    scroll-margin-top: 16px;
+}
+
+/* Editor: ficha do modelo da categoria */
+.livro-campos-modelo {
+    margin: 4px 0 14px;
+    padding: 12px 14px 8px;
+    border: 1px dashed var(--ouro-escuro);
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.25);
+}
+
+.livro-modelo-titulo {
+    margin-bottom: 8px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.78em;
+    letter-spacing: 1px;
+    color: var(--ouro-claro);
+}
+
+.livro-modelo-grade {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 12px;
+}
+
+.livro-dica-anos {
+    display: block;
+    margin: -4px 0 14px;
+}
+
+/* Editor: sugestões de [[links]] */
+#livro-editor-area {
+    position: relative;
+}
+
+.livro-sugestoes {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 34px;
+    z-index: 6;
+    max-height: 200px;
+    overflow-y: auto;
+    background: #14110d;
+    border: 1px solid var(--ouro-escuro);
+    border-radius: 4px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+}
+
+.livro-sugestao {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 7px 12px;
+    background: none;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--texto);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1em;
+    text-align: left;
+    cursor: pointer;
+}
+
+.livro-sugestao.ativa,
+.livro-sugestao:hover {
+    background: rgba(201, 164, 73, 0.16);
+    color: #fff3cf;
+}
+
+.livro-sugestao-tipo {
+    min-width: 76px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.62em;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--ouro-escuro);
+}
+
+/* Linha do tempo */
+.linha-tempo {
+    position: relative;
+    max-width: 920px;
+    margin: 26px auto 10px;
+    padding: 6px 0 10px;
+}
+
+.linha-tempo::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 2px;
+    transform: translateX(-1px);
+    background: linear-gradient(180deg, transparent, var(--ouro-escuro) 5%, var(--ouro-escuro) 95%, transparent);
+}
+
+.linha-tempo-era {
+    position: relative;
+    z-index: 2;
+    width: fit-content;
+    margin: 22px auto 18px;
+    padding: 5px 18px;
+    background: var(--ouro);
+    border-radius: 14px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.76em;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #1a1305;
+}
+
+.linha-tempo-item {
+    position: relative;
+    box-sizing: border-box;
+    width: 50%;
+    padding: 0 38px 22px 0;
+}
+
+.linha-tempo-item.direita {
+    margin-left: 50%;
+    padding: 0 0 22px 38px;
+}
+
+.linha-tempo-ponto {
+    position: absolute;
+    top: 14px;
+    right: -15px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    background: #14110d;
+    border: 2px solid var(--cor-cat, var(--ouro-escuro));
+    border-radius: 50%;
+    font-size: 0.9em;
+}
+
+.linha-tempo-item.direita .linha-tempo-ponto {
+    right: auto;
+    left: -15px;
+}
+
+.linha-tempo-cartao {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    padding: 12px 16px;
+    background: linear-gradient(165deg, rgba(255, 255, 255, 0.04), rgba(0, 0, 0, 0.35));
+    border: 1px solid var(--borda);
+    border-left: 3px solid var(--cor-cat, var(--ouro-escuro));
+    border-radius: 4px;
+    color: var(--texto);
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s;
+}
+
+.linha-tempo-cartao:hover {
+    transform: translateY(-2px);
+    border-color: var(--cor-cat, var(--ouro));
+}
+
+.linha-tempo-ano {
+    font-family: 'Cinzel', serif;
+    font-size: 0.8em;
+    letter-spacing: 1px;
+    color: var(--ouro-claro);
+}
+
+.linha-tempo-titulo {
+    font-family: 'Cinzel', serif;
+    font-size: 1.02em;
+    color: #fdf6e3;
+}
+
+.linha-tempo-resumo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.02em;
+    font-style: italic;
+    line-height: 1.4;
+    color: #d8cdb0;
+}
+
+.linha-tempo-cat {
+    font-size: 0.72em;
+    letter-spacing: 0.5px;
+    color: var(--texto-fraco);
+}
+
+.linha-tempo-aviso {
+    text-align: center;
+}
+
+/* Comentários */
+.livro-comentarios {
+    clear: both;
+    margin-top: 34px;
+    padding-top: 18px;
+    border-top: 1px solid var(--borda);
+    font-size: 0.92em;
+    line-height: 1.5;
+}
+
+.livro-comentarios h3 {
+    margin: 0 0 14px;
+    padding: 0;
+    border: none;
+    font-size: 1em;
+    letter-spacing: 1px;
+    color: var(--ouro-claro);
+}
+
+.livro-comentarios h3 small {
+    font-family: 'Cormorant Garamond', serif;
+    color: var(--texto-fraco);
+}
+
+.livro-comentarios-vazio {
+    margin: 0 0 14px;
+    font-style: italic;
+    color: var(--texto-fraco);
+}
+
+.livro-comentario {
+    margin-bottom: 10px;
+    padding: 9px 14px;
+    background: rgba(0, 0, 0, 0.28);
+    border: 1px solid var(--borda);
+    border-radius: 4px;
+}
+
+.livro-comentario header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 2px;
+}
+
+.livro-comentario header strong {
+    font-family: 'Cinzel', serif;
+    font-size: 0.8em;
+    letter-spacing: 0.5px;
+    color: var(--ouro-claro);
+}
+
+.livro-comentario header time {
+    font-size: 0.75em;
+    color: var(--texto-fraco);
+}
+
+.livro-comentario-excluir {
+    margin-left: auto;
+    padding: 0 4px;
+    background: none;
+    border: none;
+    font-size: 0.85em;
+    opacity: 0.55;
+    cursor: pointer;
+}
+
+.livro-comentario-excluir:hover {
+    opacity: 1;
+}
+
+.livro-comentario p {
+    margin: 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.livro-comentario-form {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.livro-comentario-form textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--borda);
+    border-radius: 3px;
+    color: var(--texto);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.05em;
+    resize: vertical;
+}
+
+.livro-comentario-form textarea:focus {
+    outline: none;
+    border-color: var(--ouro-escuro);
+}
+
 
 /* =========================================
    22. GUIA DO REINO
@@ -5268,5 +5771,51 @@ section,
 
     .biblioteca-grade {
         grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+    }
+}
+
+
+/* ---------- Biblioteca (índice, linha do tempo, ficha do modelo) no celular ---------- */
+@media (max-width: 899px) {
+    .livro-layout.com-indice {
+        display: block;
+    }
+
+    .livro-indice {
+        position: static;
+        max-height: none;
+        margin: 0 0 18px;
+    }
+}
+
+@media (max-width: 768px) {
+    .linha-tempo::before {
+        left: 15px;
+    }
+
+    .linha-tempo-era {
+        margin: 18px 0 14px 0;
+    }
+
+    .linha-tempo-item,
+    .linha-tempo-item.direita {
+        width: 100%;
+        margin-left: 0;
+        padding: 0 0 18px 46px;
+    }
+
+    .linha-tempo-ponto,
+    .linha-tempo-item.direita .linha-tempo-ponto {
+        left: 0;
+        right: auto;
+    }
+
+    .livro-modelo-grade {
+        grid-template-columns: 1fr;
+    }
+
+    .livro-btn-favorito {
+        top: 10px;
+        left: 10px;
     }
 }
